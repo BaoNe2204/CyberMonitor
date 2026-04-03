@@ -1,0 +1,35 @@
+using CyberMonitor.API.Models.DTOs;
+
+namespace CyberMonitor.API.Hubs;
+
+public interface IAlertHub
+{
+    Task ReceiveAlert(AlertDto alert);
+    Task AlertStatusChanged(AlertDto alert);
+    Task TicketCreated(TicketDto ticket);
+    Task TicketUpdated(TicketDto ticket);
+    Task ServerStatusChanged(Guid serverId, string status);
+    Task NotificationReceived(NotificationDto notification);
+    /// <summary>Frontend nhận lệnh block IP (từ AI Engine hoặc SOC)</summary>
+    Task ReceiveBlockCommand(BlockCommandDto command);
+    Task ReceiveUnblockCommand(string ip);
+}
+
+public class AlertHub : Microsoft.AspNetCore.SignalR.Hub<IAlertHub>
+{
+    public override async Task OnConnectedAsync()
+    {
+        // Khi user login, họ join vào group theo tenantId
+        await base.OnConnectedAsync();
+    }
+
+    public async Task JoinTenantGroup(Guid tenantId)
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, tenantId.ToString());
+    }
+
+    public async Task LeaveTenantGroup(Guid tenantId)
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, tenantId.ToString());
+    }
+}

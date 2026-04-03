@@ -23,7 +23,7 @@ async function startServer() {
   // --- Mock Database ---
   let pricingPlans = [
     { id: '1', name: 'Starter', price: '0', features: ['3 Agents', 'Basic Regex Detection', 'Email Alerts', '7-day Log Retention'], popular: false },
-    { id: '2', name: 'Professional', price: '2.500.000', features: ['20 Agents', 'AI Anomaly Detection', 'SignalR Real-time', 'MITRE Mapping', '30-day Retention'], popular: true },
+    { id: '2', name: 'Pro', price: '2.500.000', features: ['10 Agents', 'AI Anomaly Detection', 'SignalR Real-time', 'MITRE Mapping', '30-day Retention'], popular: true },
     { id: '3', name: 'Enterprise', price: 'Custom', features: ['Unlimited Agents', 'Dedicated AI Engine', 'SOAR Automation', 'ISO Compliance', '1-year Retention'], popular: false },
   ];
 

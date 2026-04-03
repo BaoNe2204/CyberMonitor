@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cpu, Plus, Server, Activity, Database, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Cpu, Plus, Server, Activity, Database, AlertTriangle, CheckCircle2, Trash2, KeyRound } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Theme, Agent } from '../types';
 
@@ -8,9 +8,20 @@ interface AgentsProps {
   t: any;
   agents: Agent[];
   setShowAddServerModal: (show: boolean) => void;
+  canManageServers?: boolean;
+  onDeleteServer?: (id: string) => Promise<void>;
+  onViewServerKey?: (id: string, name: string) => void;
 }
 
-export const Agents = ({ theme, t, agents, setShowAddServerModal }: AgentsProps) => {
+export const Agents = ({
+  theme,
+  t,
+  agents,
+  setShowAddServerModal,
+  canManageServers,
+  onDeleteServer,
+  onViewServerKey,
+}: AgentsProps) => {
   return (
     <div className="space-y-8">
       <div className={cn("border rounded-xl overflow-hidden transition-colors", theme === 'dark' ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200 shadow-sm")}>
@@ -58,7 +69,40 @@ export const Agents = ({ theme, t, agents, setShowAddServerModal }: AgentsProps)
                   ></div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
+                {onViewServerKey && (
+                  <button
+                    type="button"
+                    title="Xem API Key"
+                    onClick={() => onViewServerKey(agent.id, agent.name)}
+                    className={cn(
+                      'p-2 rounded-lg border transition-colors',
+                      theme === 'dark'
+                        ? 'border-slate-700 text-blue-400 hover:bg-blue-500/10 hover:border-blue-500/30'
+                        : 'border-slate-200 text-blue-600 hover:bg-blue-50 hover:border-blue-200'
+                    )}
+                  >
+                    <KeyRound size={16} />
+                  </button>
+                )}
+                {canManageServers && onDeleteServer && (
+                  <button
+                    type="button"
+                    title="Xóa máy chủ"
+                    onClick={async () => {
+                      if (!window.confirm(`Xóa máy chủ "${agent.name}"? Thao tác không thể hoàn tác.`)) return;
+                      await onDeleteServer(agent.id);
+                    }}
+                    className={cn(
+                      'p-2 rounded-lg border transition-colors',
+                      theme === 'dark'
+                        ? 'border-slate-700 text-slate-400 hover:bg-rose-500/10 hover:border-rose-500/30 hover:text-rose-400'
+                        : 'border-slate-200 text-slate-500 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600'
+                    )}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
                 {agent.status === 'online' ? <CheckCircle2 size={18} className="text-emerald-500" /> : <AlertTriangle size={18} className="text-rose-500" />}
               </div>
             </div>

@@ -1,0 +1,20 @@
+# Env
+.env
+.env.*
+!.env.example
+
+# Frontend
+Frontend/node_modules/
+Frontend/dist/
+
+# .NET
+**/bin/
+**/obj/
+
+# Logs / local scripts
+*.log
+
+# Local docs not for GitHub
+CYBERMONITOR_TECHNICAL_DOC.md
+HƯỚNG_DẪN_CÀI_ĐẶT.md
+README.md

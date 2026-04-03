@@ -9,6 +9,16 @@ interface BillingProps {
   plans: any[];
 }
 
+function planDisplayName(plan: { name: string }, t: any): string {
+  const m: Record<string, string> = {
+    Starter: t.planStarter,
+    Pro: t.planPro,
+    Enterprise: t.planEnterprise,
+    Professional: t.planPro,
+  };
+  return m[plan.name] || plan.name;
+}
+
 export const Billing = ({ theme, t, plans }: BillingProps) => {
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
@@ -19,7 +29,7 @@ export const Billing = ({ theme, t, plans }: BillingProps) => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {plans.map((plan) => (
-          <div key={plan.name} className={cn(
+          <div key={plan.id || plan.name} className={cn(
             "relative p-8 rounded-2xl border transition-all duration-300",
             plan.popular 
               ? (theme === 'dark' ? "bg-slate-900 border-blue-500 shadow-2xl shadow-blue-900/20 scale-105 z-10" : "bg-white border-blue-500 shadow-2xl shadow-blue-100 scale-105 z-10")
@@ -30,7 +40,7 @@ export const Billing = ({ theme, t, plans }: BillingProps) => {
                 {t.mostPopular}
               </span>
             )}
-            <h4 className={cn("text-xl font-bold mb-2", theme === 'dark' ? "text-white" : "text-slate-900")}>{plan.name}</h4>
+            <h4 className={cn("text-xl font-bold mb-2", theme === 'dark' ? "text-white" : "text-slate-900")}>{planDisplayName(plan, t)}</h4>
             <div className="flex items-baseline gap-1 mb-6">
               <span className={cn("text-4xl font-bold", theme === 'dark' ? "text-white" : "text-slate-900")}>{plan.price}</span>
               {plan.price !== 'Free' && plan.price !== 'Custom' && <span className="text-slate-500 text-sm">{t.vnd}{t.perMonth}</span>}
@@ -47,7 +57,7 @@ export const Billing = ({ theme, t, plans }: BillingProps) => {
               "w-full py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2",
               plan.popular ? "bg-blue-600 hover:bg-blue-500 text-white" : (theme === 'dark' ? "bg-slate-800 hover:bg-slate-700 text-slate-200" : "bg-slate-100 hover:bg-slate-200 text-slate-900")
             )}>
-              {plan.name === 'Enterprise' ? t.contactSales : t.upgradeNow}
+              {plan.name === 'Enterprise' || plan.name === 'Doanh nghiệp' ? t.contactSales : t.upgradeNow}
               <ChevronRight size={18} />
             </button>
           </div>

@@ -4,6 +4,24 @@
 -- ============================================
 
 -- ============================================
+-- XÓA BẢNG CŨ NẾU CÓ (Chạy lại nhiều lần an toàn)
+-- Xóa theo thứ tự ngược từ bảng con lên bảng cha
+-- ============================================
+DROP TABLE IF EXISTS Notifications;
+DROP TABLE IF EXISTS AuditLogs;
+DROP TABLE IF EXISTS TicketComments;
+DROP TABLE IF EXISTS Tickets;
+DROP TABLE IF EXISTS Alerts;
+DROP TABLE IF EXISTS TrafficLogs;
+DROP TABLE IF EXISTS ApiKeys;
+DROP TABLE IF EXISTS Servers;
+DROP TABLE IF EXISTS PaymentOrders;
+DROP TABLE IF EXISTS Subscriptions;
+DROP TABLE IF EXISTS Users;
+DROP TABLE IF EXISTS Tenants;
+GO
+
+-- ============================================
 -- 1. TENANTS (Workspace / Công ty)
 -- ============================================
 CREATE TABLE Tenants (
@@ -114,7 +132,7 @@ CREATE TABLE ApiKeys (
     IsActive BIT DEFAULT 1,
     CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
     CONSTRAINT FK_ApiKeys_Tenants FOREIGN KEY (TenantId) REFERENCES Tenants(Id) ON DELETE CASCADE,
-    CONSTRAINT FK_ApiKeys_Servers FOREIGN KEY (ServerId) REFERENCES Servers(Id) ON DELETE SET NULL
+    CONSTRAINT FK_ApiKeys_Servers FOREIGN KEY (ServerId) REFERENCES Servers(Id) 
 );
 
 CREATE INDEX IX_ApiKeys_TenantId ON ApiKeys(TenantId);
@@ -141,7 +159,7 @@ CREATE TABLE TrafficLogs (
     AnomalyScore DECIMAL(5,4) NULL,  -- 0.0000 - 1.0000
     RawPayload NVARCHAR(MAX) NULL,
     CONSTRAINT FK_TrafficLogs_Tenants FOREIGN KEY (TenantId) REFERENCES Tenants(Id) ON DELETE CASCADE,
-    CONSTRAINT FK_TrafficLogs_Servers FOREIGN KEY (ServerId) REFERENCES Servers(Id) ON DELETE CASCADE
+    CONSTRAINT FK_TrafficLogs_Servers FOREIGN KEY (ServerId) REFERENCES Servers(Id) 
 );
 
 CREATE INDEX IX_TrafficLogs_TenantId_Time ON TrafficLogs(TenantId, Timestamp DESC);
@@ -172,7 +190,7 @@ CREATE TABLE Alerts (
     AcknowledgedBy UNIQUEIDENTIFIER NULL,
     ResolvedBy UNIQUEIDENTIFIER NULL,
     CONSTRAINT FK_Alerts_Tenants FOREIGN KEY (TenantId) REFERENCES Tenants(Id) ON DELETE CASCADE,
-    CONSTRAINT FK_Alerts_Servers FOREIGN KEY (ServerId) REFERENCES Servers(Id) ON DELETE SET NULL,
+    CONSTRAINT FK_Alerts_Servers FOREIGN KEY (ServerId) REFERENCES Servers(Id),
     CONSTRAINT FK_Alerts_AcknowledgedBy FOREIGN KEY (AcknowledgedBy) REFERENCES Users(Id),
     CONSTRAINT FK_Alerts_ResolvedBy FOREIGN KEY (ResolvedBy) REFERENCES Users(Id)
 );
@@ -203,7 +221,7 @@ CREATE TABLE Tickets (
     ResolvedAt DATETIME2 NULL,
     ClosedAt DATETIME2 NULL,
     CONSTRAINT FK_Tickets_Tenants FOREIGN KEY (TenantId) REFERENCES Tenants(Id) ON DELETE CASCADE,
-    CONSTRAINT FK_Tickets_AlertId FOREIGN KEY (AlertId) REFERENCES Alerts(Id) ON DELETE SET NULL,
+    CONSTRAINT FK_Tickets_AlertId FOREIGN KEY (AlertId) REFERENCES Alerts(Id),
     CONSTRAINT FK_Tickets_AssignedTo FOREIGN KEY (AssignedTo) REFERENCES Users(Id),
     CONSTRAINT FK_Tickets_AssignedBy FOREIGN KEY (AssignedBy) REFERENCES Users(Id),
     CONSTRAINT FK_Tickets_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES Users(Id)
@@ -269,20 +287,27 @@ CREATE TABLE Notifications (
 CREATE INDEX IX_Notifications_UserId_Unread ON Notifications(UserId, IsRead);
 
 -- ============================================
--- SEED DATA: SuperAdmin mặc định
--- Password: CyberMonitor@2026 (BCrypt hash)
+-- SEED: SuperAdmin
+-- Password: CyberMonitor@2026
+-- Note: Hash giống trong SeedData.sql và CyberMonitorDbContext.cs
 -- ============================================
-DECLARE @saPasswordHash NVARCHAR(500);
-SET @saPasswordHash = '$2a$11$rBNr5KQv5Qv5Qv5Qv5Qv5eO5J5J5J5J5J5J5J5J5J5J5J5J5J5J5J';
-
-INSERT INTO Users (Id, Email, PasswordHash, FullName, Role, IsActive)
-VALUES (
-    NEWID(),
-    'admin@cybermonitor.vn',
-    @saPasswordHash,
-    'Super Administrator',
-    'SuperAdmin',
-    1
-);
+DECLARE @saEmail NVARCHAR(255) = 'admin@cybermonitor.vn';
+IF NOT EXISTS (SELECT 1 FROM Users WHERE Email = @saEmail AND Role = 'SuperAdmin')
+BEGIN
+    INSERT INTO Users (Id, Email, PasswordHash, FullName, Role, IsActive)
+    VALUES (
+        '00000000-0000-0000-0000-000000000001',
+        @saEmail,
+        '$2a$11$W6ghY.hmG5QQ6ciwQZO7Me3UB5oAmynLDf6OzYVv39c6xjTKwl4ym',
+        'Super Administrator',
+        'SuperAdmin',
+        1
+    );
+    PRINT 'SuperAdmin seeded: admin@cybermonitor.vn';
+END
+ELSE
+BEGIN
+    PRINT 'SuperAdmin already exists, skipping...';
+END
 
 PRINT 'Database schema created successfully!';

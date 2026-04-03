@@ -1,16 +1,30 @@
 import React from 'react';
-import { Bot, Zap, Lock } from 'lucide-react';
+import { Bot, Zap, Lock, TrendingUp } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Theme } from '../types';
+
+interface MITREItem {
+  technique: string;
+  name: string;
+  count: number;
+  risk: 'Critical' | 'High' | 'Medium' | 'Low';
+}
 
 interface AIEngineProps {
   theme: Theme;
   t: any;
+  mitreData?: MITREItem[];
+  dashboardData?: any;
 }
 
-export const AIEngine = ({ theme, t }: AIEngineProps) => {
+export const AIEngine = ({ theme, t, mitreData, dashboardData }: AIEngineProps) => {
+  const stats = dashboardData?.aiStats || {};
+  const predictions = dashboardData?.predictions || [];
+  const anomalyScore = stats.anomalyScore ?? 0;
+
   return (
     <div className="space-y-8">
+      {/* Engine Status */}
       <div className={cn("border p-8 rounded-2xl relative overflow-hidden transition-colors", theme === 'dark' ? "bg-gradient-to-br from-blue-600/20 to-purple-600/20 border-blue-500/30" : "bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200 shadow-sm")}>
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-4">
@@ -19,21 +33,23 @@ export const AIEngine = ({ theme, t }: AIEngineProps) => {
             </div>
             <div>
               <h2 className={cn("text-2xl font-bold", theme === 'dark' ? "text-white" : "text-slate-900")}>CyberGuard Heuristic Engine</h2>
-              <p className={cn(theme === 'dark' ? "text-blue-200/70" : "text-blue-600/70")}>Advanced Pattern Matching & Manual Rule Analysis</p>
+              <p className={cn(theme === 'dark' ? "text-blue-200/70" : "text-blue-600/70")}>Advanced Pattern Matching & Machine Learning Analysis</p>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
             <div className={cn("p-4 rounded-xl border transition-colors", theme === 'dark' ? "bg-slate-950/50 border-blue-500/20" : "bg-white border-blue-100 shadow-sm")}>
               <p className="text-xs text-blue-400 font-bold uppercase mb-2">Current Engine</p>
-              <p className={cn("text-lg font-mono", theme === 'dark' ? "text-white" : "text-slate-900")}>Heuristic-Core v4.0</p>
+              <p className={cn("text-lg font-mono", theme === 'dark' ? "text-white" : "text-slate-900")}>Isolation Forest v1.0</p>
+            </div>
+            <div className={cn("p-4 rounded-xl border transition-colors", theme === 'dark' ? "bg-slate-950/50 border-blue-500/20" : "bg-white border-blue-100 shadow-sm")}>
+              <p className="text-xs text-blue-400 font-bold uppercase mb-2">Anomaly Threshold</p>
+              <p className={cn("text-lg font-mono", theme === 'dark' ? "text-white" : "text-slate-900")}>{stats.threshold ?? 0.75} (configurable)</p>
             </div>
             <div className={cn("p-4 rounded-xl border transition-colors", theme === 'dark' ? "bg-slate-950/50 border-blue-500/20" : "bg-white border-blue-100 shadow-sm")}>
               <p className="text-xs text-blue-400 font-bold uppercase mb-2">Rule Coverage</p>
-              <p className={cn("text-lg font-mono", theme === 'dark' ? "text-white" : "text-slate-900")}>98.5% (Manual)</p>
-            </div>
-            <div className={cn("p-4 rounded-xl border transition-colors", theme === 'dark' ? "bg-slate-950/50 border-blue-500/20" : "bg-white border-blue-100 shadow-sm")}>
-              <p className="text-xs text-blue-400 font-bold uppercase mb-2">Signature DB</p>
-              <p className={cn("text-lg font-mono", theme === 'dark' ? "text-white" : "text-slate-900")}>2.5M Signatures</p>
+              <p className={cn("text-lg font-mono", theme === 'dark' ? "text-white" : "text-slate-900")}>
+                {stats.totalAlerts ?? 0} alerts analyzed
+              </p>
             </div>
           </div>
         </div>
@@ -41,73 +57,104 @@ export const AIEngine = ({ theme, t }: AIEngineProps) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Anomaly Score Chart */}
         <div className={cn("border p-6 rounded-xl transition-colors", theme === 'dark' ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200 shadow-sm")}>
           <h3 className={cn("font-bold mb-6 flex items-center gap-2", theme === 'dark' ? "text-white" : "text-slate-900")}>
             <Zap size={18} className="text-amber-400" />
-            {t.predictiveAnalysis}
+            {t.predictiveAnalysis || 'Phân Tích Dự Đoán'}
           </h3>
           <div className="space-y-6">
-            <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-              <div className="flex justify-between items-start mb-2">
-                <span className="text-xs font-bold text-amber-500 uppercase">Traffic Forecast</span>
-                <span className="text-[10px] text-amber-400/70">Confidence: 94%</span>
-              </div>
-              <p className={cn("text-sm", theme === 'dark' ? "text-amber-200" : "text-amber-900")}>
-                Based on current trends, <span className="font-bold">srv-001</span> is predicted to reach 95% CPU capacity in the next <span className="font-bold">12 minutes</span> due to rising inbound traffic.
-              </p>
-              <button className="mt-4 w-full bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold py-2 rounded transition-colors">
-                PRE-EMPTIVE SCALING
-              </button>
-            </div>
-            
+            {/* Anomaly Score Bar */}
             <div className={cn("p-4 border rounded-lg transition-colors", theme === 'dark' ? "bg-blue-500/10 border-blue-500/20" : "bg-blue-50 border-blue-100")}>
-              <div className="flex justify-between items-start mb-2">
+              <div className="flex justify-between items-start mb-3">
                 <span className="text-xs font-bold text-blue-500 uppercase">Anomaly Score</span>
-                <span className="text-[10px] text-blue-400/70">Z-Score Analysis</span>
+                <span className={cn(
+                  "text-xs font-bold px-2 py-0.5 rounded",
+                  anomalyScore >= 0.7 ? "bg-rose-500/20 text-rose-500" :
+                  anomalyScore >= 0.4 ? "bg-amber-500/20 text-amber-500" :
+                  "bg-emerald-500/20 text-emerald-500"
+                )}>
+                  {anomalyScore >= 0.7 ? 'HIGH RISK' : anomalyScore >= 0.4 ? 'MODERATE' : 'NORMAL'}
+                </span>
               </div>
-              <div className="flex items-end gap-1 h-12">
-                {[20, 35, 25, 40, 85, 30, 25, 20, 15, 10].map((h, i) => (
-                  <div key={i} className={cn("flex-1 rounded-t", i === 4 ? "bg-rose-500" : "bg-blue-500/50")} style={{ height: `${h}%` }}></div>
+              <div className={cn("w-full h-3 rounded-full overflow-hidden", theme === 'dark' ? "bg-slate-800" : "bg-slate-200")}>
+                <div
+                  className={cn("h-full rounded-full transition-all duration-700", 
+                    anomalyScore >= 0.7 ? "bg-rose-500" :
+                    anomalyScore >= 0.4 ? "bg-amber-500" :
+                    "bg-emerald-500"
+                  )}
+                  style={{ width: `${Math.round(anomalyScore * 100)}%` }}
+                />
+              </div>
+              <p className="text-xs text-slate-400 mt-2">
+                Score: {anomalyScore.toFixed(3)} (Isolation Forest output)
+              </p>
+            </div>
+
+            {/* Predictions */}
+            {predictions.length > 0 ? (
+              <div className="space-y-3">
+                {predictions.slice(0, 3).map((p: any, i: number) => (
+                  <div key={i} className={cn("p-3 border rounded-lg", theme === 'dark' ? "bg-slate-950/50 border-slate-800" : "bg-slate-50 border-slate-200")}>
+                    <div className="flex justify-between items-start">
+                      <span className={cn(
+                        "text-[10px] font-bold px-2 py-0.5 rounded",
+                        p.risk === 'Critical' || p.risk === 'High' ? "bg-rose-500/10 text-rose-500" :
+                        "bg-amber-500/10 text-amber-500"
+                      )}>
+                        {p.risk || 'Warning'}
+                      </span>
+                      <span className="text-[10px] text-slate-500">{p.confidence ? `${(p.confidence * 100).toFixed(0)}% confidence` : ''}</span>
+                    </div>
+                    <p className={cn("text-sm mt-1", theme === 'dark' ? "text-slate-300" : "text-slate-700")}>{p.message || p.description}</p>
+                  </div>
                 ))}
               </div>
-              <p className="text-xs text-slate-400 mt-3 italic">
-                * Spike at 14:22 detected as non-human behavior (Botnet pattern).
-              </p>
-            </div>
+            ) : (
+              <div className="text-center py-6 text-slate-500 text-sm space-y-2">
+                <TrendingUp size={24} className="mx-auto text-slate-400" />
+                <p>AI chưa có dự đoán nào — chạy Agent để bắt đầu phân tích.</p>
+              </div>
+            )}
           </div>
         </div>
 
+        {/* MITRE ATT&CK Mapping */}
         <div className={cn("border p-6 rounded-xl transition-colors", theme === 'dark' ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200 shadow-sm")}>
           <h3 className={cn("font-bold mb-6 flex items-center gap-2", theme === 'dark' ? "text-white" : "text-slate-900")}>
             <Lock size={18} className="text-emerald-400" />
-            {t.mitreMapping}
+            {t.mitreMapping || 'MITRE ATT&CK'}
           </h3>
-          <div className="space-y-4">
-            {[
-              { technique: 'T1190', name: 'Exploit Public-Facing App', count: 12, risk: 'High' },
-              { technique: 'T1110', name: 'Brute Force', count: 45, risk: 'Medium' },
-              { technique: 'T1498', name: 'Network Denial of Service', count: 3, risk: 'Critical' },
-              { technique: 'T1059', name: 'Command & Scripting Interpreter', count: 8, risk: 'High' },
-            ].map((item) => (
-              <div key={item.technique} className={cn("flex items-center justify-between p-3 rounded-lg border transition-colors", theme === 'dark' ? "bg-slate-950/50 border-slate-800" : "bg-slate-50 border-slate-200")}>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-mono font-bold text-blue-400">{item.technique}</span>
-                  <span className={cn("text-sm", theme === 'dark' ? "text-slate-300" : "text-slate-700")}>{item.name}</span>
+          {mitreData && mitreData.length > 0 ? (
+            <div className="space-y-4">
+              {mitreData.map((item) => (
+                <div key={item.technique} className={cn("flex items-center justify-between p-3 rounded-lg border transition-colors", theme === 'dark' ? "bg-slate-950/50 border-slate-800" : "bg-slate-50 border-slate-200")}>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-mono font-bold text-blue-400">{item.technique}</span>
+                    <span className={cn("text-sm", theme === 'dark' ? "text-slate-300" : "text-slate-700")}>{item.name}</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs text-slate-500">{item.count} hits</span>
+                    <span className={cn(
+                      "text-[10px] font-bold px-2 py-0.5 rounded",
+                      item.risk === 'Critical' ? "bg-rose-500/10 text-rose-500" :
+                      item.risk === 'High' ? "bg-amber-500/10 text-amber-500" :
+                      item.risk === 'Medium' ? "bg-blue-500/10 text-blue-500" :
+                      "bg-slate-500/10 text-slate-400"
+                    )}>
+                      {item.risk}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-xs text-slate-500">{item.count} hits</span>
-                  <span className={cn(
-                    "text-[10px] font-bold px-2 py-0.5 rounded",
-                    item.risk === 'Critical' ? "bg-rose-500/10 text-rose-500" :
-                    item.risk === 'High' ? "bg-amber-500/10 text-amber-500" :
-                    "bg-blue-500/10 text-blue-500"
-                  )}>
-                    {item.risk}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-slate-500 text-sm space-y-2">
+              <Lock size={24} className="mx-auto text-slate-400" />
+              <p>Chưa có dữ liệu MITRE — alert đầu tiên sẽ được phân tích.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { CreditCard, Save, Plus, Trash2, Edit2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Theme } from '../types';
+import { PRICING_PLANS_STORAGE_KEY } from '../data/defaultPricingPlans';
 
 interface PricingManagementProps {
   theme: Theme;
@@ -20,16 +21,18 @@ export const PricingManagement = ({ theme, t, plans, setPlans }: PricingManageme
     );
 
     try {
+      localStorage.setItem(PRICING_PLANS_STORAGE_KEY, JSON.stringify(updatedPlans));
+      setPlans(updatedPlans);
+      setEditingPlanId(null);
+
+      // Nếu chạy Frontend/server.ts (Express), đồng bộ thêm qua API
       const response = await fetch('/api/pricing/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plans: updatedPlans }),
       });
-
-      if (response.ok) {
-        setEditingPlanId(null);
-        // Socket.io will update other clients, but we update locally too
-        setPlans(updatedPlans);
+      if (!response.ok) {
+        console.warn('Không gọi được /api/pricing/update (bình thường khi chỉ chạy Vite + ASP.NET). Đã lưu cục bộ.');
       }
     } catch (error) {
       console.error('Failed to update pricing:', error);
