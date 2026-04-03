@@ -1,0 +1,70 @@
+import React from 'react';
+import { Cpu, Plus, Server, Activity, Database, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { cn } from '../lib/utils';
+import { Theme, Agent } from '../types';
+
+interface AgentsProps {
+  theme: Theme;
+  t: any;
+  agents: Agent[];
+  setShowAddServerModal: (show: boolean) => void;
+}
+
+export const Agents = ({ theme, t, agents, setShowAddServerModal }: AgentsProps) => {
+  return (
+    <div className="space-y-8">
+      <div className={cn("border rounded-xl overflow-hidden transition-colors", theme === 'dark' ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200 shadow-sm")}>
+        <div className={cn("p-6 border-b flex justify-between items-center", theme === 'dark' ? "border-slate-800" : "border-slate-100")}>
+          <h3 className={cn("font-bold flex items-center gap-2", theme === 'dark' ? "text-white" : "text-slate-900")}>
+            <Cpu size={18} className="text-indigo-400" />
+            {t.assetHealth}
+          </h3>
+          <button 
+            onClick={() => setShowAddServerModal(true)}
+            className="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors"
+          >
+            <Plus size={14} /> {t.addServer}
+          </button>
+        </div>
+        <div className="p-6 space-y-6">
+          {agents.map((agent) => (
+            <div key={agent.id} className="flex items-center gap-4">
+              <div className={cn(
+                "w-10 h-10 rounded-lg flex items-center justify-center border",
+                agent.status === 'online' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : (theme === 'dark' ? "bg-slate-800 border-slate-700 text-slate-500" : "bg-slate-100 border-slate-200 text-slate-400")
+              )}>
+                <Server size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-start mb-1">
+                  <h4 className={cn("text-sm font-bold truncate", theme === 'dark' ? "text-white" : "text-slate-900")}>{agent.name}</h4>
+                  <span className="text-[10px] text-slate-500">{agent.lastSeen}</span>
+                </div>
+                <div className="flex items-center gap-4 text-xs text-slate-400">
+                  <span className="font-mono">{agent.ip}</span>
+                  <div className="flex items-center gap-1">
+                    <Activity size={12} className="text-blue-400" />
+                    <span>CPU: {agent.cpu}%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Database size={12} className="text-purple-400" />
+                    <span>RAM: {agent.ram}%</span>
+                  </div>
+                </div>
+                <div className={cn("mt-2 w-full h-1 rounded-full overflow-hidden", theme === 'dark' ? "bg-slate-800" : "bg-slate-100")}>
+                  <div 
+                    className={cn("h-full transition-all duration-500", agent.cpu > 80 ? "bg-rose-500" : "bg-blue-500")} 
+                    style={{ width: `${agent.cpu}%` }}
+                  ></div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {agent.status === 'online' ? <CheckCircle2 size={18} className="text-emerald-500" /> : <AlertTriangle size={18} className="text-rose-500" />}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
