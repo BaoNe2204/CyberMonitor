@@ -1,0 +1,4734 @@
+{
+  "198.51.100.5": {
+    "sample_count": 306,
+    "mean": {
+      "request_rate": 0.36762043159458546,
+      "avg_bytes_per_request": 4000.0,
+      "bytes_out_ratio": 3.0,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.3333333333333333,
+      "dns_amplification_ratio": 3.0
+    },
+    "variance": {
+      "request_rate": 0.08685487773154955,
+      "avg_bytes_per_request": 1e-06,
+      "bytes_out_ratio": 1e-06,
+      "unique_dest_ports": 1e-06,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 1e-06,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 1e-06,
+      "dns_amplification_ratio": 1e-06
+    },
+    "last_seen": "2026-04-04T18:03:39.552706+00:00"
+  },
+  "203.0.113.10": {
+    "sample_count": 306,
+    "mean": {
+      "request_rate": 0.36762041108635135,
+      "avg_bytes_per_request": 150.0,
+      "bytes_out_ratio": 2.0,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.5,
+      "dns_amplification_ratio": 2.0
+    },
+    "variance": {
+      "request_rate": 0.08685487703521355,
+      "avg_bytes_per_request": 1e-06,
+      "bytes_out_ratio": 1e-06,
+      "unique_dest_ports": 1e-06,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 1e-06,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 1e-06,
+      "dns_amplification_ratio": 1e-06
+    },
+    "last_seen": "2026-04-04T18:03:39.552720+00:00"
+  },
+  "10.0.0.1": {
+    "sample_count": 306,
+    "mean": {
+      "request_rate": 0.3676204105484563,
+      "avg_bytes_per_request": 2800.0,
+      "bytes_out_ratio": 2.5,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.5,
+      "dns_amplification_ratio": 2.5
+    },
+    "variance": {
+      "request_rate": 0.08685487721489732,
+      "avg_bytes_per_request": 1e-06,
+      "bytes_out_ratio": 1e-06,
+      "unique_dest_ports": 1e-06,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 1e-06,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 1e-06,
+      "dns_amplification_ratio": 1e-06
+    },
+    "last_seen": "2026-04-04T18:03:39.552733+00:00"
+  },
+  "192.168.1.50": {
+    "sample_count": 306,
+    "mean": {
+      "request_rate": 0.36762040969258486,
+      "avg_bytes_per_request": 700.0,
+      "bytes_out_ratio": 2.5,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 4.0,
+      "dns_amplification_ratio": 2.5
+    },
+    "variance": {
+      "request_rate": 0.08685487751579178,
+      "avg_bytes_per_request": 1e-06,
+      "bytes_out_ratio": 1e-06,
+      "unique_dest_ports": 1e-06,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 1e-06,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 1e-06,
+      "dns_amplification_ratio": 1e-06
+    },
+    "last_seen": "2026-04-04T18:03:39.552746+00:00"
+  },
+  "1.1.1.1": {
+    "sample_count": 306,
+    "mean": {
+      "request_rate": 0.3676204092363261,
+      "avg_bytes_per_request": 15500.0,
+      "bytes_out_ratio": 30.0,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.0,
+      "dns_amplification_ratio": 30.0
+    },
+    "variance": {
+      "request_rate": 0.08685487768192035,
+      "avg_bytes_per_request": 1e-06,
+      "bytes_out_ratio": 1e-06,
+      "unique_dest_ports": 1e-06,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 1e-06,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 1e-06,
+      "dns_amplification_ratio": 1e-06
+    },
+    "last_seen": "2026-04-04T18:03:39.552754+00:00"
+  },
+  "203.0.113.77": {
+    "sample_count": 46,
+    "mean": {
+      "request_rate": 0.4197062192556431,
+      "avg_bytes_per_request": 5000.0,
+      "bytes_out_ratio": 0.42857142857142855,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.8,
+      "dns_amplification_ratio": 0.42857142857142855
+    },
+    "variance": {
+      "request_rate": 0.08853814632785245,
+      "avg_bytes_per_request": 0.0006665790455522185,
+      "bytes_out_ratio": 0.0006665790455522185,
+      "unique_dest_ports": 0.0006665790455522185,
+      "unique_dest_ips": 0.0006665790455522185,
+      "failed_login_count": 0.0006665790455522185,
+      "port_entropy": 0.0006665790455522185,
+      "dest_ip_entropy": 0.0006665790455522185,
+      "syn_like_ratio": 0.0006665790455522185,
+      "dns_amplification_ratio": 0.0006665790455522185
+    },
+    "last_seen": "2026-04-04T18:53:45.783692+00:00"
+  },
+  "198.51.100.23": {
+    "sample_count": 46,
+    "mean": {
+      "request_rate": 0.4197062185750129,
+      "avg_bytes_per_request": 5000.0,
+      "bytes_out_ratio": 0.42857142857142855,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 39.28809594064889,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.3,
+      "dns_amplification_ratio": 0.42857142857142855
+    },
+    "variance": {
+      "request_rate": 0.08853814637886102,
+      "avg_bytes_per_request": 0.0006665790455522185,
+      "bytes_out_ratio": 0.0006665790455522185,
+      "unique_dest_ports": 0.0006665790455522185,
+      "unique_dest_ips": 0.0006665790455522185,
+      "failed_login_count": 648.2129197304241,
+      "port_entropy": 0.0006665790455522185,
+      "dest_ip_entropy": 0.0006665790455522185,
+      "syn_like_ratio": 0.0006665790455522185,
+      "dns_amplification_ratio": 0.0006665790455522185
+    },
+    "last_seen": "2026-04-04T18:53:45.783703+00:00"
+  },
+  "111.222.33.44": {
+    "sample_count": 46,
+    "mean": {
+      "request_rate": 0.41970622781428846,
+      "avg_bytes_per_request": 5000.0,
+      "bytes_out_ratio": 0.42857142857142855,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.6,
+      "dns_amplification_ratio": 0.42857142857142855
+    },
+    "variance": {
+      "request_rate": 0.0885381459120439,
+      "avg_bytes_per_request": 0.0006665790455522185,
+      "bytes_out_ratio": 0.0006665790455522185,
+      "unique_dest_ports": 0.0006665790455522185,
+      "unique_dest_ips": 0.0006665790455522185,
+      "failed_login_count": 0.0006665790455522185,
+      "port_entropy": 0.0006665790455522185,
+      "dest_ip_entropy": 0.0006665790455522185,
+      "syn_like_ratio": 0.0006665790455522185,
+      "dns_amplification_ratio": 0.0006665790455522185
+    },
+    "last_seen": "2026-04-04T18:53:45.783713+00:00"
+  },
+  "2620:1ec:29:1::39": {
+    "sample_count": 194,
+    "mean": {
+      "request_rate": 0.1877962231464723,
+      "avg_bytes_per_request": 26385.416711390866,
+      "bytes_out_ratio": 0.4859636918352324,
+      "unique_dest_ports": 1.0011208074597284,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0004031979245209713,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.42955433672961674,
+      "dns_amplification_ratio": 0.4859636918352324
+    },
+    "variance": {
+      "request_rate": 0.014459764441905925,
+      "avg_bytes_per_request": 27829834.9090193,
+      "bytes_out_ratio": 0.017986906395689325,
+      "unique_dest_ports": 0.0013171191181027414,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 0.00018848822385740755,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 0.01100013699488996,
+      "dns_amplification_ratio": 0.017986906395689325
+    },
+    "last_seen": "2026-04-04T19:49:38.821510+00:00"
+  },
+  "13.107.5.93": {
+    "sample_count": 106,
+    "mean": {
+      "request_rate": 0.4428538014124598,
+      "avg_bytes_per_request": 15917.399659165196,
+      "bytes_out_ratio": 3.0874375601854633,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.6797712549261203,
+      "dns_amplification_ratio": 3.0874375601854633
+    },
+    "variance": {
+      "request_rate": 0.1513089463920191,
+      "avg_bytes_per_request": 284065915.99650043,
+      "bytes_out_ratio": 20.619740670240887,
+      "unique_dest_ports": 1e-06,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 1e-06,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 11.518149568228514,
+      "dns_amplification_ratio": 20.619740670240887
+    },
+    "last_seen": "2026-04-04T20:19:58.911692+00:00"
+  },
+  "2603:1061:14:140::1": {
+    "sample_count": 161,
+    "mean": {
+      "request_rate": 0.3469402901447515,
+      "avg_bytes_per_request": 13341.252439220196,
+      "bytes_out_ratio": 0.7714035325559291,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.6689417930760267,
+      "dns_amplification_ratio": 0.7714035325559291
+    },
+    "variance": {
+      "request_rate": 0.09397075069182335,
+      "avg_bytes_per_request": 476364.80810044234,
+      "bytes_out_ratio": 0.0009536909624933977,
+      "unique_dest_ports": 1e-06,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 1e-06,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 0.0011941848452902155,
+      "dns_amplification_ratio": 0.0009536909624933977
+    },
+    "last_seen": "2026-04-04T19:59:39.957209+00:00"
+  },
+  "113.171.234.9": {
+    "sample_count": 566,
+    "mean": {
+      "request_rate": 0.34253912547725124,
+      "avg_bytes_per_request": 16206.607137301193,
+      "bytes_out_ratio": 0.7350182151411804,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7112152693773425,
+      "dns_amplification_ratio": 0.7350182151411804
+    },
+    "variance": {
+      "request_rate": 0.09328360160995025,
+      "avg_bytes_per_request": 823591.8969161889,
+      "bytes_out_ratio": 4.421141213775986e-05,
+      "unique_dest_ports": 1e-06,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 1e-06,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 4.388996653718388e-05,
+      "dns_amplification_ratio": 4.421141213775986e-05
+    },
+    "last_seen": "2026-04-04T20:02:07.242283+00:00"
+  },
+  "23.11.39.161": {
+    "sample_count": 566,
+    "mean": {
+      "request_rate": 0.3425391033660562,
+      "avg_bytes_per_request": 16206.607137301193,
+      "bytes_out_ratio": 0.7350182151411804,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7112152693773425,
+      "dns_amplification_ratio": 0.7350182151411804
+    },
+    "variance": {
+      "request_rate": 0.09328360294269226,
+      "avg_bytes_per_request": 823591.8969161889,
+      "bytes_out_ratio": 4.421141213775986e-05,
+      "unique_dest_ports": 1e-06,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 1e-06,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 4.388996653718388e-05,
+      "dns_amplification_ratio": 4.421141213775986e-05
+    },
+    "last_seen": "2026-04-04T20:02:07.242333+00:00"
+  },
+  "2603:1040:a06:6::": {
+    "sample_count": 566,
+    "mean": {
+      "request_rate": 0.34253911675075177,
+      "avg_bytes_per_request": 16206.607137301193,
+      "bytes_out_ratio": 0.7350182151411804,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.6256341307567094,
+      "dns_amplification_ratio": 0.7350182151411804
+    },
+    "variance": {
+      "request_rate": 0.09328360169533716,
+      "avg_bytes_per_request": 823591.8969161889,
+      "bytes_out_ratio": 4.421141213775986e-05,
+      "unique_dest_ports": 1e-06,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 1e-06,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 9.995564774418828e-06,
+      "dns_amplification_ratio": 4.421141213775986e-05
+    },
+    "last_seen": "2026-04-04T20:02:07.242311+00:00"
+  },
+  "113.171.12.211": {
+    "sample_count": 566,
+    "mean": {
+      "request_rate": 0.34253910309065755,
+      "avg_bytes_per_request": 16206.607137301193,
+      "bytes_out_ratio": 0.7350182151411804,
+      "unique_dest_ports": 1.0000000000000002,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 3.2981566647491004e-24,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7112152693773425,
+      "dns_amplification_ratio": 0.7350182151411804
+    },
+    "variance": {
+      "request_rate": 0.09328360304992969,
+      "avg_bytes_per_request": 823591.8969161889,
+      "bytes_out_ratio": 4.421141213775986e-05,
+      "unique_dest_ports": 1e-06,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 1e-06,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 4.388996653718388e-05,
+      "dns_amplification_ratio": 4.421141213775986e-05
+    },
+    "last_seen": "2026-04-04T20:02:07.242340+00:00"
+  },
+  "20.42.73.31": {
+    "sample_count": 433,
+    "mean": {
+      "request_rate": 0.6509544155912043,
+      "avg_bytes_per_request": 38066.058786860965,
+      "bytes_out_ratio": 1.912774018234444,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.6175330714391836,
+      "dns_amplification_ratio": 1.912774018234444
+    },
+    "variance": {
+      "request_rate": 0.18108886376553565,
+      "avg_bytes_per_request": 914261014.6203103,
+      "bytes_out_ratio": 1.6569513139701066,
+      "unique_dest_ports": 1e-06,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 1e-06,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 0.9051014046196499,
+      "dns_amplification_ratio": 1.6569513139701066
+    },
+    "last_seen": "2026-04-04T20:18:06.151160+00:00"
+  },
+  "192.168.1.6": {
+    "sample_count": 566,
+    "mean": {
+      "request_rate": 0.3425391161233296,
+      "avg_bytes_per_request": 64829.32363525106,
+      "bytes_out_ratio": 0.7350090859405259,
+      "unique_dest_ports": 1.000000000001296,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 5.323450247007619e-13,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.6529540378613211,
+      "dns_amplification_ratio": 0.7350090859405259
+    },
+    "variance": {
+      "request_rate": 0.09328360193889115,
+      "avg_bytes_per_request": 13175751.855018338,
+      "bytes_out_ratio": 4.4129110396737715e-05,
+      "unique_dest_ports": 1e-06,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 1e-06,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 4.7610154689093484e-05,
+      "dns_amplification_ratio": 4.4129110396737715e-05
+    },
+    "last_seen": "2026-04-04T20:02:07.242318+00:00"
+  },
+  "113.171.234.48": {
+    "sample_count": 36,
+    "mean": {
+      "request_rate": 0.41812894610631013,
+      "avg_bytes_per_request": 11944.785599559813,
+      "bytes_out_ratio": 1.2541718177452854,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.6498941310102103,
+      "dns_amplification_ratio": 1.2541718177452854
+    },
+    "variance": {
+      "request_rate": 0.11910776224758529,
+      "avg_bytes_per_request": 99106056.5507364,
+      "bytes_out_ratio": 0.27454170777303305,
+      "unique_dest_ports": 0.0033858085706184394,
+      "unique_dest_ips": 0.0033858085706184394,
+      "failed_login_count": 0.0033858085706184394,
+      "port_entropy": 0.0033858085706184394,
+      "dest_ip_entropy": 0.0033858085706184394,
+      "syn_like_ratio": 0.01711309769191137,
+      "dns_amplification_ratio": 0.27454170777303305
+    },
+    "last_seen": "2026-04-04T18:35:14.494989+00:00"
+  },
+  "113.171.234.42": {
+    "sample_count": 30,
+    "mean": {
+      "request_rate": 0.256281804267536,
+      "avg_bytes_per_request": 5070.101402900673,
+      "bytes_out_ratio": 2.018914565090144,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.1067956411145636,
+      "dns_amplification_ratio": 2.018914565090144
+    },
+    "variance": {
+      "request_rate": 0.02010758669690036,
+      "avg_bytes_per_request": 2372907.386767577,
+      "bytes_out_ratio": 0.11559007123225877,
+      "unique_dest_ports": 0.008977364229164094,
+      "unique_dest_ips": 0.008977364229164094,
+      "failed_login_count": 0.008977364229164094,
+      "port_entropy": 0.008977364229164094,
+      "dest_ip_entropy": 0.008977364229164094,
+      "syn_like_ratio": 0.08379188662595985,
+      "dns_amplification_ratio": 0.11559007123225877
+    },
+    "last_seen": "2026-04-04T18:05:36.452687+00:00"
+  },
+  "4.213.25.242": {
+    "sample_count": 566,
+    "mean": {
+      "request_rate": 0.342539116699896,
+      "avg_bytes_per_request": 16206.607137301193,
+      "bytes_out_ratio": 0.7350182151411804,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.6256341307567094,
+      "dns_amplification_ratio": 0.7350182151411804
+    },
+    "variance": {
+      "request_rate": 0.0932836017152196,
+      "avg_bytes_per_request": 823591.8969161889,
+      "bytes_out_ratio": 4.421141213775986e-05,
+      "unique_dest_ports": 1e-06,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 1e-06,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 9.995564774418828e-06,
+      "dns_amplification_ratio": 4.421141213775986e-05
+    },
+    "last_seen": "2026-04-04T20:02:07.242291+00:00"
+  },
+  "146.59.253.24": {
+    "sample_count": 566,
+    "mean": {
+      "request_rate": 0.3425391148850464,
+      "avg_bytes_per_request": 16206.607137301193,
+      "bytes_out_ratio": 0.7350182151411804,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.6256341307567094,
+      "dns_amplification_ratio": 0.7350182151411804
+    },
+    "variance": {
+      "request_rate": 0.09328360228546528,
+      "avg_bytes_per_request": 823591.8969161889,
+      "bytes_out_ratio": 4.421141213775986e-05,
+      "unique_dest_ports": 1e-06,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 1e-06,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 9.995564774418828e-06,
+      "dns_amplification_ratio": 4.421141213775986e-05
+    },
+    "last_seen": "2026-04-04T20:02:07.242297+00:00"
+  },
+  "72.153.5.96": {
+    "sample_count": 73,
+    "mean": {
+      "request_rate": 0.3260814563589435,
+      "avg_bytes_per_request": 12649.552518479724,
+      "bytes_out_ratio": 0.7631221715101284,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7903682786444768,
+      "dns_amplification_ratio": 0.7631221715101284
+    },
+    "variance": {
+      "request_rate": 0.09579283715276261,
+      "avg_bytes_per_request": 2934412.5831297883,
+      "bytes_out_ratio": 0.005546295297930107,
+      "unique_dest_ports": 8.282523016540943e-06,
+      "unique_dest_ips": 8.282523016540943e-06,
+      "failed_login_count": 8.282523016540943e-06,
+      "port_entropy": 8.282523016540943e-06,
+      "dest_ip_entropy": 8.282523016540943e-06,
+      "syn_like_ratio": 0.0066202484258474446,
+      "dns_amplification_ratio": 0.005546295297930107
+    },
+    "last_seen": "2026-04-04T19:52:09.678680+00:00"
+  },
+  "23.203.77.172": {
+    "sample_count": 548,
+    "mean": {
+      "request_rate": 0.3425391122891438,
+      "avg_bytes_per_request": 16206.607137301193,
+      "bytes_out_ratio": 0.7350182151411804,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7112152693773425,
+      "dns_amplification_ratio": 0.7350182151411804
+    },
+    "variance": {
+      "request_rate": 0.093283602781018,
+      "avg_bytes_per_request": 823591.8969161889,
+      "bytes_out_ratio": 4.421141213775986e-05,
+      "unique_dest_ports": 1e-06,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 1e-06,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 4.388996653718388e-05,
+      "dns_amplification_ratio": 4.421141213775986e-05
+    },
+    "last_seen": "2026-04-04T20:02:07.242304+00:00"
+  },
+  "204.79.197.203": {
+    "sample_count": 27,
+    "mean": {
+      "request_rate": 0.2629005327038054,
+      "avg_bytes_per_request": 3870.3835542758884,
+      "bytes_out_ratio": 1.6048090156157817,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.3136095929503115,
+      "dns_amplification_ratio": 1.6048090156157817
+    },
+    "variance": {
+      "request_rate": 0.02890733617372339,
+      "avg_bytes_per_request": 127144.81099554464,
+      "bytes_out_ratio": 0.049091767314185485,
+      "unique_dest_ports": 0.014618138374376706,
+      "unique_dest_ips": 0.014618138374376706,
+      "failed_login_count": 0.014618138374376706,
+      "port_entropy": 0.014618138374376706,
+      "dest_ip_entropy": 0.014618138374376706,
+      "syn_like_ratio": 0.09495142404506526,
+      "dns_amplification_ratio": 0.049091767314185485
+    },
+    "last_seen": "2026-04-04T18:09:56.188135+00:00"
+  },
+  "2603:1061:14:166::1": {
+    "sample_count": 16,
+    "mean": {
+      "request_rate": 0.41237809248035795,
+      "avg_bytes_per_request": 4596.4830258036945,
+      "bytes_out_ratio": 1.4687650023057364,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.622728611684686,
+      "dns_amplification_ratio": 1.4687650023057364
+    },
+    "variance": {
+      "request_rate": 0.21486726867850275,
+      "avg_bytes_per_request": 6874772.742914321,
+      "bytes_out_ratio": 0.23656410627942384,
+      "unique_dest_ports": 0.08735421910125164,
+      "unique_dest_ips": 0.08735421910125164,
+      "failed_login_count": 0.08735421910125164,
+      "port_entropy": 0.08735421910125164,
+      "dest_ip_entropy": 0.08735421910125164,
+      "syn_like_ratio": 0.10218173988197223,
+      "dns_amplification_ratio": 0.23656410627942384
+    },
+    "last_seen": "2026-04-04T18:09:31.663966+00:00"
+  },
+  "20.52.64.201": {
+    "sample_count": 19,
+    "mean": {
+      "request_rate": 0.24971209992964793,
+      "avg_bytes_per_request": 3597.3281484386625,
+      "bytes_out_ratio": 1.4922080045916464,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.219351081518142,
+      "dns_amplification_ratio": 1.4922080045916464
+    },
+    "variance": {
+      "request_rate": 0.05981059321202677,
+      "avg_bytes_per_request": 72181.18695470162,
+      "bytes_out_ratio": 0.0964540274751486,
+      "unique_dest_ports": 0.05364640980555616,
+      "unique_dest_ips": 0.05364640980555616,
+      "failed_login_count": 0.05364640980555616,
+      "port_entropy": 0.05364640980555616,
+      "dest_ip_entropy": 0.05364640980555616,
+      "syn_like_ratio": 0.07467992384981106,
+      "dns_amplification_ratio": 0.0964540274751486
+    },
+    "last_seen": "2026-04-04T18:10:41.113950+00:00"
+  },
+  "113.171.234.24": {
+    "sample_count": 22,
+    "mean": {
+      "request_rate": 0.3467572061383104,
+      "avg_bytes_per_request": 3315.2557837110885,
+      "bytes_out_ratio": 1.4347977568728114,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.1795189672964363,
+      "dns_amplification_ratio": 1.4347977568728114
+    },
+    "variance": {
+      "request_rate": 0.1225826114014646,
+      "avg_bytes_per_request": 42133.401304268846,
+      "bytes_out_ratio": 0.050947596210614024,
+      "unique_dest_ports": 0.032945601421837174,
+      "unique_dest_ips": 0.032945601421837174,
+      "failed_login_count": 0.032945601421837174,
+      "port_entropy": 0.032945601421837174,
+      "dest_ip_entropy": 0.032945601421837174,
+      "syn_like_ratio": 0.04396231329105788,
+      "dns_amplification_ratio": 0.050947596210614024
+    },
+    "last_seen": "2026-04-04T18:11:22.312971+00:00"
+  },
+  "20.189.173.9": {
+    "sample_count": 50,
+    "mean": {
+      "request_rate": 0.2538291347768624,
+      "avg_bytes_per_request": 4755.281585047996,
+      "bytes_out_ratio": 0.9788814026572497,
+      "unique_dest_ports": 1.0092846489130791,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.007096023855915273,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.049764748274432,
+      "dns_amplification_ratio": 0.9788814026572497
+    },
+    "variance": {
+      "request_rate": 0.017234383608322905,
+      "avg_bytes_per_request": 13378089.409108754,
+      "bytes_out_ratio": 0.7629927130933106,
+      "unique_dest_ports": 0.011169657495709381,
+      "unique_dest_ips": 0.00034795842789729273,
+      "failed_login_count": 0.00034795842789729273,
+      "port_entropy": 0.0071428965893089984,
+      "dest_ip_entropy": 0.00034795842789729273,
+      "syn_like_ratio": 0.3109545228950413,
+      "dns_amplification_ratio": 0.7629927130933106
+    },
+    "last_seen": "2026-04-04T20:09:41.378850+00:00"
+  },
+  "40.74.78.229": {
+    "sample_count": 21,
+    "mean": {
+      "request_rate": 0.39510953844537605,
+      "avg_bytes_per_request": 3811.4600531236056,
+      "bytes_out_ratio": 1.3624009243641715,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.6082163783360152,
+      "dns_amplification_ratio": 1.3624009243641715
+    },
+    "variance": {
+      "request_rate": 0.14248067556270655,
+      "avg_bytes_per_request": 355310.28333908634,
+      "bytes_out_ratio": 0.1569926646807285,
+      "unique_dest_ports": 0.038759531084514326,
+      "unique_dest_ips": 0.038759531084514326,
+      "failed_login_count": 0.038759531084514326,
+      "port_entropy": 0.038759531084514326,
+      "dest_ip_entropy": 0.038759531084514326,
+      "syn_like_ratio": 0.05603270153227594,
+      "dns_amplification_ratio": 0.1569926646807285
+    },
+    "last_seen": "2026-04-04T18:13:57.143398+00:00"
+  },
+  "13.89.179.13": {
+    "sample_count": 31,
+    "mean": {
+      "request_rate": 0.34881019354999354,
+      "avg_bytes_per_request": 3863.9495617131656,
+      "bytes_out_ratio": 1.3055278950015674,
+      "unique_dest_ports": 1.0951389099360944,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.03657320325634464,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.9583573989679144,
+      "dns_amplification_ratio": 1.3055278950015674
+    },
+    "variance": {
+      "request_rate": 0.10229818149335693,
+      "avg_bytes_per_request": 894335.9902831484,
+      "bytes_out_ratio": 0.03993816765373373,
+      "unique_dest_ports": 0.10891016871510276,
+      "unique_dest_ips": 0.00763075959478948,
+      "failed_login_count": 0.00763075959478948,
+      "port_entropy": 0.02470170338799862,
+      "dest_ip_entropy": 0.00763075959478948,
+      "syn_like_ratio": 0.024460655805020312,
+      "dns_amplification_ratio": 0.03993816765373373
+    },
+    "last_seen": "2026-04-04T18:19:16.161132+00:00"
+  },
+  "169.254.169.254": {
+    "sample_count": 34,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 11207.733252552664,
+      "bytes_out_ratio": 0.7555695080798448,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.0536464098055558,
+      "dns_amplification_ratio": 0.7555695080798448
+    },
+    "variance": {
+      "request_rate": 0.0046862402361500894,
+      "avg_bytes_per_request": 3242458.3500443427,
+      "bytes_out_ratio": 0.007087918231670687,
+      "unique_dest_ports": 0.0046862402361500894,
+      "unique_dest_ips": 0.0046862402361500894,
+      "failed_login_count": 0.0046862402361500894,
+      "port_entropy": 0.0046862402361500894,
+      "dest_ip_entropy": 0.0046862402361500894,
+      "syn_like_ratio": 0.0644138549661858,
+      "dns_amplification_ratio": 0.007087918231670687
+    },
+    "last_seen": "2026-04-04T19:48:14.066882+00:00"
+  },
+  "2620:1ec:29:1::59": {
+    "sample_count": 25,
+    "mean": {
+      "request_rate": 0.3652650613668127,
+      "avg_bytes_per_request": 3873.3816079750436,
+      "bytes_out_ratio": 1.3731710481923642,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.5453846517182062,
+      "dns_amplification_ratio": 1.3731710481923642
+    },
+    "variance": {
+      "request_rate": 0.11840118022286064,
+      "avg_bytes_per_request": 259703.83610830578,
+      "bytes_out_ratio": 0.08211011868151989,
+      "unique_dest_ports": 0.020232717473185752,
+      "unique_dest_ips": 0.020232717473185752,
+      "failed_login_count": 0.020232717473185752,
+      "port_entropy": 0.020232717473185752,
+      "dest_ip_entropy": 0.020232717473185752,
+      "syn_like_ratio": 0.027077197006734187,
+      "dns_amplification_ratio": 0.08211011868151989
+    },
+    "last_seen": "2026-04-04T18:19:31.508607+00:00"
+  },
+  "2603:1061:14:143::1": {
+    "sample_count": 136,
+    "mean": {
+      "request_rate": 0.33545415974869386,
+      "avg_bytes_per_request": 12724.653633554843,
+      "bytes_out_ratio": 0.7694849357865842,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.6509259741175246,
+      "dns_amplification_ratio": 0.7694849357865842
+    },
+    "variance": {
+      "request_rate": 0.09491980942049162,
+      "avg_bytes_per_request": 134852.94437216615,
+      "bytes_out_ratio": 0.000480631790564309,
+      "unique_dest_ports": 1e-06,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 1e-06,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 0.00042071378208738397,
+      "dns_amplification_ratio": 0.000480631790564309
+    },
+    "last_seen": "2026-04-04T19:59:33.536903+00:00"
+  },
+  "72.153.5.130": {
+    "sample_count": 97,
+    "mean": {
+      "request_rate": 0.324528408216625,
+      "avg_bytes_per_request": 12375.669073562347,
+      "bytes_out_ratio": 0.746571855920247,
+      "unique_dest_ports": 1.1132747339709563,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.08154687689570175,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7693764377776887,
+      "dns_amplification_ratio": 0.746571855920247
+    },
+    "variance": {
+      "request_rate": 0.0996054306782689,
+      "avg_bytes_per_request": 44677912.60792823,
+      "bytes_out_ratio": 0.028238898304815258,
+      "unique_dest_ports": 0.1181690718306135,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 0.06808491008856622,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 0.04912830773656099,
+      "dns_amplification_ratio": 0.028238898304815258
+    },
+    "last_seen": "2026-04-04T19:50:25.891824+00:00"
+  },
+  "2603:1020:5:d::3a1": {
+    "sample_count": 30,
+    "mean": {
+      "request_rate": 0.2520485825015783,
+      "avg_bytes_per_request": 5183.905327671548,
+      "bytes_out_ratio": 1.6666876441296359,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.5960466069581218,
+      "dns_amplification_ratio": 1.6666876441296359
+    },
+    "variance": {
+      "request_rate": 0.020498515761955327,
+      "avg_bytes_per_request": 440943.3122944451,
+      "bytes_out_ratio": 0.04287677281854476,
+      "unique_dest_ports": 0.008977364229164094,
+      "unique_dest_ips": 0.008977364229164094,
+      "failed_login_count": 0.008977364229164094,
+      "port_entropy": 0.008977364229164094,
+      "dest_ip_entropy": 0.008977364229164094,
+      "syn_like_ratio": 0.09812824959257802,
+      "dns_amplification_ratio": 0.04287677281854476
+    },
+    "last_seen": "2026-04-04T18:26:59.691907+00:00"
+  },
+  "2603:1061:14:161::1": {
+    "sample_count": 25,
+    "mean": {
+      "request_rate": 0.35056709323418533,
+      "avg_bytes_per_request": 4072.0364862298834,
+      "bytes_out_ratio": 1.379765524949589,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.6547159632928609,
+      "dns_amplification_ratio": 1.379765524949589
+    },
+    "variance": {
+      "request_rate": 0.10925744842728491,
+      "avg_bytes_per_request": 827105.2260388142,
+      "bytes_out_ratio": 0.050163052416186904,
+      "unique_dest_ports": 0.020232717473185752,
+      "unique_dest_ips": 0.020232717473185752,
+      "failed_login_count": 0.020232717473185752,
+      "port_entropy": 0.020232717473185752,
+      "dest_ip_entropy": 0.020232717473185752,
+      "syn_like_ratio": 0.03035827230082321,
+      "dns_amplification_ratio": 0.050163052416186904
+    },
+    "last_seen": "2026-04-04T18:29:39.774758+00:00"
+  },
+  "2a03:90c0:f1:2801::9999": {
+    "sample_count": 67,
+    "mean": {
+      "request_rate": 0.3469335050181447,
+      "avg_bytes_per_request": 4933.2145688463925,
+      "bytes_out_ratio": 2.072912648583443,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.165564201348595,
+      "dns_amplification_ratio": 2.072912648583443
+    },
+    "variance": {
+      "request_rate": 0.09111873243600677,
+      "avg_bytes_per_request": 544606.7022288362,
+      "bytes_out_ratio": 0.04180055751395303,
+      "unique_dest_ports": 2.196084755091204e-05,
+      "unique_dest_ips": 2.196084755091204e-05,
+      "failed_login_count": 2.196084755091204e-05,
+      "port_entropy": 2.196084755091204e-05,
+      "dest_ip_entropy": 2.196084755091204e-05,
+      "syn_like_ratio": 0.321619733159899,
+      "dns_amplification_ratio": 0.04180055751395303
+    },
+    "last_seen": "2026-04-04T18:38:05.501343+00:00"
+  },
+  "2603:1061:14:145::1": {
+    "sample_count": 56,
+    "mean": {
+      "request_rate": 0.35919022472027384,
+      "avg_bytes_per_request": 10082.655487662036,
+      "bytes_out_ratio": 1.75475956161926,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.0217425468873913,
+      "dns_amplification_ratio": 1.75475956161926
+    },
+    "variance": {
+      "request_rate": 0.09521493227068314,
+      "avg_bytes_per_request": 1471737.6391870833,
+      "bytes_out_ratio": 0.024538142271623452,
+      "unique_dest_ports": 0.0001312323525391004,
+      "unique_dest_ips": 0.0001312323525391004,
+      "failed_login_count": 0.0001312323525391004,
+      "port_entropy": 0.0001312323525391004,
+      "dest_ip_entropy": 0.0001312323525391004,
+      "syn_like_ratio": 0.006218182390578716,
+      "dns_amplification_ratio": 0.024538142271623452
+    },
+    "last_seen": "2026-04-04T18:49:35.382566+00:00"
+  },
+  "72.153.5.141": {
+    "sample_count": 26,
+    "mean": {
+      "request_rate": 0.2513905372083877,
+      "avg_bytes_per_request": 3490.677593424007,
+      "bytes_out_ratio": 1.697660732977047,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.1182070209057793,
+      "dns_amplification_ratio": 1.697660732977047
+    },
+    "variance": {
+      "request_rate": 0.034000726576042216,
+      "avg_bytes_per_request": 982824.154454065,
+      "bytes_out_ratio": 0.09309345911244904,
+      "unique_dest_ports": 0.01719780985220789,
+      "unique_dest_ips": 0.01719780985220789,
+      "failed_login_count": 0.01719780985220789,
+      "port_entropy": 0.01719780985220789,
+      "dest_ip_entropy": 0.01719780985220789,
+      "syn_like_ratio": 0.06095310313385886,
+      "dns_amplification_ratio": 0.09309345911244904
+    },
+    "last_seen": "2026-04-04T18:36:41.647580+00:00"
+  },
+  "113.171.234.150": {
+    "sample_count": 20,
+    "mean": {
+      "request_rate": 0.38121223693927453,
+      "avg_bytes_per_request": 6419.423187064486,
+      "bytes_out_ratio": 2.254336937054558,
+      "unique_dest_ports": 1.6197303304691153,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.5789107782850382,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.9794275903250973,
+      "dns_amplification_ratio": 2.254336937054558
+    },
+    "variance": {
+      "request_rate": 0.15607597072575902,
+      "avg_bytes_per_request": 10640586.070979908,
+      "bytes_out_ratio": 1.5215280349202,
+      "unique_dest_ports": 0.3228519753532596,
+      "unique_dest_ips": 0.045599448334722736,
+      "failed_login_count": 0.045599448334722736,
+      "port_entropy": 0.2921851235789382,
+      "dest_ip_entropy": 0.045599448334722736,
+      "syn_like_ratio": 0.1190141723149657,
+      "dns_amplification_ratio": 1.5215280349202
+    },
+    "last_seen": "2026-04-04T18:35:36.086813+00:00"
+  },
+  "72.153.5.135": {
+    "sample_count": 25,
+    "mean": {
+      "request_rate": 0.24027965854404135,
+      "avg_bytes_per_request": 6162.053281597766,
+      "bytes_out_ratio": 0.9691246615304477,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7423327494505496,
+      "dns_amplification_ratio": 0.9691246615304477
+    },
+    "variance": {
+      "request_rate": 0.03669889418273603,
+      "avg_bytes_per_request": 13026661.62300104,
+      "bytes_out_ratio": 0.4833871385837758,
+      "unique_dest_ports": 0.020232717473185752,
+      "unique_dest_ips": 0.020232717473185752,
+      "failed_login_count": 0.020232717473185752,
+      "port_entropy": 0.020232717473185752,
+      "dest_ip_entropy": 0.020232717473185752,
+      "syn_like_ratio": 0.38432484271873046,
+      "dns_amplification_ratio": 0.4833871385837758
+    },
+    "last_seen": "2026-04-04T20:19:58.911494+00:00"
+  },
+  "2001:ee0:3242::71ab:a5a": {
+    "sample_count": 15,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 2.0,
+      "bytes_out_ratio": 1.0,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.0,
+      "dns_amplification_ratio": 1.0
+    },
+    "variance": {
+      "request_rate": 0.10276966953088429,
+      "avg_bytes_per_request": 0.10276966953088429,
+      "bytes_out_ratio": 0.10276966953088429,
+      "unique_dest_ports": 0.10276966953088429,
+      "unique_dest_ips": 0.10276966953088429,
+      "failed_login_count": 0.10276966953088429,
+      "port_entropy": 0.10276966953088429,
+      "dest_ip_entropy": 0.10276966953088429,
+      "syn_like_ratio": 0.10276966953088429,
+      "dns_amplification_ratio": 0.10276966953088429
+    },
+    "last_seen": "2026-04-04T18:34:38.607108+00:00"
+  },
+  "13.107.4.254": {
+    "sample_count": 20,
+    "mean": {
+      "request_rate": 0.2838803339878193,
+      "avg_bytes_per_request": 4319.941447750625,
+      "bytes_out_ratio": 2.313715571369454,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.8560760533635813,
+      "dns_amplification_ratio": 2.313715571369454
+    },
+    "variance": {
+      "request_rate": 0.07896306650420748,
+      "avg_bytes_per_request": 2030801.609076249,
+      "bytes_out_ratio": 1.0782824077146715,
+      "unique_dest_ports": 0.045599448334722736,
+      "unique_dest_ips": 0.045599448334722736,
+      "failed_login_count": 0.045599448334722736,
+      "port_entropy": 0.045599448334722736,
+      "dest_ip_entropy": 0.045599448334722736,
+      "syn_like_ratio": 0.10441310192965939,
+      "dns_amplification_ratio": 1.0782824077146715
+    },
+    "last_seen": "2026-04-04T18:35:36.086786+00:00"
+  },
+  "72.153.5.61": {
+    "sample_count": 57,
+    "mean": {
+      "request_rate": 0.32850166965196353,
+      "avg_bytes_per_request": 13407.732042679987,
+      "bytes_out_ratio": 0.7560253422388095,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7405029704055806,
+      "dns_amplification_ratio": 0.7560253422388095
+    },
+    "variance": {
+      "request_rate": 0.09484535828543529,
+      "avg_bytes_per_request": 1359350.9972311493,
+      "bytes_out_ratio": 0.0025194733688395335,
+      "unique_dest_ports": 0.00011154749965823534,
+      "unique_dest_ips": 0.00011154749965823534,
+      "failed_login_count": 0.00011154749965823534,
+      "port_entropy": 0.00011154749965823534,
+      "dest_ip_entropy": 0.00011154749965823534,
+      "syn_like_ratio": 0.00398027057159974,
+      "dns_amplification_ratio": 0.0025194733688395335
+    },
+    "last_seen": "2026-04-04T19:52:49.052697+00:00"
+  },
+  "23.53.213.209": {
+    "sample_count": 81,
+    "mean": {
+      "request_rate": 0.24297137108658892,
+      "avg_bytes_per_request": 6672.209772483725,
+      "bytes_out_ratio": 1.4031563381677492,
+      "unique_dest_ports": 1.0091049145671407,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.007370930349620155,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.0866895823448532,
+      "dns_amplification_ratio": 1.4031563381677492
+    },
+    "variance": {
+      "request_rate": 0.01154026698640903,
+      "avg_bytes_per_request": 19717754.160909098,
+      "bytes_out_ratio": 1.0939042509775587,
+      "unique_dest_ports": 0.010616392318299939,
+      "unique_dest_ips": 2.2569090454253613e-06,
+      "failed_login_count": 2.2569090454253613e-06,
+      "port_entropy": 0.007314056005181305,
+      "dest_ip_entropy": 2.2569090454253613e-06,
+      "syn_like_ratio": 0.38232290956119036,
+      "dns_amplification_ratio": 1.0939042509775587
+    },
+    "last_seen": "2026-04-04T20:19:58.911583+00:00"
+  },
+  "3.162.51.71": {
+    "sample_count": 31,
+    "mean": {
+      "request_rate": 0.247962966824624,
+      "avg_bytes_per_request": 4364.583281038478,
+      "bytes_out_ratio": 2.3955224729755975,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.995689625884521,
+      "dns_amplification_ratio": 2.3955224729755975
+    },
+    "variance": {
+      "request_rate": 0.01732814355728216,
+      "avg_bytes_per_request": 463272.4083631087,
+      "bytes_out_ratio": 0.22037321932091442,
+      "unique_dest_ports": 0.00763075959478948,
+      "unique_dest_ips": 0.00763075959478948,
+      "failed_login_count": 0.00763075959478948,
+      "port_entropy": 0.00763075959478948,
+      "dest_ip_entropy": 0.00763075959478948,
+      "syn_like_ratio": 0.049898953181201265,
+      "dns_amplification_ratio": 0.22037321932091442
+    },
+    "last_seen": "2026-04-04T18:37:30.943758+00:00"
+  },
+  "204.79.197.222": {
+    "sample_count": 20,
+    "mean": {
+      "request_rate": 0.2838803463329381,
+      "avg_bytes_per_request": 4319.941447750625,
+      "bytes_out_ratio": 2.313715571369454,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.8560760533635813,
+      "dns_amplification_ratio": 2.313715571369454
+    },
+    "variance": {
+      "request_rate": 0.07896306952885157,
+      "avg_bytes_per_request": 2030801.609076249,
+      "bytes_out_ratio": 1.0782824077146715,
+      "unique_dest_ports": 0.045599448334722736,
+      "unique_dest_ips": 0.045599448334722736,
+      "failed_login_count": 0.045599448334722736,
+      "port_entropy": 0.045599448334722736,
+      "dest_ip_entropy": 0.045599448334722736,
+      "syn_like_ratio": 0.10441310192965939,
+      "dns_amplification_ratio": 1.0782824077146715
+    },
+    "last_seen": "2026-04-04T18:35:36.086800+00:00"
+  },
+  "23.203.72.43": {
+    "sample_count": 15,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 22352.0,
+      "bytes_out_ratio": 0.853707082434898,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7272727272727273,
+      "dns_amplification_ratio": 0.853707082434898
+    },
+    "variance": {
+      "request_rate": 0.10276966953088429,
+      "avg_bytes_per_request": 0.10276966953088429,
+      "bytes_out_ratio": 0.10276966953088429,
+      "unique_dest_ports": 0.10276966953088429,
+      "unique_dest_ips": 0.10276966953088429,
+      "failed_login_count": 0.10276966953088429,
+      "port_entropy": 0.10276966953088429,
+      "dest_ip_entropy": 0.10276966953088429,
+      "syn_like_ratio": 0.10276966953088429,
+      "dns_amplification_ratio": 0.10276966953088429
+    },
+    "last_seen": "2026-04-04T18:34:50.956521+00:00"
+  },
+  "2001:ee0:3242::71ab:a29": {
+    "sample_count": 15,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 22352.0,
+      "bytes_out_ratio": 0.853707082434898,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.9,
+      "dns_amplification_ratio": 0.853707082434898
+    },
+    "variance": {
+      "request_rate": 0.10276966953088429,
+      "avg_bytes_per_request": 0.10276966953088429,
+      "bytes_out_ratio": 0.10276966953088429,
+      "unique_dest_ports": 0.10276966953088429,
+      "unique_dest_ips": 0.10276966953088429,
+      "failed_login_count": 0.10276966953088429,
+      "port_entropy": 0.10276966953088429,
+      "dest_ip_entropy": 0.10276966953088429,
+      "syn_like_ratio": 0.10276966953088429,
+      "dns_amplification_ratio": 0.10276966953088429
+    },
+    "last_seen": "2026-04-04T18:34:50.956536+00:00"
+  },
+  "113.171.234.51": {
+    "sample_count": 25,
+    "mean": {
+      "request_rate": 0.3539476849015515,
+      "avg_bytes_per_request": 3218.400740172291,
+      "bytes_out_ratio": 1.8266031573469317,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.5851453466933345,
+      "dns_amplification_ratio": 1.8266031573469317
+    },
+    "variance": {
+      "request_rate": 0.12225609832643633,
+      "avg_bytes_per_request": 113244.14919580292,
+      "bytes_out_ratio": 0.11948829169511352,
+      "unique_dest_ports": 0.020232717473185752,
+      "unique_dest_ips": 0.020232717473185752,
+      "failed_login_count": 0.020232717473185752,
+      "port_entropy": 0.020232717473185752,
+      "dest_ip_entropy": 0.020232717473185752,
+      "syn_like_ratio": 0.03175992923093035,
+      "dns_amplification_ratio": 0.11948829169511352
+    },
+    "last_seen": "2026-04-04T18:36:51.688681+00:00"
+  },
+  "23.48.56.229": {
+    "sample_count": 31,
+    "mean": {
+      "request_rate": 0.35114622246355076,
+      "avg_bytes_per_request": 4917.912741341618,
+      "bytes_out_ratio": 2.0747252639633222,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.1580858675725554,
+      "dns_amplification_ratio": 2.0747252639633222
+    },
+    "variance": {
+      "request_rate": 0.10137205117915143,
+      "avg_bytes_per_request": 585769.7767308491,
+      "bytes_out_ratio": 0.04734475565796282,
+      "unique_dest_ports": 0.00763075959478948,
+      "unique_dest_ips": 0.00763075959478948,
+      "failed_login_count": 0.00763075959478948,
+      "port_entropy": 0.00763075959478948,
+      "dest_ip_entropy": 0.00763075959478948,
+      "syn_like_ratio": 0.3457055650519006,
+      "dns_amplification_ratio": 0.04734475565796282
+    },
+    "last_seen": "2026-04-04T18:38:05.501326+00:00"
+  },
+  "2404:6800:4005:805::2003": {
+    "sample_count": 31,
+    "mean": {
+      "request_rate": 0.3511462207693683,
+      "avg_bytes_per_request": 4917.912741341618,
+      "bytes_out_ratio": 2.0747252639633222,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.1580858675725554,
+      "dns_amplification_ratio": 2.0747252639633222
+    },
+    "variance": {
+      "request_rate": 0.10137205166919475,
+      "avg_bytes_per_request": 585769.7767308491,
+      "bytes_out_ratio": 0.04734475565796282,
+      "unique_dest_ports": 0.00763075959478948,
+      "unique_dest_ips": 0.00763075959478948,
+      "failed_login_count": 0.00763075959478948,
+      "port_entropy": 0.00763075959478948,
+      "dest_ip_entropy": 0.00763075959478948,
+      "syn_like_ratio": 0.3457055650519006,
+      "dns_amplification_ratio": 0.04734475565796282
+    },
+    "last_seen": "2026-04-04T18:38:05.501334+00:00"
+  },
+  "20.189.173.5": {
+    "sample_count": 22,
+    "mean": {
+      "request_rate": 0.2705628478013527,
+      "avg_bytes_per_request": 4721.331560170001,
+      "bytes_out_ratio": 1.9558842051608838,
+      "unique_dest_ports": 1.1343976422677764,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0494252116638297,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.06289333981962,
+      "dns_amplification_ratio": 1.9558842051608838
+    },
+    "variance": {
+      "request_rate": 0.05801514172569612,
+      "avg_bytes_per_request": 321800.9152666066,
+      "bytes_out_ratio": 0.08262046297373862,
+      "unique_dest_ports": 0.16981020850494244,
+      "unique_dest_ips": 0.032945601421837174,
+      "failed_login_count": 0.032945601421837174,
+      "port_entropy": 0.054510703336099586,
+      "dest_ip_entropy": 0.032945601421837174,
+      "syn_like_ratio": 0.25517584442285857,
+      "dns_amplification_ratio": 0.08262046297373862
+    },
+    "last_seen": "2026-04-04T18:38:05.501317+00:00"
+  },
+  "51.105.71.136": {
+    "sample_count": 41,
+    "mean": {
+      "request_rate": 0.24759110996393108,
+      "avg_bytes_per_request": 9309.402848969905,
+      "bytes_out_ratio": 1.9321241446867699,
+      "unique_dest_ports": 1.0922080645553967,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.06848017521141218,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.9170676053497324,
+      "dns_amplification_ratio": 1.9321241446867699
+    },
+    "variance": {
+      "request_rate": 0.005920524987503233,
+      "avg_bytes_per_request": 897532.6365859054,
+      "bytes_out_ratio": 0.07078897240855614,
+      "unique_dest_ports": 0.0999796393514734,
+      "unique_dest_ips": 0.0015023012498914326,
+      "failed_login_count": 0.0015023012498914326,
+      "port_entropy": 0.06086097018166655,
+      "dest_ip_entropy": 0.0015023012498914326,
+      "syn_like_ratio": 0.10188466185388345,
+      "dns_amplification_ratio": 0.07078897240855614
+    },
+    "last_seen": "2026-04-04T18:43:46.691437+00:00"
+  },
+  "2603:1063:27:1::14": {
+    "sample_count": 80,
+    "mean": {
+      "request_rate": 0.331008054507677,
+      "avg_bytes_per_request": 12710.36389606206,
+      "bytes_out_ratio": 0.7711345696607669,
+      "unique_dest_ports": 1.000055017402725,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 4.272557840488521e-05,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7734783394685124,
+      "dns_amplification_ratio": 0.7711345696607669
+    },
+    "variance": {
+      "request_rate": 0.09370714804717553,
+      "avg_bytes_per_request": 97482.58704843342,
+      "bytes_out_ratio": 0.0004030916520901732,
+      "unique_dest_ports": 6.737798218380257e-05,
+      "unique_dest_ips": 2.655187112265131e-06,
+      "failed_login_count": 2.655187112265131e-06,
+      "port_entropy": 4.4997995324602214e-05,
+      "dest_ip_entropy": 2.655187112265131e-06,
+      "syn_like_ratio": 0.00140834929338432,
+      "dns_amplification_ratio": 0.0004030916520901732
+    },
+    "last_seen": "2026-04-04T19:59:33.536916+00:00"
+  },
+  "2603:1061:14:167::1": {
+    "sample_count": 16,
+    "mean": {
+      "request_rate": 0.4135070226011335,
+      "avg_bytes_per_request": 20430.209552692635,
+      "bytes_out_ratio": 0.9553012923271653,
+      "unique_dest_ports": 1.2897952965237476,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.14156130858393556,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.815021633152244,
+      "dns_amplification_ratio": 0.9553012923271653
+    },
+    "variance": {
+      "request_rate": 0.21710044559550395,
+      "avg_bytes_per_request": 51419041.89196881,
+      "bytes_out_ratio": 0.10820634191286445,
+      "unique_dest_ports": 0.3294883163206174,
+      "unique_dest_ips": 0.08735421910125164,
+      "failed_login_count": 0.08735421910125164,
+      "port_entropy": 0.15795033165554542,
+      "dest_ip_entropy": 0.08735421910125164,
+      "syn_like_ratio": 0.09413779408841183,
+      "dns_amplification_ratio": 0.10820634191286445
+    },
+    "last_seen": "2026-04-04T18:54:39.589840+00:00"
+  },
+  "20.189.173.7": {
+    "sample_count": 21,
+    "mean": {
+      "request_rate": 0.44147163701599956,
+      "avg_bytes_per_request": 15963.010010955475,
+      "bytes_out_ratio": 0.9032893401905445,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.9258980358162517,
+      "dns_amplification_ratio": 0.9032893401905445
+    },
+    "variance": {
+      "request_rate": 0.17779406512753038,
+      "avg_bytes_per_request": 2025317.3443372464,
+      "bytes_out_ratio": 0.04714406890176387,
+      "unique_dest_ports": 0.038759531084514326,
+      "unique_dest_ips": 0.038759531084514326,
+      "failed_login_count": 0.038759531084514326,
+      "port_entropy": 0.038759531084514326,
+      "dest_ip_entropy": 0.038759531084514326,
+      "syn_like_ratio": 0.047337198186473764,
+      "dns_amplification_ratio": 0.04714406890176387
+    },
+    "last_seen": "2026-04-04T19:43:51.073586+00:00"
+  },
+  "52.168.117.168": {
+    "sample_count": 158,
+    "mean": {
+      "request_rate": 0.40823797960676744,
+      "avg_bytes_per_request": 15103.38154172594,
+      "bytes_out_ratio": 0.7595027838199402,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7087851670145322,
+      "dns_amplification_ratio": 0.7595027838199402
+    },
+    "variance": {
+      "request_rate": 0.15824263734013516,
+      "avg_bytes_per_request": 115389.86030047192,
+      "bytes_out_ratio": 0.00012773791540201726,
+      "unique_dest_ports": 1e-06,
+      "unique_dest_ips": 1e-06,
+      "failed_login_count": 1e-06,
+      "port_entropy": 1e-06,
+      "dest_ip_entropy": 1e-06,
+      "syn_like_ratio": 0.007654505308735689,
+      "dns_amplification_ratio": 0.00012773791540201726
+    },
+    "last_seen": "2026-04-04T20:01:28.776853+00:00"
+  },
+  "103.153.74.75": {
+    "sample_count": 1,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 15921.0,
+      "bytes_out_ratio": 2.386726228462029,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.25,
+      "dns_amplification_ratio": 2.386726228462029
+    },
+    "variance": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 1.0,
+      "bytes_out_ratio": 1.0,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 1.0,
+      "port_entropy": 1.0,
+      "dest_ip_entropy": 1.0,
+      "syn_like_ratio": 1.0,
+      "dns_amplification_ratio": 1.0
+    },
+    "last_seen": "2026-04-04T19:42:31.675675+00:00"
+  },
+  "140.82.114.22": {
+    "sample_count": 17,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 12794.0,
+      "bytes_out_ratio": 0.7430517711171662,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.8333333333333334,
+      "dns_amplification_ratio": 0.7430517711171662
+    },
+    "variance": {
+      "request_rate": 0.0742510862360639,
+      "avg_bytes_per_request": 0.0742510862360639,
+      "bytes_out_ratio": 0.0742510862360639,
+      "unique_dest_ports": 0.0742510862360639,
+      "unique_dest_ips": 0.0742510862360639,
+      "failed_login_count": 0.0742510862360639,
+      "port_entropy": 0.0742510862360639,
+      "dest_ip_entropy": 0.0742510862360639,
+      "syn_like_ratio": 0.0742510862360639,
+      "dns_amplification_ratio": 0.0742510862360639
+    },
+    "last_seen": "2026-04-04T19:46:40.660687+00:00"
+  },
+  "72.154.7.248": {
+    "sample_count": 29,
+    "mean": {
+      "request_rate": 0.3284858236626169,
+      "avg_bytes_per_request": 11399.77173006137,
+      "bytes_out_ratio": 0.7738177359528574,
+      "unique_dest_ports": 1.1316801521606843,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.06590042561449187,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7804504178871409,
+      "dns_amplification_ratio": 0.7738177359528574
+    },
+    "variance": {
+      "request_rate": 0.11359391988860917,
+      "avg_bytes_per_request": 27412825.855142146,
+      "bytes_out_ratio": 0.029534447805113582,
+      "unique_dest_ports": 0.14507982813739723,
+      "unique_dest_ips": 0.010561604975487169,
+      "failed_login_count": 0.010561604975487169,
+      "port_entropy": 0.05055820282673726,
+      "dest_ip_entropy": 0.010561604975487169,
+      "syn_like_ratio": 0.03634232853978542,
+      "dns_amplification_ratio": 0.029534447805113582
+    },
+    "last_seen": "2026-04-04T19:50:50.605226+00:00"
+  },
+  "13.71.55.58": {
+    "sample_count": 28,
+    "mean": {
+      "request_rate": 0.3404689072801653,
+      "avg_bytes_per_request": 32900.30466219622,
+      "bytes_out_ratio": 0.7663074277305909,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7499171543593113,
+      "dns_amplification_ratio": 0.7663074277305909
+    },
+    "variance": {
+      "request_rate": 0.11599352632559734,
+      "avg_bytes_per_request": 321700726.2855398,
+      "bytes_out_ratio": 0.036396510842378535,
+      "unique_dest_ports": 0.0124254176182202,
+      "unique_dest_ips": 0.0124254176182202,
+      "failed_login_count": 0.0124254176182202,
+      "port_entropy": 0.0124254176182202,
+      "dest_ip_entropy": 0.0124254176182202,
+      "syn_like_ratio": 0.03561624605553066,
+      "dns_amplification_ratio": 0.036396510842378535
+    },
+    "last_seen": "2026-04-04T19:50:42.636087+00:00"
+  },
+  "2603:1030:608:c::370": {
+    "sample_count": 28,
+    "mean": {
+      "request_rate": 0.22882312540286157,
+      "avg_bytes_per_request": 11195.827240218692,
+      "bytes_out_ratio": 0.7662837851126247,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7924605161749284,
+      "dns_amplification_ratio": 0.7662837851126247
+    },
+    "variance": {
+      "request_rate": 0.026359896060574914,
+      "avg_bytes_per_request": 33940111.04927087,
+      "bytes_out_ratio": 0.035349626105773836,
+      "unique_dest_ports": 0.0124254176182202,
+      "unique_dest_ips": 0.0124254176182202,
+      "failed_login_count": 0.0124254176182202,
+      "port_entropy": 0.0124254176182202,
+      "dest_ip_entropy": 0.0124254176182202,
+      "syn_like_ratio": 0.047834185158389754,
+      "dns_amplification_ratio": 0.035349626105773836
+    },
+    "last_seen": "2026-04-04T19:50:42.636065+00:00"
+  },
+  "2603:1030:10:12::2fe": {
+    "sample_count": 28,
+    "mean": {
+      "request_rate": 0.33706362388213484,
+      "avg_bytes_per_request": 12302.608374354813,
+      "bytes_out_ratio": 0.7676060095076392,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7763668452322594,
+      "dns_amplification_ratio": 0.7676060095076392
+    },
+    "variance": {
+      "request_rate": 0.11995876224027296,
+      "avg_bytes_per_request": 84898192.72129154,
+      "bytes_out_ratio": 0.034462123018074324,
+      "unique_dest_ports": 0.0124254176182202,
+      "unique_dest_ips": 0.0124254176182202,
+      "failed_login_count": 0.0124254176182202,
+      "port_entropy": 0.0124254176182202,
+      "dest_ip_entropy": 0.0124254176182202,
+      "syn_like_ratio": 0.04076169123620445,
+      "dns_amplification_ratio": 0.034462123018074324
+    },
+    "last_seen": "2026-04-04T19:50:50.605211+00:00"
+  },
+  "206.206.82.207": {
+    "sample_count": 17,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 180258.0,
+      "bytes_out_ratio": 0.44113014766431347,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.42056074766355134,
+      "dns_amplification_ratio": 0.44113014766431347
+    },
+    "variance": {
+      "request_rate": 0.0742510862360639,
+      "avg_bytes_per_request": 0.0742510862360639,
+      "bytes_out_ratio": 0.0742510862360639,
+      "unique_dest_ports": 0.0742510862360639,
+      "unique_dest_ips": 0.0742510862360639,
+      "failed_login_count": 0.0742510862360639,
+      "port_entropy": 0.0742510862360639,
+      "dest_ip_entropy": 0.0742510862360639,
+      "syn_like_ratio": 0.0742510862360639,
+      "dns_amplification_ratio": 0.0742510862360639
+    },
+    "last_seen": "2026-04-04T19:49:07.394049+00:00"
+  },
+  "2a04:4e42:65::684": {
+    "sample_count": 43,
+    "mean": {
+      "request_rate": 0.34739025073543395,
+      "avg_bytes_per_request": 7637.021813663613,
+      "bytes_out_ratio": 1.9462737974154998,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.238794104723073,
+      "dns_amplification_ratio": 1.9462737974154998
+    },
+    "variance": {
+      "request_rate": 0.10092129475385958,
+      "avg_bytes_per_request": 69828878.05038413,
+      "bytes_out_ratio": 2.8269410415188916,
+      "unique_dest_ports": 0.00108541265304656,
+      "unique_dest_ips": 0.00108541265304656,
+      "failed_login_count": 0.00108541265304656,
+      "port_entropy": 0.00108541265304656,
+      "dest_ip_entropy": 0.00108541265304656,
+      "syn_like_ratio": 1.6276618465787422,
+      "dns_amplification_ratio": 2.8269410415188916
+    },
+    "last_seen": "2026-04-04T20:16:07.642877+00:00"
+  },
+  "72.153.5.137": {
+    "sample_count": 37,
+    "mean": {
+      "request_rate": 0.3412204746940369,
+      "avg_bytes_per_request": 13163.352558478375,
+      "bytes_out_ratio": 0.7588376431554947,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7180313505437678,
+      "dns_amplification_ratio": 0.7588376431554947
+    },
+    "variance": {
+      "request_rate": 0.09826092731536482,
+      "avg_bytes_per_request": 4288072.671783296,
+      "bytes_out_ratio": 0.0054390545938123635,
+      "unique_dest_ports": 0.0028779372850256733,
+      "unique_dest_ips": 0.0028779372850256733,
+      "failed_login_count": 0.0028779372850256733,
+      "port_entropy": 0.0028779372850256733,
+      "dest_ip_entropy": 0.0028779372850256733,
+      "syn_like_ratio": 0.007906455420323517,
+      "dns_amplification_ratio": 0.0054390545938123635
+    },
+    "last_seen": "2026-04-04T19:52:33.928137+00:00"
+  },
+  "52.168.117.171": {
+    "sample_count": 14,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 11449.0,
+      "bytes_out_ratio": 0.770646458397773,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.6666666666666666,
+      "dns_amplification_ratio": 0.770646458397773
+    },
+    "variance": {
+      "request_rate": 0.12090549356574623,
+      "avg_bytes_per_request": 0.12090549356574623,
+      "bytes_out_ratio": 0.12090549356574623,
+      "unique_dest_ports": 0.12090549356574623,
+      "unique_dest_ips": 0.12090549356574623,
+      "failed_login_count": 0.12090549356574623,
+      "port_entropy": 0.12090549356574623,
+      "dest_ip_entropy": 0.12090549356574623,
+      "syn_like_ratio": 0.12090549356574623,
+      "dns_amplification_ratio": 0.12090549356574623
+    },
+    "last_seen": "2026-04-04T19:51:30.145570+00:00"
+  },
+  "52.167.249.196": {
+    "sample_count": 17,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 14124.0,
+      "bytes_out_ratio": 0.7370557127044643,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.5714285714285714,
+      "dns_amplification_ratio": 0.7370557127044643
+    },
+    "variance": {
+      "request_rate": 0.0742510862360639,
+      "avg_bytes_per_request": 0.0742510862360639,
+      "bytes_out_ratio": 0.0742510862360639,
+      "unique_dest_ports": 0.0742510862360639,
+      "unique_dest_ips": 0.0742510862360639,
+      "failed_login_count": 0.0742510862360639,
+      "port_entropy": 0.0742510862360639,
+      "dest_ip_entropy": 0.0742510862360639,
+      "syn_like_ratio": 0.0742510862360639,
+      "dns_amplification_ratio": 0.0742510862360639
+    },
+    "last_seen": "2026-04-04T19:56:23.982706+00:00"
+  },
+  "20.50.73.11": {
+    "sample_count": 25,
+    "mean": {
+      "request_rate": 0.36824118277592677,
+      "avg_bytes_per_request": 16473.344199362047,
+      "bytes_out_ratio": 0.7323314395335513,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.6280451563792221,
+      "dns_amplification_ratio": 0.7323314395335513
+    },
+    "variance": {
+      "request_rate": 0.11930036656815998,
+      "avg_bytes_per_request": 1229307.6019578644,
+      "bytes_out_ratio": 0.020311073171575347,
+      "unique_dest_ports": 0.020232717473185752,
+      "unique_dest_ips": 0.020232717473185752,
+      "failed_login_count": 0.020232717473185752,
+      "port_entropy": 0.020232717473185752,
+      "dest_ip_entropy": 0.020232717473185752,
+      "syn_like_ratio": 0.02042493332852638,
+      "dns_amplification_ratio": 0.020311073171575347
+    },
+    "last_seen": "2026-04-04T20:02:07.242326+00:00"
+  },
+  "4.213.25.241": {
+    "sample_count": 53,
+    "mean": {
+      "request_rate": 0.20640174772323452,
+      "avg_bytes_per_request": 8130.016110674765,
+      "bytes_out_ratio": 1.2155197859055598,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.927447016066992,
+      "dns_amplification_ratio": 1.2155197859055598
+    },
+    "variance": {
+      "request_rate": 0.0032419745560105188,
+      "avg_bytes_per_request": 25188278.735103913,
+      "bytes_out_ratio": 1.4774629251791627,
+      "unique_dest_ports": 0.00021368996953242486,
+      "unique_dest_ips": 0.00021368996953242486,
+      "failed_login_count": 0.00021368996953242486,
+      "port_entropy": 0.00021368996953242486,
+      "dest_ip_entropy": 0.00021368996953242486,
+      "syn_like_ratio": 0.7396072295108971,
+      "dns_amplification_ratio": 1.4774629251791627
+    },
+    "last_seen": "2026-04-04T20:19:58.911338+00:00"
+  },
+  "20.189.104.97": {
+    "sample_count": 53,
+    "mean": {
+      "request_rate": 0.2064017476232333,
+      "avg_bytes_per_request": 8130.016110674765,
+      "bytes_out_ratio": 1.2155197859055598,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.4409829646056116,
+      "dns_amplification_ratio": 1.2155197859055598
+    },
+    "variance": {
+      "request_rate": 0.003241974563993733,
+      "avg_bytes_per_request": 25188278.735103913,
+      "bytes_out_ratio": 1.4774629251791627,
+      "unique_dest_ports": 0.00021368996953242486,
+      "unique_dest_ips": 0.00021368996953242486,
+      "failed_login_count": 0.00021368996953242486,
+      "port_entropy": 0.00021368996953242486,
+      "dest_ip_entropy": 0.00021368996953242486,
+      "syn_like_ratio": 1.7256146161893025,
+      "dns_amplification_ratio": 1.4774629251791627
+    },
+    "last_seen": "2026-04-04T20:19:58.911351+00:00"
+  },
+  "4.145.11.36": {
+    "sample_count": 17,
+    "mean": {
+      "request_rate": 0.39333042707461296,
+      "avg_bytes_per_request": 2389.854932336783,
+      "bytes_out_ratio": 0.3303179743441111,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.657795031377429,
+      "dns_amplification_ratio": 0.3303179743441111
+    },
+    "variance": {
+      "request_rate": 0.20049123832696608,
+      "avg_bytes_per_request": 1302899.344304542,
+      "bytes_out_ratio": 0.11714555586688175,
+      "unique_dest_ports": 0.0742510862360639,
+      "unique_dest_ips": 0.0742510862360639,
+      "failed_login_count": 0.0742510862360639,
+      "port_entropy": 0.0742510862360639,
+      "dest_ip_entropy": 0.0742510862360639,
+      "syn_like_ratio": 0.12058103339376539,
+      "dns_amplification_ratio": 0.11714555586688175
+    },
+    "last_seen": "2026-04-04T20:04:40.437280+00:00"
+  },
+  "57.144.152.145": {
+    "sample_count": 53,
+    "mean": {
+      "request_rate": 0.20640174769992206,
+      "avg_bytes_per_request": 8130.016110674765,
+      "bytes_out_ratio": 1.2155197859055598,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.927447016066992,
+      "dns_amplification_ratio": 1.2155197859055598
+    },
+    "variance": {
+      "request_rate": 0.003241974413646047,
+      "avg_bytes_per_request": 25188278.735103913,
+      "bytes_out_ratio": 1.4774629251791627,
+      "unique_dest_ports": 0.00021368996953242486,
+      "unique_dest_ips": 0.00021368996953242486,
+      "failed_login_count": 0.00021368996953242486,
+      "port_entropy": 0.00021368996953242486,
+      "dest_ip_entropy": 0.00021368996953242486,
+      "syn_like_ratio": 0.7396072295108971,
+      "dns_amplification_ratio": 1.4774629251791627
+    },
+    "last_seen": "2026-04-04T20:19:58.911372+00:00"
+  },
+  "2001:4860:4802:38::223": {
+    "sample_count": 29,
+    "mean": {
+      "request_rate": 0.20180079241671794,
+      "avg_bytes_per_request": 4972.345225933097,
+      "bytes_out_ratio": 1.091665450437342,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.8842539240464004,
+      "dns_amplification_ratio": 1.091665450437342
+    },
+    "variance": {
+      "request_rate": 0.019672687343813042,
+      "avg_bytes_per_request": 14442779.290774647,
+      "bytes_out_ratio": 1.4609731792870126,
+      "unique_dest_ports": 0.010561604975487169,
+      "unique_dest_ips": 0.010561604975487169,
+      "failed_login_count": 0.010561604975487169,
+      "port_entropy": 0.010561604975487169,
+      "dest_ip_entropy": 0.010561604975487169,
+      "syn_like_ratio": 0.5182718550483055,
+      "dns_amplification_ratio": 1.4609731792870126
+    },
+    "last_seen": "2026-04-04T20:09:41.378823+00:00"
+  },
+  "13.219.41.229": {
+    "sample_count": 28,
+    "mean": {
+      "request_rate": 0.2063925980211967,
+      "avg_bytes_per_request": 4165.9950261381055,
+      "bytes_out_ratio": 1.1197110225079756,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.8857475805835886,
+      "dns_amplification_ratio": 1.1197110225079756
+    },
+    "variance": {
+      "request_rate": 0.02334435617610387,
+      "avg_bytes_per_request": 7032322.075111929,
+      "bytes_out_ratio": 1.2083102270658483,
+      "unique_dest_ports": 0.0124254176182202,
+      "unique_dest_ips": 0.0124254176182202,
+      "failed_login_count": 0.0124254176182202,
+      "port_entropy": 0.0124254176182202,
+      "dest_ip_entropy": 0.0124254176182202,
+      "syn_like_ratio": 0.45808114052902166,
+      "dns_amplification_ratio": 1.2083102270658483
+    },
+    "last_seen": "2026-04-04T20:09:16.218668+00:00"
+  },
+  "51.222.43.134": {
+    "sample_count": 53,
+    "mean": {
+      "request_rate": 0.2064017476143363,
+      "avg_bytes_per_request": 8130.016110674765,
+      "bytes_out_ratio": 1.2155197859055598,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.927447016066992,
+      "dns_amplification_ratio": 1.2155197859055598
+    },
+    "variance": {
+      "request_rate": 0.003241974404741147,
+      "avg_bytes_per_request": 25188278.735103913,
+      "bytes_out_ratio": 1.4774629251791627,
+      "unique_dest_ports": 0.00021368996953242486,
+      "unique_dest_ips": 0.00021368996953242486,
+      "failed_login_count": 0.00021368996953242486,
+      "port_entropy": 0.00021368996953242486,
+      "dest_ip_entropy": 0.00021368996953242486,
+      "syn_like_ratio": 0.7396072295108971,
+      "dns_amplification_ratio": 1.4774629251791627
+    },
+    "last_seen": "2026-04-04T20:19:58.911399+00:00"
+  },
+  "103.247.205.20": {
+    "sample_count": 53,
+    "mean": {
+      "request_rate": 0.20640174674938483,
+      "avg_bytes_per_request": 8130.016110674765,
+      "bytes_out_ratio": 1.2155197859055598,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.927447016066992,
+      "dns_amplification_ratio": 1.2155197859055598
+    },
+    "variance": {
+      "request_rate": 0.003241974332632819,
+      "avg_bytes_per_request": 25188278.735103913,
+      "bytes_out_ratio": 1.4774629251791627,
+      "unique_dest_ports": 0.00021368996953242486,
+      "unique_dest_ips": 0.00021368996953242486,
+      "failed_login_count": 0.00021368996953242486,
+      "port_entropy": 0.00021368996953242486,
+      "dest_ip_entropy": 0.00021368996953242486,
+      "syn_like_ratio": 0.7396072295108971,
+      "dns_amplification_ratio": 1.4774629251791627
+    },
+    "last_seen": "2026-04-04T20:19:58.911439+00:00"
+  },
+  "2001:df0:13:7::2b": {
+    "sample_count": 13,
+    "mean": {
+      "request_rate": 0.4728215034059187,
+      "avg_bytes_per_request": 2614.7316077632186,
+      "bytes_out_ratio": 0.3135908255295562,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.31619466224346554,
+      "dns_amplification_ratio": 0.3135908255295562
+    },
+    "variance": {
+      "request_rate": 0.19646165025304205,
+      "avg_bytes_per_request": 1331781.3458203317,
+      "bytes_out_ratio": 0.23416163568538567,
+      "unique_dest_ports": 0.14224175713617204,
+      "unique_dest_ips": 0.14224175713617204,
+      "failed_login_count": 0.14224175713617204,
+      "port_entropy": 0.14224175713617204,
+      "dest_ip_entropy": 0.14224175713617204,
+      "syn_like_ratio": 0.14883288172781,
+      "dns_amplification_ratio": 0.23416163568538567
+    },
+    "last_seen": "2026-04-04T20:03:36.952693+00:00"
+  },
+  "2a03:2880:f34c:91:face:b00c:0:6206": {
+    "sample_count": 53,
+    "mean": {
+      "request_rate": 0.20640174714624593,
+      "avg_bytes_per_request": 16260.910328546477,
+      "bytes_out_ratio": 1.2154672141411025,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.9152907278315111,
+      "dns_amplification_ratio": 1.2154672141411025
+    },
+    "variance": {
+      "request_rate": 0.0032419743336658596,
+      "avg_bytes_per_request": 100752598.10372987,
+      "bytes_out_ratio": 1.477307053200425,
+      "unique_dest_ports": 0.00021368996953242486,
+      "unique_dest_ips": 0.00021368996953242486,
+      "failed_login_count": 0.00021368996953242486,
+      "port_entropy": 0.00021368996953242486,
+      "dest_ip_entropy": 0.00021368996953242486,
+      "syn_like_ratio": 0.7129878402445292,
+      "dns_amplification_ratio": 1.477307053200425
+    },
+    "last_seen": "2026-04-04T20:19:58.911449+00:00"
+  },
+  "51.105.71.137": {
+    "sample_count": 16,
+    "mean": {
+      "request_rate": 0.307301065364905,
+      "avg_bytes_per_request": 3209.958247343137,
+      "bytes_out_ratio": 0.3359664253754041,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.5521574492009945,
+      "dns_amplification_ratio": 0.3359664253754041
+    },
+    "variance": {
+      "request_rate": 0.14657297960912052,
+      "avg_bytes_per_request": 3582757.6649006447,
+      "bytes_out_ratio": 0.13765453205221997,
+      "unique_dest_ports": 0.08735421910125164,
+      "unique_dest_ips": 0.08735421910125164,
+      "failed_login_count": 0.08735421910125164,
+      "port_entropy": 0.08735421910125164,
+      "dest_ip_entropy": 0.08735421910125164,
+      "syn_like_ratio": 0.12870890244003447,
+      "dns_amplification_ratio": 0.13765453205221997
+    },
+    "last_seen": "2026-04-04T20:04:28.160000+00:00"
+  },
+  "2a04:4e42:12::347": {
+    "sample_count": 14,
+    "mean": {
+      "request_rate": 0.3161858692467387,
+      "avg_bytes_per_request": 2265.604823666515,
+      "bytes_out_ratio": 0.37790403241078097,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.3920017846801266,
+      "dns_amplification_ratio": 0.37790403241078097
+    },
+    "variance": {
+      "request_rate": 0.19878914947273604,
+      "avg_bytes_per_request": 890784.5508635967,
+      "bytes_out_ratio": 0.18468481657207067,
+      "unique_dest_ports": 0.12090549356574623,
+      "unique_dest_ips": 0.12090549356574623,
+      "failed_login_count": 0.12090549356574623,
+      "port_entropy": 0.12090549356574623,
+      "dest_ip_entropy": 0.12090549356574623,
+      "syn_like_ratio": 0.1231106270025777,
+      "dns_amplification_ratio": 0.18468481657207067
+    },
+    "last_seen": "2026-04-04T20:03:59.364506+00:00"
+  },
+  "2a03:2880:f34c:8d:face:b00c:0:2": {
+    "sample_count": 53,
+    "mean": {
+      "request_rate": 0.20640174852853202,
+      "avg_bytes_per_request": 8130.016110674765,
+      "bytes_out_ratio": 1.2155197859055598,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.927447016066992,
+      "dns_amplification_ratio": 1.2155197859055598
+    },
+    "variance": {
+      "request_rate": 0.0032419744969327466,
+      "avg_bytes_per_request": 25188278.735103913,
+      "bytes_out_ratio": 1.4774629251791627,
+      "unique_dest_ports": 0.00021368996953242486,
+      "unique_dest_ips": 0.00021368996953242486,
+      "failed_login_count": 0.00021368996953242486,
+      "port_entropy": 0.00021368996953242486,
+      "dest_ip_entropy": 0.00021368996953242486,
+      "syn_like_ratio": 0.7396072295108971,
+      "dns_amplification_ratio": 1.4774629251791627
+    },
+    "last_seen": "2026-04-04T20:19:58.911506+00:00"
+  },
+  "2404:6800:4005:827::2001": {
+    "sample_count": 40,
+    "mean": {
+      "request_rate": 0.20085300335352257,
+      "avg_bytes_per_request": 10214.187454633733,
+      "bytes_out_ratio": 1.7024421154411238,
+      "unique_dest_ports": 1.1275,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.1275,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.3133311321531704,
+      "dns_amplification_ratio": 1.7024421154411238
+    },
+    "variance": {
+      "request_rate": 0.016746986723197698,
+      "avg_bytes_per_request": 23401578.80722272,
+      "bytes_out_ratio": 2.9322957004461907,
+      "unique_dest_ports": 0.13264241323516637,
+      "unique_dest_ips": 0.0017674132351663914,
+      "failed_login_count": 0.0017674132351663914,
+      "port_entropy": 0.13264241323516637,
+      "dest_ip_entropy": 0.0017674132351663914,
+      "syn_like_ratio": 1.5375850160370415,
+      "dns_amplification_ratio": 2.9322957004461907
+    },
+    "last_seen": "2026-04-04T20:19:58.911431+00:00"
+  },
+  "54.204.37.164": {
+    "sample_count": 16,
+    "mean": {
+      "request_rate": 0.4024868117955577,
+      "avg_bytes_per_request": 2840.0676745795154,
+      "bytes_out_ratio": 0.3273531100379733,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.36233639984575383,
+      "dns_amplification_ratio": 0.3273531100379733
+    },
+    "variance": {
+      "request_rate": 0.21924109423047722,
+      "avg_bytes_per_request": 2837187.8600423494,
+      "bytes_out_ratio": 0.13995265838136758,
+      "unique_dest_ports": 0.08735421910125164,
+      "unique_dest_ips": 0.08735421910125164,
+      "failed_login_count": 0.08735421910125164,
+      "port_entropy": 0.08735421910125164,
+      "dest_ip_entropy": 0.08735421910125164,
+      "syn_like_ratio": 0.09450768681625753,
+      "dns_amplification_ratio": 0.13995265838136758
+    },
+    "last_seen": "2026-04-04T20:04:28.160018+00:00"
+  },
+  "3.227.206.4": {
+    "sample_count": 53,
+    "mean": {
+      "request_rate": 0.20640174817109133,
+      "avg_bytes_per_request": 8130.016110674765,
+      "bytes_out_ratio": 1.2155197859055598,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.927447016066992,
+      "dns_amplification_ratio": 1.2155197859055598
+    },
+    "variance": {
+      "request_rate": 0.0032419745990287987,
+      "avg_bytes_per_request": 25188278.735103913,
+      "bytes_out_ratio": 1.4774629251791627,
+      "unique_dest_ports": 0.00021368996953242486,
+      "unique_dest_ips": 0.00021368996953242486,
+      "failed_login_count": 0.00021368996953242486,
+      "port_entropy": 0.00021368996953242486,
+      "dest_ip_entropy": 0.00021368996953242486,
+      "syn_like_ratio": 0.7396072295108971,
+      "dns_amplification_ratio": 1.4774629251791627
+    },
+    "last_seen": "2026-04-04T20:19:58.911543+00:00"
+  },
+  "18.206.206.92": {
+    "sample_count": 15,
+    "mean": {
+      "request_rate": 0.3034844702564631,
+      "avg_bytes_per_request": 1915.573731206764,
+      "bytes_out_ratio": 0.37932144811689733,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.42950624197104736,
+      "dns_amplification_ratio": 0.37932144811689733
+    },
+    "variance": {
+      "request_rate": 0.17014055399250136,
+      "avg_bytes_per_request": 672419.1856007819,
+      "bytes_out_ratio": 0.1559003892019003,
+      "unique_dest_ports": 0.10276966953088429,
+      "unique_dest_ips": 0.10276966953088429,
+      "failed_login_count": 0.10276966953088429,
+      "port_entropy": 0.10276966953088429,
+      "dest_ip_entropy": 0.10276966953088429,
+      "syn_like_ratio": 0.10545878709373548,
+      "dns_amplification_ratio": 0.1559003892019003
+    },
+    "last_seen": "2026-04-04T20:04:15.297014+00:00"
+  },
+  "151.101.0.223": {
+    "sample_count": 32,
+    "mean": {
+      "request_rate": 0.2764262935454693,
+      "avg_bytes_per_request": 3321.1037906029337,
+      "bytes_out_ratio": 0.7129836152126094,
+      "unique_dest_ports": 1.0217962513074448,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.018921432471810516,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7070793034308334,
+      "dns_amplification_ratio": 0.7129836152126094
+    },
+    "variance": {
+      "request_rate": 0.034321918296739584,
+      "avg_bytes_per_request": 5228191.372447739,
+      "bytes_out_ratio": 0.49594400904399405,
+      "unique_dest_ports": 0.03156988063955695,
+      "unique_dest_ips": 0.006486145655571058,
+      "failed_login_count": 0.006486145655571058,
+      "port_entropy": 0.02551141999153234,
+      "dest_ip_entropy": 0.006486145655571058,
+      "syn_like_ratio": 0.16992914007194157,
+      "dns_amplification_ratio": 0.49594400904399405
+    },
+    "last_seen": "2026-04-04T20:19:58.911676+00:00"
+  },
+  "2a03:2880:f331:186:face:b00c:0:1cc9": {
+    "sample_count": 53,
+    "mean": {
+      "request_rate": 0.20640174765938735,
+      "avg_bytes_per_request": 8130.016110674765,
+      "bytes_out_ratio": 1.2155197859055598,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.927447016066992,
+      "dns_amplification_ratio": 1.2155197859055598
+    },
+    "variance": {
+      "request_rate": 0.0032419745760695106,
+      "avg_bytes_per_request": 25188278.735103913,
+      "bytes_out_ratio": 1.4774629251791627,
+      "unique_dest_ports": 0.00021368996953242486,
+      "unique_dest_ips": 0.00021368996953242486,
+      "failed_login_count": 0.00021368996953242486,
+      "port_entropy": 0.00021368996953242486,
+      "dest_ip_entropy": 0.00021368996953242486,
+      "syn_like_ratio": 0.7396072295108971,
+      "dns_amplification_ratio": 1.4774629251791627
+    },
+    "last_seen": "2026-04-04T20:19:58.911554+00:00"
+  },
+  "2404:6800:4008:c1b::bc": {
+    "sample_count": 53,
+    "mean": {
+      "request_rate": 0.2064017479419771,
+      "avg_bytes_per_request": 8130.016110674765,
+      "bytes_out_ratio": 1.2155197859055598,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.927447016066992,
+      "dns_amplification_ratio": 1.2155197859055598
+    },
+    "variance": {
+      "request_rate": 0.0032419745996390666,
+      "avg_bytes_per_request": 25188278.735103913,
+      "bytes_out_ratio": 1.4774629251791627,
+      "unique_dest_ports": 0.00021368996953242486,
+      "unique_dest_ips": 0.00021368996953242486,
+      "failed_login_count": 0.00021368996953242486,
+      "port_entropy": 0.00021368996953242486,
+      "dest_ip_entropy": 0.00021368996953242486,
+      "syn_like_ratio": 0.7396072295108971,
+      "dns_amplification_ratio": 1.4774629251791627
+    },
+    "last_seen": "2026-04-04T20:19:58.911575+00:00"
+  },
+  "2a04:4e42::223": {
+    "sample_count": 43,
+    "mean": {
+      "request_rate": 0.2591255227008566,
+      "avg_bytes_per_request": 5793.976780411442,
+      "bytes_out_ratio": 1.340233010825855,
+      "unique_dest_ports": 1.5091804172389183,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.4585621199325901,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.0203808911520447,
+      "dns_amplification_ratio": 1.340233010825855
+    },
+    "variance": {
+      "request_rate": 0.021909078754222572,
+      "avg_bytes_per_request": 16724912.269333428,
+      "bytes_out_ratio": 2.6958782920941986,
+      "unique_dest_ports": 0.3530115870548298,
+      "unique_dest_ips": 0.00108541265304656,
+      "failed_login_count": 0.00108541265304656,
+      "port_entropy": 0.26363172522224154,
+      "dest_ip_entropy": 0.00108541265304656,
+      "syn_like_ratio": 1.0328113121481806,
+      "dns_amplification_ratio": 2.6958782920941986
+    },
+    "last_seen": "2026-04-04T20:19:58.911364+00:00"
+  },
+  "217.146.11.105": {
+    "sample_count": 53,
+    "mean": {
+      "request_rate": 0.2064017484156794,
+      "avg_bytes_per_request": 8130.016110674765,
+      "bytes_out_ratio": 1.2155197859055598,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.927447016066992,
+      "dns_amplification_ratio": 1.2155197859055598
+    },
+    "variance": {
+      "request_rate": 0.0032419746151111546,
+      "avg_bytes_per_request": 25188278.735103913,
+      "bytes_out_ratio": 1.4774629251791627,
+      "unique_dest_ports": 0.00021368996953242486,
+      "unique_dest_ips": 0.00021368996953242486,
+      "failed_login_count": 0.00021368996953242486,
+      "port_entropy": 0.00021368996953242486,
+      "dest_ip_entropy": 0.00021368996953242486,
+      "syn_like_ratio": 0.7396072295108971,
+      "dns_amplification_ratio": 1.4774629251791627
+    },
+    "last_seen": "2026-04-04T20:19:58.911591+00:00"
+  },
+  "52.178.17.233": {
+    "sample_count": 15,
+    "mean": {
+      "request_rate": 0.3034844334752768,
+      "avg_bytes_per_request": 1915.573731206764,
+      "bytes_out_ratio": 0.37932144811689733,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.42950624197104736,
+      "dns_amplification_ratio": 0.37932144811689733
+    },
+    "variance": {
+      "request_rate": 0.17014055709883996,
+      "avg_bytes_per_request": 672419.1856007819,
+      "bytes_out_ratio": 0.1559003892019003,
+      "unique_dest_ports": 0.10276966953088429,
+      "unique_dest_ips": 0.10276966953088429,
+      "failed_login_count": 0.10276966953088429,
+      "port_entropy": 0.10276966953088429,
+      "dest_ip_entropy": 0.10276966953088429,
+      "syn_like_ratio": 0.10545878709373548,
+      "dns_amplification_ratio": 0.1559003892019003
+    },
+    "last_seen": "2026-04-04T20:04:15.297020+00:00"
+  },
+  "54.39.17.203": {
+    "sample_count": 53,
+    "mean": {
+      "request_rate": 0.2064017480230926,
+      "avg_bytes_per_request": 20388.586667949374,
+      "bytes_out_ratio": 1.0250401718434745,
+      "unique_dest_ports": 2.864993960649578,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 1.2087922684570507,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.8050919237208728,
+      "dns_amplification_ratio": 1.0250401718434745
+    },
+    "variance": {
+      "request_rate": 0.003241974595622443,
+      "avg_bytes_per_request": 214831094.96490926,
+      "bytes_out_ratio": 0.962357384762874,
+      "unique_dest_ports": 0.5827332414929753,
+      "unique_dest_ips": 0.00021368996953242486,
+      "failed_login_count": 0.00021368996953242486,
+      "port_entropy": 0.2278328411365395,
+      "dest_ip_entropy": 0.00021368996953242486,
+      "syn_like_ratio": 0.4869232829506752,
+      "dns_amplification_ratio": 0.962357384762874
+    },
+    "last_seen": "2026-04-04T20:19:58.911457+00:00"
+  },
+  "49.213.95.31": {
+    "sample_count": 53,
+    "mean": {
+      "request_rate": 0.20640174802868944,
+      "avg_bytes_per_request": 8130.016110674765,
+      "bytes_out_ratio": 1.2155197859055598,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.927447016066992,
+      "dns_amplification_ratio": 1.2155197859055598
+    },
+    "variance": {
+      "request_rate": 0.003241974599705243,
+      "avg_bytes_per_request": 25188278.735103913,
+      "bytes_out_ratio": 1.4774629251791627,
+      "unique_dest_ports": 0.00021368996953242486,
+      "unique_dest_ips": 0.00021368996953242486,
+      "failed_login_count": 0.00021368996953242486,
+      "port_entropy": 0.00021368996953242486,
+      "dest_ip_entropy": 0.00021368996953242486,
+      "syn_like_ratio": 0.7396072295108971,
+      "dns_amplification_ratio": 1.4774629251791627
+    },
+    "last_seen": "2026-04-04T20:19:58.911607+00:00"
+  },
+  "206.206.82.205": {
+    "sample_count": 16,
+    "mean": {
+      "request_rate": 0.7151711448176351,
+      "avg_bytes_per_request": 3259.1483650800783,
+      "bytes_out_ratio": 0.4511847832617526,
+      "unique_dest_ports": 1.2935479117187498,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.29354791171875,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.0689300059374998,
+      "dns_amplification_ratio": 0.4511847832617526
+    },
+    "variance": {
+      "request_rate": 0.3170498640234731,
+      "avg_bytes_per_request": 7722671.8550318815,
+      "bytes_out_ratio": 0.2545501360355973,
+      "unique_dest_ports": 0.33132778997691154,
+      "unique_dest_ips": 0.08735421910125164,
+      "failed_login_count": 0.08735421910125164,
+      "port_entropy": 0.33132778997691154,
+      "dest_ip_entropy": 0.08735421910125164,
+      "syn_like_ratio": 0.5862205826676705,
+      "dns_amplification_ratio": 0.2545501360355973
+    },
+    "last_seen": "2026-04-04T20:04:28.160012+00:00"
+  },
+  "2404:6800:4005:81b::200a": {
+    "sample_count": 29,
+    "mean": {
+      "request_rate": 0.21031326738403686,
+      "avg_bytes_per_request": 6467.133588747358,
+      "bytes_out_ratio": 1.0337716164735855,
+      "unique_dest_ports": 1.2120883662167965,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.1852726447265002,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.9080737636035385,
+      "dns_amplification_ratio": 1.0337716164735855
+    },
+    "variance": {
+      "request_rate": 0.020134026102793082,
+      "avg_bytes_per_request": 32607775.78928612,
+      "bytes_out_ratio": 1.266388775529579,
+      "unique_dest_ports": 0.20715794748405972,
+      "unique_dest_ips": 0.010561604975487169,
+      "failed_login_count": 0.010561604975487169,
+      "port_entropy": 0.1630090166101304,
+      "dest_ip_entropy": 0.010561604975487169,
+      "syn_like_ratio": 0.6727105898589167,
+      "dns_amplification_ratio": 1.266388775529579
+    },
+    "last_seen": "2026-04-04T20:09:41.378844+00:00"
+  },
+  "113.171.234.35": {
+    "sample_count": 40,
+    "mean": {
+      "request_rate": 0.9180945568979798,
+      "avg_bytes_per_request": 75978.67420698621,
+      "bytes_out_ratio": 9.226138964220247,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 7.204224682554563,
+      "dns_amplification_ratio": 9.226138964220247
+    },
+    "variance": {
+      "request_rate": 0.07220291194888258,
+      "avg_bytes_per_request": 734423526.2571578,
+      "bytes_out_ratio": 10.823087420489353,
+      "unique_dest_ports": 0.0017674132351663914,
+      "unique_dest_ips": 0.0017674132351663914,
+      "failed_login_count": 0.0017674132351663914,
+      "port_entropy": 0.0017674132351663914,
+      "dest_ip_entropy": 0.0017674132351663914,
+      "syn_like_ratio": 5.567051078475042,
+      "dns_amplification_ratio": 10.823087420489353
+    },
+    "last_seen": "2026-04-04T20:14:43.174253+00:00"
+  },
+  "2a03:2880:f331:8d:face:b00c:0:2": {
+    "sample_count": 53,
+    "mean": {
+      "request_rate": 0.20640172272567828,
+      "avg_bytes_per_request": 8130.016110674765,
+      "bytes_out_ratio": 1.2155197859055598,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.927447016066992,
+      "dns_amplification_ratio": 1.2155197859055598
+    },
+    "variance": {
+      "request_rate": 0.0032419711525307347,
+      "avg_bytes_per_request": 25188278.735103913,
+      "bytes_out_ratio": 1.4774629251791627,
+      "unique_dest_ports": 0.00021368996953242486,
+      "unique_dest_ips": 0.00021368996953242486,
+      "failed_login_count": 0.00021368996953242486,
+      "port_entropy": 0.00021368996953242486,
+      "dest_ip_entropy": 0.00021368996953242486,
+      "syn_like_ratio": 0.7396072295108971,
+      "dns_amplification_ratio": 1.4774629251791627
+    },
+    "last_seen": "2026-04-04T20:19:58.911623+00:00"
+  },
+  "3.222.14.252": {
+    "sample_count": 23,
+    "mean": {
+      "request_rate": 0.2567712809452506,
+      "avg_bytes_per_request": 46510.19378389829,
+      "bytes_out_ratio": 3.4406227431952203,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.862558107343027,
+      "dns_amplification_ratio": 3.4406227431952203
+    },
+    "variance": {
+      "request_rate": 0.06605287794761598,
+      "avg_bytes_per_request": 1587956001.2389421,
+      "bytes_out_ratio": 4.837523531253219,
+      "unique_dest_ports": 0.028003761208561597,
+      "unique_dest_ips": 0.028003761208561597,
+      "failed_login_count": 0.028003761208561597,
+      "port_entropy": 0.028003761208561597,
+      "dest_ip_entropy": 0.028003761208561597,
+      "syn_like_ratio": 3.5877371621491285,
+      "dns_amplification_ratio": 4.837523531253219
+    },
+    "last_seen": "2026-04-04T20:06:39.328199+00:00"
+  },
+  "192.168.1.11": {
+    "sample_count": 53,
+    "mean": {
+      "request_rate": 0.20640171789563322,
+      "avg_bytes_per_request": 16454.17026106673,
+      "bytes_out_ratio": 1.214647394055814,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.9255082821853073,
+      "dns_amplification_ratio": 1.214647394055814
+    },
+    "variance": {
+      "request_rate": 0.00324197030365882,
+      "avg_bytes_per_request": 101893873.65993229,
+      "bytes_out_ratio": 1.4759698637648062,
+      "unique_dest_ports": 0.00021368996953242486,
+      "unique_dest_ips": 0.00021368996953242486,
+      "failed_login_count": 0.00021368996953242486,
+      "port_entropy": 0.00021368996953242486,
+      "dest_ip_entropy": 0.00021368996953242486,
+      "syn_like_ratio": 0.8116945399849449,
+      "dns_amplification_ratio": 1.4759698637648062
+    },
+    "last_seen": "2026-04-04T20:19:58.911531+00:00"
+  },
+  "2606:4700::6812:137d": {
+    "sample_count": 29,
+    "mean": {
+      "request_rate": 0.2010834723010607,
+      "avg_bytes_per_request": 4009.216590212982,
+      "bytes_out_ratio": 0.9842561128634946,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.0105643749654991,
+      "dns_amplification_ratio": 0.9842561128634946
+    },
+    "variance": {
+      "request_rate": 0.019660284472057643,
+      "avg_bytes_per_request": 6053781.537012072,
+      "bytes_out_ratio": 1.1193154648309729,
+      "unique_dest_ports": 0.010561604975487169,
+      "unique_dest_ips": 0.010561604975487169,
+      "failed_login_count": 0.010561604975487169,
+      "port_entropy": 0.010561604975487169,
+      "dest_ip_entropy": 0.010561604975487169,
+      "syn_like_ratio": 0.34061317910529015,
+      "dns_amplification_ratio": 1.1193154648309729
+    },
+    "last_seen": "2026-04-04T20:09:41.378814+00:00"
+  },
+  "72.154.7.101": {
+    "sample_count": 17,
+    "mean": {
+      "request_rate": 0.39333039438202305,
+      "avg_bytes_per_request": 2389.854932336783,
+      "bytes_out_ratio": 0.3303179743441111,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.657795031377429,
+      "dns_amplification_ratio": 0.3303179743441111
+    },
+    "variance": {
+      "request_rate": 0.20049124820118117,
+      "avg_bytes_per_request": 1302899.344304542,
+      "bytes_out_ratio": 0.11714555586688175,
+      "unique_dest_ports": 0.0742510862360639,
+      "unique_dest_ips": 0.0742510862360639,
+      "failed_login_count": 0.0742510862360639,
+      "port_entropy": 0.0742510862360639,
+      "dest_ip_entropy": 0.0742510862360639,
+      "syn_like_ratio": 0.12058103339376539,
+      "dns_amplification_ratio": 0.11714555586688175
+    },
+    "last_seen": "2026-04-04T20:04:40.437287+00:00"
+  },
+  "113.171.234.148": {
+    "sample_count": 53,
+    "mean": {
+      "request_rate": 0.20640172178039956,
+      "avg_bytes_per_request": 8130.016110674765,
+      "bytes_out_ratio": 1.2155197859055598,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.4409829646056116,
+      "dns_amplification_ratio": 1.2155197859055598
+    },
+    "variance": {
+      "request_rate": 0.0032419710257203557,
+      "avg_bytes_per_request": 25188278.735103913,
+      "bytes_out_ratio": 1.4774629251791627,
+      "unique_dest_ports": 0.00021368996953242486,
+      "unique_dest_ips": 0.00021368996953242486,
+      "failed_login_count": 0.00021368996953242486,
+      "port_entropy": 0.00021368996953242486,
+      "dest_ip_entropy": 0.00021368996953242486,
+      "syn_like_ratio": 1.7256146161893025,
+      "dns_amplification_ratio": 1.4774629251791627
+    },
+    "last_seen": "2026-04-04T20:19:58.911630+00:00"
+  },
+  "2a04:4e42:12::498": {
+    "sample_count": 25,
+    "mean": {
+      "request_rate": 0.32090353753787615,
+      "avg_bytes_per_request": 9776.993954745349,
+      "bytes_out_ratio": 1.7630834561468385,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.2762840552372368,
+      "dns_amplification_ratio": 1.7630834561468385
+    },
+    "variance": {
+      "request_rate": 0.13344560345802253,
+      "avg_bytes_per_request": 47556940.71666413,
+      "bytes_out_ratio": 2.2256760273398712,
+      "unique_dest_ports": 0.020232717473185752,
+      "unique_dest_ips": 0.020232717473185752,
+      "failed_login_count": 0.020232717473185752,
+      "port_entropy": 0.020232717473185752,
+      "dest_ip_entropy": 0.020232717473185752,
+      "syn_like_ratio": 0.7311391350101427,
+      "dns_amplification_ratio": 2.2256760273398712
+    },
+    "last_seen": "2026-04-04T20:07:46.300351+00:00"
+  },
+  "34.54.84.110": {
+    "sample_count": 53,
+    "mean": {
+      "request_rate": 0.20640172050151415,
+      "avg_bytes_per_request": 8130.016110674765,
+      "bytes_out_ratio": 1.2155197859055598,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.927447016066992,
+      "dns_amplification_ratio": 1.2155197859055598
+    },
+    "variance": {
+      "request_rate": 0.003241970896224853,
+      "avg_bytes_per_request": 25188278.735103913,
+      "bytes_out_ratio": 1.4774629251791627,
+      "unique_dest_ports": 0.00021368996953242486,
+      "unique_dest_ips": 0.00021368996953242486,
+      "failed_login_count": 0.00021368996953242486,
+      "port_entropy": 0.00021368996953242486,
+      "dest_ip_entropy": 0.00021368996953242486,
+      "syn_like_ratio": 0.7396072295108971,
+      "dns_amplification_ratio": 1.4774629251791627
+    },
+    "last_seen": "2026-04-04T20:19:58.911653+00:00"
+  },
+  "108.157.32.97": {
+    "sample_count": 53,
+    "mean": {
+      "request_rate": 0.2064017212037381,
+      "avg_bytes_per_request": 8130.016110674765,
+      "bytes_out_ratio": 1.2155197859055598,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.4409829646056116,
+      "dns_amplification_ratio": 1.2155197859055598
+    },
+    "variance": {
+      "request_rate": 0.0032419709956263134,
+      "avg_bytes_per_request": 25188278.735103913,
+      "bytes_out_ratio": 1.4774629251791627,
+      "unique_dest_ports": 0.00021368996953242486,
+      "unique_dest_ips": 0.00021368996953242486,
+      "failed_login_count": 0.00021368996953242486,
+      "port_entropy": 0.00021368996953242486,
+      "dest_ip_entropy": 0.00021368996953242486,
+      "syn_like_ratio": 1.7256146161893025,
+      "dns_amplification_ratio": 1.4774629251791627
+    },
+    "last_seen": "2026-04-04T20:19:58.911669+00:00"
+  },
+  "20.37.198.118": {
+    "sample_count": 25,
+    "mean": {
+      "request_rate": 0.21459270975098074,
+      "avg_bytes_per_request": 6926.149416746776,
+      "bytes_out_ratio": 1.194795381290044,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.2291811866523885,
+      "dns_amplification_ratio": 1.194795381290044
+    },
+    "variance": {
+      "request_rate": 0.03638553300495149,
+      "avg_bytes_per_request": 20034906.922009524,
+      "bytes_out_ratio": 1.6395162089312687,
+      "unique_dest_ports": 0.020232717473185752,
+      "unique_dest_ips": 0.020232717473185752,
+      "failed_login_count": 0.020232717473185752,
+      "port_entropy": 0.020232717473185752,
+      "dest_ip_entropy": 0.020232717473185752,
+      "syn_like_ratio": 1.5081373180711937,
+      "dns_amplification_ratio": 1.6395162089312687
+    },
+    "last_seen": "2026-04-04T20:19:58.911638+00:00"
+  },
+  "20.44.239.154": {
+    "sample_count": 16,
+    "mean": {
+      "request_rate": 0.5408591174265992,
+      "avg_bytes_per_request": 31282.051636828728,
+      "bytes_out_ratio": 5.946239232192831,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 6.13480716464897,
+      "dns_amplification_ratio": 5.946239232192831
+    },
+    "variance": {
+      "request_rate": 0.31276874562669815,
+      "avg_bytes_per_request": 720728273.7559967,
+      "bytes_out_ratio": 27.018688837616573,
+      "unique_dest_ports": 0.08735421910125164,
+      "unique_dest_ips": 0.08735421910125164,
+      "failed_login_count": 0.08735421910125164,
+      "port_entropy": 0.08735421910125164,
+      "dest_ip_entropy": 0.08735421910125164,
+      "syn_like_ratio": 26.14522747064504,
+      "dns_amplification_ratio": 27.018688837616573
+    },
+    "last_seen": "2026-04-04T20:06:39.328214+00:00"
+  },
+  "18.235.116.19": {
+    "sample_count": 33,
+    "mean": {
+      "request_rate": 0.9064202913892797,
+      "avg_bytes_per_request": 38448.111294058384,
+      "bytes_out_ratio": 9.237016990603756,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 7.149557643815854,
+      "dns_amplification_ratio": 9.237016990603756
+    },
+    "variance": {
+      "request_rate": 0.08460956840124169,
+      "avg_bytes_per_request": 151322713.85998538,
+      "bytes_out_ratio": 10.566038327106826,
+      "unique_dest_ports": 0.0055132238072353994,
+      "unique_dest_ips": 0.0055132238072353994,
+      "failed_login_count": 0.0055132238072353994,
+      "port_entropy": 0.0055132238072353994,
+      "dest_ip_entropy": 0.0055132238072353994,
+      "syn_like_ratio": 6.239628843277247,
+      "dns_amplification_ratio": 10.566038327106826
+    },
+    "last_seen": "2026-04-04T20:14:43.174260+00:00"
+  },
+  "20.42.73.24": {
+    "sample_count": 6,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 1453.9999999999998,
+      "bytes_out_ratio": 0.3821292775665399,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.5,
+      "dns_amplification_ratio": 0.3821292775665399
+    },
+    "variance": {
+      "request_rate": 0.4437053124999999,
+      "avg_bytes_per_request": 0.4437053124999999,
+      "bytes_out_ratio": 0.4437053124999999,
+      "unique_dest_ports": 0.4437053124999999,
+      "unique_dest_ips": 0.4437053124999999,
+      "failed_login_count": 0.4437053124999999,
+      "port_entropy": 0.4437053124999999,
+      "dest_ip_entropy": 0.4437053124999999,
+      "syn_like_ratio": 0.4437053124999999,
+      "dns_amplification_ratio": 0.4437053124999999
+    },
+    "last_seen": "2026-04-04T20:04:15.297007+00:00"
+  },
+  "172.64.146.66": {
+    "sample_count": 9,
+    "mean": {
+      "request_rate": 0.49160641302769414,
+      "avg_bytes_per_request": 7765.162945774049,
+      "bytes_out_ratio": 0.9825363188678377,
+      "unique_dest_ports": 1.6191344749609373,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.5205611860458238,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.0527801125083704,
+      "dns_amplification_ratio": 0.9825363188678377
+    },
+    "variance": {
+      "request_rate": 0.4596326488918278,
+      "avg_bytes_per_request": 65111218.28073092,
+      "bytes_out_ratio": 1.6328459500021717,
+      "unique_dest_ports": 0.5499104978340998,
+      "unique_dest_ips": 0.2724905250390624,
+      "failed_login_count": 0.2724905250390624,
+      "port_entropy": 0.4990291417013942,
+      "dest_ip_entropy": 0.2724905250390624,
+      "syn_like_ratio": 1.7955907539036131,
+      "dns_amplification_ratio": 1.6328459500021717
+    },
+    "last_seen": "2026-04-04T20:09:41.378768+00:00"
+  },
+  "35.172.108.96": {
+    "sample_count": 32,
+    "mean": {
+      "request_rate": 0.9031344121372071,
+      "avg_bytes_per_request": 38040.3593710517,
+      "bytes_out_ratio": 9.2401312119252,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 7.153084334314461,
+      "dns_amplification_ratio": 9.2401312119252
+    },
+    "variance": {
+      "request_rate": 0.08714057743575129,
+      "avg_bytes_per_request": 179269185.58885357,
+      "bytes_out_ratio": 10.50893418306807,
+      "unique_dest_ports": 0.006486145655571058,
+      "unique_dest_ips": 0.006486145655571058,
+      "failed_login_count": 0.006486145655571058,
+      "port_entropy": 0.006486145655571058,
+      "dest_ip_entropy": 0.006486145655571058,
+      "syn_like_ratio": 6.1903030668273775,
+      "dns_amplification_ratio": 10.50893418306807
+    },
+    "last_seen": "2026-04-04T20:14:43.174232+00:00"
+  },
+  "20.213.196.212": {
+    "sample_count": 18,
+    "mean": {
+      "request_rate": 0.24035937587535547,
+      "avg_bytes_per_request": 4939.460650329374,
+      "bytes_out_ratio": 1.1541896594597272,
+      "unique_dest_ports": 1.345350484375,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.22414708460336583,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.32137916244002,
+      "dns_amplification_ratio": 1.1541896594597272
+    },
+    "variance": {
+      "request_rate": 0.1098710035062298,
+      "avg_bytes_per_request": 6869838.014289999,
+      "bytes_out_ratio": 1.2410675992613147,
+      "unique_dest_ports": 0.32909404367354,
+      "unique_dest_ips": 0.06311342330065431,
+      "failed_login_count": 0.06311342330065431,
+      "port_entropy": 0.21197159559324527,
+      "dest_ip_entropy": 0.06311342330065431,
+      "syn_like_ratio": 0.7470197045764959,
+      "dns_amplification_ratio": 1.2410675992613147
+    },
+    "last_seen": "2026-04-04T20:09:41.378805+00:00"
+  },
+  "2404:6800:4005:81a::200a": {
+    "sample_count": 15,
+    "mean": {
+      "request_rate": 0.21896365365320894,
+      "avg_bytes_per_request": 5448.178587431122,
+      "bytes_out_ratio": 1.55194225741364,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.1894112068079374,
+      "dns_amplification_ratio": 1.55194225741364
+    },
+    "variance": {
+      "request_rate": 0.10983814985074661,
+      "avg_bytes_per_request": 18056025.043342993,
+      "bytes_out_ratio": 2.0547345938605255,
+      "unique_dest_ports": 0.10276966953088429,
+      "unique_dest_ips": 0.10276966953088429,
+      "failed_login_count": 0.10276966953088429,
+      "port_entropy": 0.10276966953088429,
+      "dest_ip_entropy": 0.10276966953088429,
+      "syn_like_ratio": 0.9933154414810585,
+      "dns_amplification_ratio": 2.0547345938605255
+    },
+    "last_seen": "2026-04-04T20:09:16.218682+00:00"
+  },
+  "2404:6800:4005:80a::200a": {
+    "sample_count": 40,
+    "mean": {
+      "request_rate": 0.20636250647943039,
+      "avg_bytes_per_request": 17228.813579917514,
+      "bytes_out_ratio": 1.2973795252360054,
+      "unique_dest_ports": 1.3032019274920053,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.18381019080319713,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.9972916045954467,
+      "dns_amplification_ratio": 1.2973795252360054
+    },
+    "variance": {
+      "request_rate": 0.004741770760030444,
+      "avg_bytes_per_request": 164027477.45193505,
+      "bytes_out_ratio": 1.854301864235735,
+      "unique_dest_ports": 0.268082187437096,
+      "unique_dest_ips": 0.0017674132351663914,
+      "failed_login_count": 0.0017674132351663914,
+      "port_entropy": 0.13305718658837765,
+      "dest_ip_entropy": 0.0017674132351663914,
+      "syn_like_ratio": 0.9963736788122275,
+      "dns_amplification_ratio": 1.854301864235735
+    },
+    "last_seen": "2026-04-04T20:19:58.911465+00:00"
+  },
+  "20.42.73.28": {
+    "sample_count": 32,
+    "mean": {
+      "request_rate": 0.34952391007551453,
+      "avg_bytes_per_request": 7126.704113840261,
+      "bytes_out_ratio": 1.9871609423480812,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.5329962150391505,
+      "dns_amplification_ratio": 1.9871609423480812
+    },
+    "variance": {
+      "request_rate": 0.10973077322733685,
+      "avg_bytes_per_request": 61678097.1111781,
+      "bytes_out_ratio": 2.8631752954876086,
+      "unique_dest_ports": 0.006486145655571058,
+      "unique_dest_ips": 0.006486145655571058,
+      "failed_login_count": 0.006486145655571058,
+      "port_entropy": 0.006486145655571058,
+      "dest_ip_entropy": 0.006486145655571058,
+      "syn_like_ratio": 1.5466302609086477,
+      "dns_amplification_ratio": 2.8631752954876086
+    },
+    "last_seen": "2026-04-04T20:16:07.642891+00:00"
+  },
+  "98.82.102.40": {
+    "sample_count": 13,
+    "mean": {
+      "request_rate": 0.22914628947804844,
+      "avg_bytes_per_request": 4435.006750099268,
+      "bytes_out_ratio": 0.6353556680304416,
+      "unique_dest_ports": 1.4062946875,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.28974785419022875,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.65801408151878,
+      "dns_amplification_ratio": 0.6353556680304416
+    },
+    "variance": {
+      "request_rate": 0.147247625231917,
+      "avg_bytes_per_request": 1823834.7088280956,
+      "bytes_out_ratio": 0.43124770427075354,
+      "unique_dest_ports": 0.42602918585296895,
+      "unique_dest_ips": 0.14224175713617204,
+      "failed_login_count": 0.14224175713617204,
+      "port_entropy": 0.313024085952178,
+      "dest_ip_entropy": 0.14224175713617204,
+      "syn_like_ratio": 0.2709866624658034,
+      "dns_amplification_ratio": 0.43124770427075354
+    },
+    "last_seen": "2026-04-04T20:09:41.378371+00:00"
+  },
+  "2404:6800:4005:81f::200a": {
+    "sample_count": 11,
+    "mean": {
+      "request_rate": 0.2351954232262316,
+      "avg_bytes_per_request": 11168.710436990414,
+      "bytes_out_ratio": 2.2080329767753453,
+      "unique_dest_ports": 1.2774999999999999,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.23578921423310434,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.231265678021173,
+      "dns_amplification_ratio": 2.2080329767753453
+    },
+    "variance": {
+      "request_rate": 0.19789121925381462,
+      "avg_bytes_per_request": 47073670.22215137,
+      "bytes_out_ratio": 2.623191482401137,
+      "unique_dest_ports": 0.43274940434072257,
+      "unique_dest_ips": 0.19687440434072256,
+      "failed_login_count": 0.19687440434072256,
+      "port_entropy": 0.3734396661989457,
+      "dest_ip_entropy": 0.19687440434072256,
+      "syn_like_ratio": 2.31563616557411,
+      "dns_amplification_ratio": 2.623191482401137
+    },
+    "last_seen": "2026-04-04T20:19:58.911520+00:00"
+  },
+  "2404:6800:4003:c02::6d": {
+    "sample_count": 9,
+    "mean": {
+      "request_rate": 0.23388951528457605,
+      "avg_bytes_per_request": 30407.666351809366,
+      "bytes_out_ratio": 1.733810262165506,
+      "unique_dest_ports": 1.8638687499999997,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.3826452458505074,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.921418187912196,
+      "dns_amplification_ratio": 1.733810262165506
+    },
+    "variance": {
+      "request_rate": 0.27369220172576053,
+      "avg_bytes_per_request": 496470679.46762735,
+      "bytes_out_ratio": 2.320631373301834,
+      "unique_dest_ports": 1.3187840930078125,
+      "unique_dest_ips": 0.2724905250390624,
+      "failed_login_count": 0.2724905250390624,
+      "port_entropy": 0.5257861015736285,
+      "dest_ip_entropy": 0.2724905250390624,
+      "syn_like_ratio": 2.3482703184723426,
+      "dns_amplification_ratio": 2.320631373301834
+    },
+    "last_seen": "2026-04-04T20:07:46.300337+00:00"
+  },
+  "20.190.144.161": {
+    "sample_count": 9,
+    "mean": {
+      "request_rate": 0.22612435379595958,
+      "avg_bytes_per_request": 3414.4924024840834,
+      "bytes_out_ratio": 0.634283097231004,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.9091281621006331,
+      "dns_amplification_ratio": 0.634283097231004
+    },
+    "variance": {
+      "request_rate": 0.2743900602208345,
+      "avg_bytes_per_request": 3591292.608266782,
+      "bytes_out_ratio": 0.6170034138960244,
+      "unique_dest_ports": 0.2724905250390624,
+      "unique_dest_ips": 0.2724905250390624,
+      "failed_login_count": 0.2724905250390624,
+      "port_entropy": 0.2724905250390624,
+      "dest_ip_entropy": 0.2724905250390624,
+      "syn_like_ratio": 0.8378050149406248,
+      "dns_amplification_ratio": 0.6170034138960244
+    },
+    "last_seen": "2026-04-04T20:09:41.378796+00:00"
+  },
+  "20.44.229.112": {
+    "sample_count": 8,
+    "mean": {
+      "request_rate": 0.23992742168533288,
+      "avg_bytes_per_request": 2582.643797789618,
+      "bytes_out_ratio": 0.4026595197499627,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.4779257406121845,
+      "dns_amplification_ratio": 0.4026595197499627
+    },
+    "variance": {
+      "request_rate": 0.322150729640159,
+      "avg_bytes_per_request": 1515237.7488310772,
+      "bytes_out_ratio": 0.39224121077232205,
+      "unique_dest_ports": 0.32057708828124987,
+      "unique_dest_ips": 0.32057708828124987,
+      "failed_login_count": 0.32057708828124987,
+      "port_entropy": 0.32057708828124987,
+      "dest_ip_entropy": 0.32057708828124987,
+      "syn_like_ratio": 0.34432994627158825,
+      "dns_amplification_ratio": 0.39224121077232205
+    },
+    "last_seen": "2026-04-04T20:09:16.218676+00:00"
+  },
+  "13.89.179.10": {
+    "sample_count": 8,
+    "mean": {
+      "request_rate": 0.2611139698300541,
+      "avg_bytes_per_request": 7687.313827987196,
+      "bytes_out_ratio": 0.5406651305448364,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7180957846530519,
+      "dns_amplification_ratio": 0.5406651305448364
+    },
+    "variance": {
+      "request_rate": 0.3295020470956425,
+      "avg_bytes_per_request": 34062717.466845244,
+      "bytes_out_ratio": 0.7000919804509044,
+      "unique_dest_ports": 0.32057708828124987,
+      "unique_dest_ips": 0.32057708828124987,
+      "failed_login_count": 0.32057708828124987,
+      "port_entropy": 0.32057708828124987,
+      "dest_ip_entropy": 0.32057708828124987,
+      "syn_like_ratio": 0.9266834531431323,
+      "dns_amplification_ratio": 0.7000919804509044
+    },
+    "last_seen": "2026-04-04T20:09:41.378749+00:00"
+  },
+  "2404:6800:4005:812::2003": {
+    "sample_count": 8,
+    "mean": {
+      "request_rate": 0.2296224337967774,
+      "avg_bytes_per_request": 6110.435754720869,
+      "bytes_out_ratio": 0.5431556358897418,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.5321677339441928,
+      "dns_amplification_ratio": 0.5431556358897418
+    },
+    "variance": {
+      "request_rate": 0.3226745075453019,
+      "avg_bytes_per_request": 12561899.740815941,
+      "bytes_out_ratio": 0.6971885411485652,
+      "unique_dest_ports": 0.32057708828124987,
+      "unique_dest_ips": 0.32057708828124987,
+      "failed_login_count": 0.32057708828124987,
+      "port_entropy": 0.32057708828124987,
+      "dest_ip_entropy": 0.32057708828124987,
+      "syn_like_ratio": 0.546748447701086,
+      "dns_amplification_ratio": 0.6971885411485652
+    },
+    "last_seen": "2026-04-04T20:09:41.378606+00:00"
+  },
+  "20.42.73.27": {
+    "sample_count": 4,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 921.9999999999999,
+      "bytes_out_ratio": 0.1866151866151866,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.5,
+      "dns_amplification_ratio": 0.1866151866151866
+    },
+    "variance": {
+      "request_rate": 0.6141249999999999,
+      "avg_bytes_per_request": 0.6141249999999999,
+      "bytes_out_ratio": 0.6141249999999999,
+      "unique_dest_ports": 0.6141249999999999,
+      "unique_dest_ips": 0.6141249999999999,
+      "failed_login_count": 0.6141249999999999,
+      "port_entropy": 0.6141249999999999,
+      "dest_ip_entropy": 0.6141249999999999,
+      "syn_like_ratio": 0.6141249999999999,
+      "dns_amplification_ratio": 0.6141249999999999
+    },
+    "last_seen": "2026-04-04T20:08:18.331491+00:00"
+  },
+  "50.19.21.155": {
+    "sample_count": 4,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 2801.0,
+      "bytes_out_ratio": 0.6125503742084053,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.0,
+      "dns_amplification_ratio": 0.6125503742084053
+    },
+    "variance": {
+      "request_rate": 0.6141249999999999,
+      "avg_bytes_per_request": 0.6141249999999999,
+      "bytes_out_ratio": 0.6141249999999999,
+      "unique_dest_ports": 0.6141249999999999,
+      "unique_dest_ips": 0.6141249999999999,
+      "failed_login_count": 0.6141249999999999,
+      "port_entropy": 0.6141249999999999,
+      "dest_ip_entropy": 0.6141249999999999,
+      "syn_like_ratio": 0.6141249999999999,
+      "dns_amplification_ratio": 0.6141249999999999
+    },
+    "last_seen": "2026-04-04T20:08:49.679119+00:00"
+  },
+  "52.202.203.235": {
+    "sample_count": 5,
+    "mean": {
+      "request_rate": 0.6243893310590233,
+      "avg_bytes_per_request": 3175.2139954545455,
+      "bytes_out_ratio": 0.3779255736544048,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.430475,
+      "dns_amplification_ratio": 0.3779255736544048
+    },
+    "variance": {
+      "request_rate": 0.7032867108278624,
+      "avg_bytes_per_request": 98074.80700394708,
+      "bytes_out_ratio": 0.5375796117850729,
+      "unique_dest_ports": 0.5220062499999999,
+      "unique_dest_ips": 0.5220062499999999,
+      "failed_login_count": 0.5220062499999999,
+      "port_entropy": 0.5220062499999999,
+      "dest_ip_entropy": 0.5220062499999999,
+      "syn_like_ratio": 0.5363042634259259,
+      "dns_amplification_ratio": 0.5375796117850729
+    },
+    "last_seen": "2026-04-04T20:09:41.378832+00:00"
+  },
+  "2606:4700::6812:127d": {
+    "sample_count": 20,
+    "mean": {
+      "request_rate": 0.23397776471569387,
+      "avg_bytes_per_request": 7754.986013117271,
+      "bytes_out_ratio": 2.330555285118625,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.700310475227626,
+      "dns_amplification_ratio": 2.330555285118625
+    },
+    "variance": {
+      "request_rate": 0.05729439982095788,
+      "avg_bytes_per_request": 68098191.99293731,
+      "bytes_out_ratio": 2.5280889554271027,
+      "unique_dest_ports": 0.045599448334722736,
+      "unique_dest_ips": 0.045599448334722736,
+      "failed_login_count": 0.045599448334722736,
+      "port_entropy": 0.045599448334722736,
+      "dest_ip_entropy": 0.045599448334722736,
+      "syn_like_ratio": 1.5909910478610312,
+      "dns_amplification_ratio": 2.5280889554271027
+    },
+    "last_seen": "2026-04-04T20:15:40.844612+00:00"
+  },
+  "54.87.46.36": {
+    "sample_count": 28,
+    "mean": {
+      "request_rate": 0.20758230615850656,
+      "avg_bytes_per_request": 8099.625528961455,
+      "bytes_out_ratio": 1.2064119993748759,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.9230360326914924,
+      "dns_amplification_ratio": 1.2064119993748759
+    },
+    "variance": {
+      "request_rate": 0.015370257926428628,
+      "avg_bytes_per_request": 25453897.089511305,
+      "bytes_out_ratio": 1.481437589095809,
+      "unique_dest_ports": 0.0124254176182202,
+      "unique_dest_ips": 0.0124254176182202,
+      "failed_login_count": 0.0124254176182202,
+      "port_entropy": 0.0124254176182202,
+      "dest_ip_entropy": 0.0124254176182202,
+      "syn_like_ratio": 0.7483905667904724,
+      "dns_amplification_ratio": 1.481437589095809
+    },
+    "last_seen": "2026-04-04T20:19:58.911390+00:00"
+  },
+  "2001:4860:4802:36::223": {
+    "sample_count": 26,
+    "mean": {
+      "request_rate": 0.2097029884020408,
+      "avg_bytes_per_request": 13186.430220784046,
+      "bytes_out_ratio": 1.339122464624006,
+      "unique_dest_ports": 1.393055771623274,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.25270991840346385,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.0324453660530772,
+      "dns_amplification_ratio": 1.339122464624006
+    },
+    "variance": {
+      "request_rate": 0.020671793280154383,
+      "avg_bytes_per_request": 184598738.0458771,
+      "bytes_out_ratio": 2.1404027122476754,
+      "unique_dest_ports": 0.29786008281327453,
+      "unique_dest_ips": 0.01719780985220789,
+      "failed_login_count": 0.01719780985220789,
+      "port_entropy": 0.1608230087050437,
+      "dest_ip_entropy": 0.01719780985220789,
+      "syn_like_ratio": 1.2738217674640284,
+      "dns_amplification_ratio": 2.1404027122476754
+    },
+    "last_seen": "2026-04-04T20:19:58.911314+00:00"
+  },
+  "2404:6800:4003:c06::6c": {
+    "sample_count": 2,
+    "mean": {
+      "request_rate": 0.8847886320027584,
+      "avg_bytes_per_request": 26013.074999999997,
+      "bytes_out_ratio": 3.0031724642566626,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 3.4050000000000002,
+      "dns_amplification_ratio": 3.0031724642566626
+    },
+    "variance": {
+      "request_rate": 0.9384910621053055,
+      "avg_bytes_per_request": 76520239.55416666,
+      "bytes_out_ratio": 1.2559210572929325,
+      "unique_dest_ports": 0.85,
+      "unique_dest_ips": 0.85,
+      "failed_login_count": 0.85,
+      "port_entropy": 0.85,
+      "dest_ip_entropy": 0.85,
+      "syn_like_ratio": 1.1035,
+      "dns_amplification_ratio": 1.2559210572929325
+    },
+    "last_seen": "2026-04-04T20:09:41.378616+00:00"
+  },
+  "2404:6800:4005:80a::2001": {
+    "sample_count": 15,
+    "mean": {
+      "request_rate": 0.9227121433357145,
+      "avg_bytes_per_request": 40758.47399819019,
+      "bytes_out_ratio": 9.643827124448691,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 9.889088792111522,
+      "dns_amplification_ratio": 9.643827124448691
+    },
+    "variance": {
+      "request_rate": 0.15432699680229073,
+      "avg_bytes_per_request": 36577975.08813701,
+      "bytes_out_ratio": 4.3469399842005725,
+      "unique_dest_ports": 0.10276966953088429,
+      "unique_dest_ips": 0.10276966953088429,
+      "failed_login_count": 0.10276966953088429,
+      "port_entropy": 0.10276966953088429,
+      "dest_ip_entropy": 0.10276966953088429,
+      "syn_like_ratio": 5.357396905770471,
+      "dns_amplification_ratio": 4.3469399842005725
+    },
+    "last_seen": "2026-04-04T20:14:43.174273+00:00"
+  },
+  "2404:6800:4005:826::200a": {
+    "sample_count": 17,
+    "mean": {
+      "request_rate": 0.28559550184214366,
+      "avg_bytes_per_request": 34220.43133889514,
+      "bytes_out_ratio": 4.464417261933262,
+      "unique_dest_ports": 1.7049999999999996,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.4268925891682003,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 3.7641020623467747,
+      "dns_amplification_ratio": 4.464417261933262
+    },
+    "variance": {
+      "request_rate": 0.08559002560851234,
+      "avg_bytes_per_request": 282151284.1746824,
+      "bytes_out_ratio": 1.3562425328837358,
+      "unique_dest_ports": 1.6777510862360638,
+      "unique_dest_ips": 0.0742510862360639,
+      "failed_login_count": 0.0742510862360639,
+      "port_entropy": 0.6328635366429953,
+      "dest_ip_entropy": 0.0742510862360639,
+      "syn_like_ratio": 0.8772653668858137,
+      "dns_amplification_ratio": 1.3562425328837358
+    },
+    "last_seen": "2026-04-04T20:19:58.911661+00:00"
+  },
+  "20.50.73.12": {
+    "sample_count": 17,
+    "mean": {
+      "request_rate": 0.23929184152324887,
+      "avg_bytes_per_request": 9025.285888189639,
+      "bytes_out_ratio": 2.7423263636334414,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.9327960306951075,
+      "dns_amplification_ratio": 2.7423263636334414
+    },
+    "variance": {
+      "request_rate": 0.0846160672263387,
+      "avg_bytes_per_request": 53140549.98758284,
+      "bytes_out_ratio": 1.9013189912634738,
+      "unique_dest_ports": 0.0742510862360639,
+      "unique_dest_ips": 0.0742510862360639,
+      "failed_login_count": 0.0742510862360639,
+      "port_entropy": 0.0742510862360639,
+      "dest_ip_entropy": 0.0742510862360639,
+      "syn_like_ratio": 1.3713140271677522,
+      "dns_amplification_ratio": 1.9013189912634738
+    },
+    "last_seen": "2026-04-04T20:16:07.642860+00:00"
+  },
+  "2603:1030:10:15::622": {
+    "sample_count": 13,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 42610.0,
+      "bytes_out_ratio": 10.341495874367848,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 10.666666666666666,
+      "dns_amplification_ratio": 10.341495874367848
+    },
+    "variance": {
+      "request_rate": 0.14224175713617204,
+      "avg_bytes_per_request": 0.14224175713617204,
+      "bytes_out_ratio": 0.14224175713617204,
+      "unique_dest_ports": 0.14224175713617204,
+      "unique_dest_ips": 0.14224175713617204,
+      "failed_login_count": 0.14224175713617204,
+      "port_entropy": 0.14224175713617204,
+      "dest_ip_entropy": 0.14224175713617204,
+      "syn_like_ratio": 0.14224175713617204,
+      "dns_amplification_ratio": 0.14224175713617204
+    },
+    "last_seen": "2026-04-04T20:14:43.174218+00:00"
+  },
+  "2603:1030:807:e::34f": {
+    "sample_count": 13,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 42610.0,
+      "bytes_out_ratio": 10.341495874367848,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 10.666666666666666,
+      "dns_amplification_ratio": 10.341495874367848
+    },
+    "variance": {
+      "request_rate": 0.14224175713617204,
+      "avg_bytes_per_request": 0.14224175713617204,
+      "bytes_out_ratio": 0.14224175713617204,
+      "unique_dest_ports": 0.14224175713617204,
+      "unique_dest_ips": 0.14224175713617204,
+      "failed_login_count": 0.14224175713617204,
+      "port_entropy": 0.14224175713617204,
+      "dest_ip_entropy": 0.14224175713617204,
+      "syn_like_ratio": 0.14224175713617204,
+      "dns_amplification_ratio": 0.14224175713617204
+    },
+    "last_seen": "2026-04-04T20:14:43.174225+00:00"
+  },
+  "2a03:90c0:321:2803::254": {
+    "sample_count": 13,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 42610.0,
+      "bytes_out_ratio": 10.341495874367848,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 10.666666666666666,
+      "dns_amplification_ratio": 10.341495874367848
+    },
+    "variance": {
+      "request_rate": 0.14224175713617204,
+      "avg_bytes_per_request": 0.14224175713617204,
+      "bytes_out_ratio": 0.14224175713617204,
+      "unique_dest_ports": 0.14224175713617204,
+      "unique_dest_ips": 0.14224175713617204,
+      "failed_login_count": 0.14224175713617204,
+      "port_entropy": 0.14224175713617204,
+      "dest_ip_entropy": 0.14224175713617204,
+      "syn_like_ratio": 0.14224175713617204,
+      "dns_amplification_ratio": 0.14224175713617204
+    },
+    "last_seen": "2026-04-04T20:14:43.174239+00:00"
+  },
+  "20.190.163.18": {
+    "sample_count": 15,
+    "mean": {
+      "request_rate": 0.3000240037704329,
+      "avg_bytes_per_request": 21359.750995416678,
+      "bytes_out_ratio": 3.264172963414245,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.8764062040750096,
+      "dns_amplification_ratio": 3.264172963414245
+    },
+    "variance": {
+      "request_rate": 0.1694516817417554,
+      "avg_bytes_per_request": 742916338.6096612,
+      "bytes_out_ratio": 7.952798101213371,
+      "unique_dest_ports": 0.10276966953088429,
+      "unique_dest_ips": 0.10276966953088429,
+      "failed_login_count": 0.10276966953088429,
+      "port_entropy": 0.10276966953088429,
+      "dest_ip_entropy": 0.10276966953088429,
+      "syn_like_ratio": 4.114121983342232,
+      "dns_amplification_ratio": 7.952798101213371
+    },
+    "last_seen": "2026-04-04T20:15:40.844619+00:00"
+  },
+  "20.213.196.214": {
+    "sample_count": 22,
+    "mean": {
+      "request_rate": 0.251447623459241,
+      "avg_bytes_per_request": 35438.83905267605,
+      "bytes_out_ratio": 2.385713470111753,
+      "unique_dest_ports": 1.9523721449219285,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.5692286742254425,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.346640258272704,
+      "dns_amplification_ratio": 2.385713470111753
+    },
+    "variance": {
+      "request_rate": 0.05653956262428741,
+      "avg_bytes_per_request": 781850878.8998418,
+      "bytes_out_ratio": 6.846727397705685,
+      "unique_dest_ports": 1.1699989113986926,
+      "unique_dest_ips": 0.032945601421837174,
+      "failed_login_count": 0.032945601421837174,
+      "port_entropy": 0.3562299095438658,
+      "dest_ip_entropy": 0.032945601421837174,
+      "syn_like_ratio": 6.573316705254549,
+      "dns_amplification_ratio": 6.846727397705685
+    },
+    "last_seen": "2026-04-04T20:19:58.911646+00:00"
+  },
+  "23.53.213.253": {
+    "sample_count": 13,
+    "mean": {
+      "request_rate": 0.44878893541530285,
+      "avg_bytes_per_request": 37246.00882825105,
+      "bytes_out_ratio": 5.858392414022578,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 5.0368351610158655,
+      "dns_amplification_ratio": 5.858392414022578
+    },
+    "variance": {
+      "request_rate": 0.20151779079855128,
+      "avg_bytes_per_request": 5613314.850396319,
+      "bytes_out_ratio": 4.0632775411146005,
+      "unique_dest_ports": 0.14224175713617204,
+      "unique_dest_ips": 0.14224175713617204,
+      "failed_login_count": 0.14224175713617204,
+      "port_entropy": 0.14224175713617204,
+      "dest_ip_entropy": 0.14224175713617204,
+      "syn_like_ratio": 1.855232066065214,
+      "dns_amplification_ratio": 4.0632775411146005
+    },
+    "last_seen": "2026-04-04T20:14:43.174211+00:00"
+  },
+  "51.11.168.232": {
+    "sample_count": 13,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 127830.0,
+      "bytes_out_ratio": 10.341495874367848,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 10.777777777777779,
+      "dns_amplification_ratio": 10.341495874367848
+    },
+    "variance": {
+      "request_rate": 0.14224175713617204,
+      "avg_bytes_per_request": 0.14224175713617204,
+      "bytes_out_ratio": 0.14224175713617204,
+      "unique_dest_ports": 0.14224175713617204,
+      "unique_dest_ips": 0.14224175713617204,
+      "failed_login_count": 0.14224175713617204,
+      "port_entropy": 0.14224175713617204,
+      "dest_ip_entropy": 0.14224175713617204,
+      "syn_like_ratio": 0.14224175713617204,
+      "dns_amplification_ratio": 0.14224175713617204
+    },
+    "last_seen": "2026-04-04T20:14:43.174267+00:00"
+  },
+  "57.155.161.95": {
+    "sample_count": 13,
+    "mean": {
+      "request_rate": 0.34328177786501535,
+      "avg_bytes_per_request": 215994.17436085758,
+      "bytes_out_ratio": 5.118071375026387,
+      "unique_dest_ports": 1.857758242863828,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.5828109481488644,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 5.1439863462623965,
+      "dns_amplification_ratio": 5.118071375026387
+    },
+    "variance": {
+      "request_rate": 0.22694486669735137,
+      "avg_bytes_per_request": 24707904220.080368,
+      "bytes_out_ratio": 5.622916840506643,
+      "unique_dest_ports": 0.28578180379850887,
+      "unique_dest_ips": 0.14224175713617204,
+      "failed_login_count": 0.14224175713617204,
+      "port_entropy": 0.21506361437597038,
+      "dest_ip_entropy": 0.14224175713617204,
+      "syn_like_ratio": 5.913919538550926,
+      "dns_amplification_ratio": 5.622916840506643
+    },
+    "last_seen": "2026-04-04T20:14:43.174181+00:00"
+  },
+  "100.55.212.207": {
+    "sample_count": 21,
+    "mean": {
+      "request_rate": 0.2667755067283916,
+      "avg_bytes_per_request": 24694.84978571178,
+      "bytes_out_ratio": 2.8232932274546023,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.9903586982968977,
+      "dns_amplification_ratio": 2.8232932274546023
+    },
+    "variance": {
+      "request_rate": 0.06915637560723276,
+      "avg_bytes_per_request": 280956510.8681573,
+      "bytes_out_ratio": 6.961968765481167,
+      "unique_dest_ports": 0.038759531084514326,
+      "unique_dest_ips": 0.038759531084514326,
+      "failed_login_count": 0.038759531084514326,
+      "port_entropy": 0.038759531084514326,
+      "dest_ip_entropy": 0.038759531084514326,
+      "syn_like_ratio": 3.8038406950998698,
+      "dns_amplification_ratio": 6.961968765481167
+    },
+    "last_seen": "2026-04-04T20:18:35.338788+00:00"
+  },
+  "2603:1030:10:1d::af": {
+    "sample_count": 14,
+    "mean": {
+      "request_rate": 0.3281124928796216,
+      "avg_bytes_per_request": 23461.30938930252,
+      "bytes_out_ratio": 4.467733643404189,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 4.725081515093118,
+      "dns_amplification_ratio": 4.467733643404189
+    },
+    "variance": {
+      "request_rate": 0.19519049555259502,
+      "avg_bytes_per_request": 729630713.3179499,
+      "bytes_out_ratio": 8.381530204942264,
+      "unique_dest_ports": 0.12090549356574623,
+      "unique_dest_ips": 0.12090549356574623,
+      "failed_login_count": 0.12090549356574623,
+      "port_entropy": 0.12090549356574623,
+      "dest_ip_entropy": 0.12090549356574623,
+      "syn_like_ratio": 7.950518888515376,
+      "dns_amplification_ratio": 8.381530204942264
+    },
+    "last_seen": "2026-04-04T20:15:12.847541+00:00"
+  },
+  "2603:1030:807:e::358": {
+    "sample_count": 13,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 42610.0,
+      "bytes_out_ratio": 10.341495874367848,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 10.666666666666666,
+      "dns_amplification_ratio": 10.341495874367848
+    },
+    "variance": {
+      "request_rate": 0.14224175713617204,
+      "avg_bytes_per_request": 0.14224175713617204,
+      "bytes_out_ratio": 0.14224175713617204,
+      "unique_dest_ports": 0.14224175713617204,
+      "unique_dest_ips": 0.14224175713617204,
+      "failed_login_count": 0.14224175713617204,
+      "port_entropy": 0.14224175713617204,
+      "dest_ip_entropy": 0.14224175713617204,
+      "syn_like_ratio": 0.14224175713617204,
+      "dns_amplification_ratio": 0.14224175713617204
+    },
+    "last_seen": "2026-04-04T20:14:43.174281+00:00"
+  },
+  "44.220.217.205": {
+    "sample_count": 23,
+    "mean": {
+      "request_rate": 0.22665545475953855,
+      "avg_bytes_per_request": 14727.71923363073,
+      "bytes_out_ratio": 1.0143923751760962,
+      "unique_dest_ports": 1.4062946875,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.3154215459076707,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.7921547276730762,
+      "dns_amplification_ratio": 1.0143923751760962
+    },
+    "variance": {
+      "request_rate": 0.048567697090338945,
+      "avg_bytes_per_request": 145291228.3204976,
+      "bytes_out_ratio": 0.6223410450682001,
+      "unique_dest_ports": 0.3117911899253585,
+      "unique_dest_ips": 0.028003761208561597,
+      "failed_login_count": 0.028003761208561597,
+      "port_entropy": 0.21519649960919413,
+      "dest_ip_entropy": 0.028003761208561597,
+      "syn_like_ratio": 0.3066195527707151,
+      "dns_amplification_ratio": 0.6223410450682001
+    },
+    "last_seen": "2026-04-04T20:19:58.911483+00:00"
+  },
+  "104.18.41.190": {
+    "sample_count": 12,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 30103.0,
+      "bytes_out_ratio": 2.700885173346447,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.5714285714285716,
+      "dns_amplification_ratio": 2.700885173346447
+    },
+    "variance": {
+      "request_rate": 0.16734324368961417,
+      "avg_bytes_per_request": 0.16734324368961417,
+      "bytes_out_ratio": 0.16734324368961417,
+      "unique_dest_ports": 0.16734324368961417,
+      "unique_dest_ips": 0.16734324368961417,
+      "failed_login_count": 0.16734324368961417,
+      "port_entropy": 0.16734324368961417,
+      "dest_ip_entropy": 0.16734324368961417,
+      "syn_like_ratio": 0.16734324368961417,
+      "dns_amplification_ratio": 0.16734324368961417
+    },
+    "last_seen": "2026-04-04T20:14:43.174204+00:00"
+  },
+  "32.193.75.77": {
+    "sample_count": 23,
+    "mean": {
+      "request_rate": 0.2266554514471027,
+      "avg_bytes_per_request": 8085.52100357141,
+      "bytes_out_ratio": 1.0258530092946692,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.8125746083730504,
+      "dns_amplification_ratio": 1.0258530092946692
+    },
+    "variance": {
+      "request_rate": 0.048567696777900606,
+      "avg_bytes_per_request": 30213901.660946436,
+      "bytes_out_ratio": 0.6201089813131289,
+      "unique_dest_ports": 0.028003761208561597,
+      "unique_dest_ips": 0.028003761208561597,
+      "failed_login_count": 0.028003761208561597,
+      "port_entropy": 0.028003761208561597,
+      "dest_ip_entropy": 0.028003761208561597,
+      "syn_like_ratio": 0.32643797769787153,
+      "dns_amplification_ratio": 0.6201089813131289
+    },
+    "last_seen": "2026-04-04T20:19:58.911615+00:00"
+  },
+  "2404:6800:4003:c06::6d": {
+    "sample_count": 10,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 4808.0,
+      "bytes_out_ratio": 0.15134099616858238,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.25,
+      "dns_amplification_ratio": 0.15134099616858238
+    },
+    "variance": {
+      "request_rate": 0.23161694628320303,
+      "avg_bytes_per_request": 0.23161694628320303,
+      "bytes_out_ratio": 0.23161694628320303,
+      "unique_dest_ports": 0.23161694628320303,
+      "unique_dest_ips": 0.23161694628320303,
+      "failed_login_count": 0.23161694628320303,
+      "port_entropy": 0.23161694628320303,
+      "dest_ip_entropy": 0.23161694628320303,
+      "syn_like_ratio": 0.23161694628320303,
+      "dns_amplification_ratio": 0.23161694628320303
+    },
+    "last_seen": "2026-04-04T20:14:43.174189+00:00"
+  },
+  "2404:6800:4005:804::200a": {
+    "sample_count": 14,
+    "mean": {
+      "request_rate": 0.3104306917870319,
+      "avg_bytes_per_request": 17439.36806588955,
+      "bytes_out_ratio": 1.2355064116773358,
+      "unique_dest_ports": 1.877233317895851,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.619693824756017,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.111729356291346,
+      "dns_amplification_ratio": 1.2355064116773358
+    },
+    "variance": {
+      "request_rate": 0.19830511134090484,
+      "avg_bytes_per_request": 224297755.1439647,
+      "bytes_out_ratio": 3.7469897756309782,
+      "unique_dest_ports": 0.6923405574530419,
+      "unique_dest_ips": 0.12090549356574623,
+      "failed_login_count": 0.12090549356574623,
+      "port_entropy": 0.34932480052451603,
+      "dest_ip_entropy": 0.12090549356574623,
+      "syn_like_ratio": 1.3481030754820895,
+      "dns_amplification_ratio": 3.7469897756309782
+    },
+    "last_seen": "2026-04-04T20:19:58.911701+00:00"
+  },
+  "20.189.173.10": {
+    "sample_count": 12,
+    "mean": {
+      "request_rate": 0.3429617077797228,
+      "avg_bytes_per_request": 13110.792193138734,
+      "bytes_out_ratio": 1.5472010917947698,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.2634297455075072,
+      "dns_amplification_ratio": 1.5472010917947698
+    },
+    "variance": {
+      "request_rate": 0.2695696795149484,
+      "avg_bytes_per_request": 91867553.65370817,
+      "bytes_out_ratio": 4.604699421234575,
+      "unique_dest_ports": 0.16734324368961417,
+      "unique_dest_ips": 0.16734324368961417,
+      "failed_login_count": 0.16734324368961417,
+      "port_entropy": 0.16734324368961417,
+      "dest_ip_entropy": 0.16734324368961417,
+      "syn_like_ratio": 2.522785233161804,
+      "dns_amplification_ratio": 4.604699421234575
+    },
+    "last_seen": "2026-04-04T20:19:28.594594+00:00"
+  },
+  "2404:6800:4005:827::200a": {
+    "sample_count": 13,
+    "mean": {
+      "request_rate": 0.24559287600427793,
+      "avg_bytes_per_request": 12126.32141134119,
+      "bytes_out_ratio": 1.002627349713261,
+      "unique_dest_ports": 1.2316169462832025,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.1677800814038814,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.9397650180558309,
+      "dns_amplification_ratio": 1.002627349713261
+    },
+    "variance": {
+      "request_rate": 0.14727318906306328,
+      "avg_bytes_per_request": 77283223.12471554,
+      "bytes_out_ratio": 1.8951436017382701,
+      "unique_dest_ports": 0.35161885887457983,
+      "unique_dest_ips": 0.14224175713617204,
+      "failed_login_count": 0.14224175713617204,
+      "port_entropy": 0.26981165562280796,
+      "dest_ip_entropy": 0.14224175713617204,
+      "syn_like_ratio": 1.3905338801752767,
+      "dns_amplification_ratio": 1.8951436017382701
+    },
+    "last_seen": "2026-04-04T20:19:58.911712+00:00"
+  },
+  "44.206.81.88": {
+    "sample_count": 4,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 12288.0,
+      "bytes_out_ratio": 5.696457765667575,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 9.0,
+      "dns_amplification_ratio": 5.696457765667575
+    },
+    "variance": {
+      "request_rate": 0.6141249999999999,
+      "avg_bytes_per_request": 0.6141249999999999,
+      "bytes_out_ratio": 0.6141249999999999,
+      "unique_dest_ports": 0.6141249999999999,
+      "unique_dest_ips": 0.6141249999999999,
+      "failed_login_count": 0.6141249999999999,
+      "port_entropy": 0.6141249999999999,
+      "dest_ip_entropy": 0.6141249999999999,
+      "syn_like_ratio": 0.6141249999999999,
+      "dns_amplification_ratio": 0.6141249999999999
+    },
+    "last_seen": "2026-04-04T20:16:35.566890+00:00"
+  },
+  "2001:df0:13:7::15": {
+    "sample_count": 5,
+    "mean": {
+      "request_rate": 0.3137025767698325,
+      "avg_bytes_per_request": 15425.278409374998,
+      "bytes_out_ratio": 0.18075595211804238,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.20666414388020832,
+      "dns_amplification_ratio": 0.18075595211804238
+    },
+    "variance": {
+      "request_rate": 0.5287240969745116,
+      "avg_bytes_per_request": 175025771.89248687,
+      "bytes_out_ratio": 0.5361322000510881,
+      "unique_dest_ports": 0.5220062499999999,
+      "unique_dest_ips": 0.5220062499999999,
+      "failed_login_count": 0.5220062499999999,
+      "port_entropy": 0.5220062499999999,
+      "dest_ip_entropy": 0.5220062499999999,
+      "syn_like_ratio": 0.542625752601067,
+      "dns_amplification_ratio": 0.5361322000510881
+    },
+    "last_seen": "2026-04-04T20:17:35.096765+00:00"
+  },
+  "14.238.122.90": {
+    "sample_count": 10,
+    "mean": {
+      "request_rate": 0.2453071100918245,
+      "avg_bytes_per_request": 15415.339017893653,
+      "bytes_out_ratio": 0.6077861882057507,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.5167584830471699,
+      "dns_amplification_ratio": 0.6077861882057507
+    },
+    "variance": {
+      "request_rate": 0.23865108324101217,
+      "avg_bytes_per_request": 104962808.61871895,
+      "bytes_out_ratio": 0.5034823417944958,
+      "unique_dest_ports": 0.23161694628320303,
+      "unique_dest_ips": 0.23161694628320303,
+      "failed_login_count": 0.23161694628320303,
+      "port_entropy": 0.23161694628320303,
+      "dest_ip_entropy": 0.23161694628320303,
+      "syn_like_ratio": 0.355218300362127,
+      "dns_amplification_ratio": 0.5034823417944958
+    },
+    "last_seen": "2026-04-04T20:19:58.911566+00:00"
+  },
+  "14.238.122.110": {
+    "sample_count": 8,
+    "mean": {
+      "request_rate": 0.2931942460414338,
+      "avg_bytes_per_request": 20370.156502781363,
+      "bytes_out_ratio": 0.3039514919932985,
+      "unique_dest_ports": 1.2935479117187498,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.20148230121530236,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.30831492589417164,
+      "dns_amplification_ratio": 0.3039514919932985
+    },
+    "variance": {
+      "request_rate": 0.3295390895434607,
+      "avg_bytes_per_request": 272820592.39818317,
+      "bytes_out_ratio": 0.3523501807057064,
+      "unique_dest_ports": 0.5645506591569099,
+      "unique_dest_ips": 0.32057708828124987,
+      "failed_login_count": 0.32057708828124987,
+      "port_entropy": 0.44546948054673424,
+      "dest_ip_entropy": 0.32057708828124987,
+      "syn_like_ratio": 0.3508772615358953,
+      "dns_amplification_ratio": 0.3523501807057064
+    },
+    "last_seen": "2026-04-04T20:19:00.122222+00:00"
+  },
+  "52.168.117.175": {
+    "sample_count": 8,
+    "mean": {
+      "request_rate": 0.22061566580273254,
+      "avg_bytes_per_request": 6902.965606138264,
+      "bytes_out_ratio": 1.5174810099721119,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.1041482326115095,
+      "dns_amplification_ratio": 1.5174810099721119
+    },
+    "variance": {
+      "request_rate": 0.32135558248729573,
+      "avg_bytes_per_request": 7782717.373655875,
+      "bytes_out_ratio": 1.4304527361288377,
+      "unique_dest_ports": 0.32057708828124987,
+      "unique_dest_ips": 0.32057708828124987,
+      "failed_login_count": 0.32057708828124987,
+      "port_entropy": 0.32057708828124987,
+      "dest_ip_entropy": 0.32057708828124987,
+      "syn_like_ratio": 0.7633767315902483,
+      "dns_amplification_ratio": 1.4304527361288377
+    },
+    "last_seen": "2026-04-04T20:19:58.911423+00:00"
+  },
+  "2001:df0:13:1::1d": {
+    "sample_count": 5,
+    "mean": {
+      "request_rate": 0.2683028700948489,
+      "avg_bytes_per_request": 8872.277014062498,
+      "bytes_out_ratio": 3.4851106319127987,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.4502791666666663,
+      "dns_amplification_ratio": 3.4851106319127987
+    },
+    "variance": {
+      "request_rate": 0.5250161873827572,
+      "avg_bytes_per_request": 16335379.075702395,
+      "bytes_out_ratio": 2.301922387018587,
+      "unique_dest_ports": 0.5220062499999999,
+      "unique_dest_ips": 0.5220062499999999,
+      "failed_login_count": 0.5220062499999999,
+      "port_entropy": 0.5220062499999999,
+      "dest_ip_entropy": 0.5220062499999999,
+      "syn_like_ratio": 1.7415275635416663,
+      "dns_amplification_ratio": 2.301922387018587
+    },
+    "last_seen": "2026-04-04T20:18:35.338795+00:00"
+  },
+  "3.228.43.71": {
+    "sample_count": 7,
+    "mean": {
+      "request_rate": 0.23628901915762282,
+      "avg_bytes_per_request": 15909.59944244759,
+      "bytes_out_ratio": 1.4649346386376931,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 1.125341171965889,
+      "dns_amplification_ratio": 1.4649346386376931
+    },
+    "variance": {
+      "request_rate": 0.37920624559651334,
+      "avg_bytes_per_request": 42538099.69561979,
+      "bytes_out_ratio": 1.6437565223976618,
+      "unique_dest_ports": 0.3771495156249999,
+      "unique_dest_ips": 0.3771495156249999,
+      "failed_login_count": 0.3771495156249999,
+      "port_entropy": 0.3771495156249999,
+      "dest_ip_entropy": 0.3771495156249999,
+      "syn_like_ratio": 1.0263608377845062,
+      "dns_amplification_ratio": 1.6437565223976618
+    },
+    "last_seen": "2026-04-04T20:19:58.911415+00:00"
+  },
+  "2404:6800:4003:c03::5c": {
+    "sample_count": 6,
+    "mean": {
+      "request_rate": 0.21571686542078475,
+      "avg_bytes_per_request": 11913.04626146173,
+      "bytes_out_ratio": 0.44855399851583866,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.3772175563631726,
+      "dns_amplification_ratio": 0.44855399851583866
+    },
+    "variance": {
+      "request_rate": 0.4439417837288704,
+      "avg_bytes_per_request": 50565834.15527391,
+      "bytes_out_ratio": 0.8212939201870721,
+      "unique_dest_ports": 0.4437053124999999,
+      "unique_dest_ips": 0.4437053124999999,
+      "failed_login_count": 0.4437053124999999,
+      "port_entropy": 0.4437053124999999,
+      "dest_ip_entropy": 0.4437053124999999,
+      "syn_like_ratio": 0.6447338234265587,
+      "dns_amplification_ratio": 0.8212939201870721
+    },
+    "last_seen": "2026-04-04T20:19:58.911407+00:00"
+  },
+  "2404:6800:4005:805::200e": {
+    "sample_count": 6,
+    "mean": {
+      "request_rate": 0.21571684573689923,
+      "avg_bytes_per_request": 11913.04626146173,
+      "bytes_out_ratio": 0.44855399851583866,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.3772175563631726,
+      "dns_amplification_ratio": 0.44855399851583866
+    },
+    "variance": {
+      "request_rate": 0.4439417832362063,
+      "avg_bytes_per_request": 50565834.15527391,
+      "bytes_out_ratio": 0.8212939201870721,
+      "unique_dest_ports": 0.4437053124999999,
+      "unique_dest_ips": 0.4437053124999999,
+      "failed_login_count": 0.4437053124999999,
+      "port_entropy": 0.4437053124999999,
+      "dest_ip_entropy": 0.4437053124999999,
+      "syn_like_ratio": 0.6447338234265587,
+      "dns_amplification_ratio": 0.8212939201870721
+    },
+    "last_seen": "2026-04-04T20:19:58.911599+00:00"
+  },
+  "206.206.82.202": {
+    "sample_count": 3,
+    "mean": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 1077.0,
+      "bytes_out_ratio": 0.2836710369487485,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.0,
+      "dns_amplification_ratio": 0.2836710369487485
+    },
+    "variance": {
+      "request_rate": 0.7224999999999999,
+      "avg_bytes_per_request": 0.7224999999999999,
+      "bytes_out_ratio": 0.7224999999999999,
+      "unique_dest_ports": 0.7224999999999999,
+      "unique_dest_ips": 0.7224999999999999,
+      "failed_login_count": 0.7224999999999999,
+      "port_entropy": 0.7224999999999999,
+      "dest_ip_entropy": 0.7224999999999999,
+      "syn_like_ratio": 0.7224999999999999,
+      "dns_amplification_ratio": 0.7224999999999999
+    },
+    "last_seen": "2026-04-04T20:19:58.911684+00:00"
+  },
+  "52.182.141.63": {
+    "sample_count": 2,
+    "mean": {
+      "request_rate": 0.2511458620290322,
+      "avg_bytes_per_request": 8885.1975,
+      "bytes_out_ratio": 3.441559634701658,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.5825396825396827,
+      "dns_amplification_ratio": 3.441559634701658
+    },
+    "variance": {
+      "request_rate": 0.8502844414188587,
+      "avg_bytes_per_request": 3690761.6683750004,
+      "bytes_out_ratio": 1.0909561793454374,
+      "unique_dest_ports": 0.85,
+      "unique_dest_ips": 0.85,
+      "failed_login_count": 0.85,
+      "port_entropy": 0.85,
+      "dest_ip_entropy": 0.85,
+      "syn_like_ratio": 1.104119425547997,
+      "dns_amplification_ratio": 1.0909561793454374
+    },
+    "last_seen": "2026-04-04T20:19:58.911381+00:00"
+  },
+  "34.0.206.140": {
+    "sample_count": 1,
+    "mean": {
+      "request_rate": 0.24109591788928816,
+      "avg_bytes_per_request": 1721.6,
+      "bytes_out_ratio": 0.567085381394502,
+      "unique_dest_ports": 2.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 0.7219280948873623,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.5,
+      "dns_amplification_ratio": 0.567085381394502
+    },
+    "variance": {
+      "request_rate": 1.0,
+      "avg_bytes_per_request": 1.0,
+      "bytes_out_ratio": 1.0,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 1.0,
+      "port_entropy": 1.0,
+      "dest_ip_entropy": 1.0,
+      "syn_like_ratio": 1.0,
+      "dns_amplification_ratio": 1.0
+    },
+    "last_seen": "2026-04-04T20:19:58.911473+00:00"
+  },
+  "45.33.32.156": {
+    "sample_count": 19,
+    "mean": {
+      "request_rate": 496.7889289233393,
+      "avg_bytes_per_request": 11033.228790915873,
+      "bytes_out_ratio": 167.48795568473196,
+      "unique_dest_ports": 3.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 1.5814700213624562,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 106.26610453515141,
+      "dns_amplification_ratio": 167.48795568473196
+    },
+    "variance": {
+      "request_rate": 1269.273504567455,
+      "avg_bytes_per_request": 76751.08716534375,
+      "bytes_out_ratio": 20.74760121409406,
+      "unique_dest_ports": 0.05364640980555616,
+      "unique_dest_ips": 0.05364640980555616,
+      "failed_login_count": 0.05364640980555616,
+      "port_entropy": 0.053653351326929506,
+      "dest_ip_entropy": 0.05364640980555616,
+      "syn_like_ratio": 1.0346264628787434,
+      "dns_amplification_ratio": 20.74760121409406
+    },
+    "last_seen": "2026-04-04T20:55:42.269993+00:00"
+  },
+  "198.51.100.66": {
+    "sample_count": 5,
+    "mean": {
+      "request_rate": 45.468160603734795,
+      "avg_bytes_per_request": 7178.511115585937,
+      "bytes_out_ratio": 3.2520132934641643,
+      "unique_dest_ports": 4.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 1.9821481597812147,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.0657435616992954,
+      "dns_amplification_ratio": 3.2520132934641643
+    },
+    "variance": {
+      "request_rate": 1285.1193339846845,
+      "avg_bytes_per_request": 75970.80349138161,
+      "bytes_out_ratio": 0.5363033845653733,
+      "unique_dest_ports": 0.5220062499999999,
+      "unique_dest_ips": 0.5220062499999999,
+      "failed_login_count": 0.5220062499999999,
+      "port_entropy": 0.522032987326881,
+      "dest_ip_entropy": 0.5220062499999999,
+      "syn_like_ratio": 0.5224508303768769,
+      "dns_amplification_ratio": 0.5363033845653733
+    },
+    "last_seen": "2026-04-04T20:55:42.269915+00:00"
+  },
+  "91.189.114.8": {
+    "sample_count": 5,
+    "mean": {
+      "request_rate": 56.85848175326629,
+      "avg_bytes_per_request": 119.864399375,
+      "bytes_out_ratio": 1.0164547600178695,
+      "unique_dest_ports": 152.200625,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 7.16586243977474,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 2.0,
+      "dns_amplification_ratio": 1.0164547600178695
+    },
+    "variance": {
+      "request_rate": 2005.540760109225,
+      "avg_bytes_per_request": 0.5467082741171877,
+      "bytes_out_ratio": 0.5220217747427526,
+      "unique_dest_ports": 2936.0011234374997,
+      "unique_dest_ips": 0.5220062499999999,
+      "failed_login_count": 0.5220062499999999,
+      "port_entropy": 0.8155541617187511,
+      "dest_ip_entropy": 0.5220062499999999,
+      "syn_like_ratio": 0.5220062499999999,
+      "dns_amplification_ratio": 0.5220217747427526
+    },
+    "last_seen": "2026-04-04T20:55:42.269950+00:00"
+  },
+  "103.253.11.97": {
+    "sample_count": 11,
+    "mean": {
+      "request_rate": 46.444858821313424,
+      "avg_bytes_per_request": 809.6736473485244,
+      "bytes_out_ratio": 0.5917248625321314,
+      "unique_dest_ports": 3.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 0.0,
+      "port_entropy": 1.572001990014534,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 0.9863403743014136,
+      "dns_amplification_ratio": 0.5917248625321314
+    },
+    "variance": {
+      "request_rate": 1631.425764602609,
+      "avg_bytes_per_request": 167.75375961922146,
+      "bytes_out_ratio": 0.19701384569303776,
+      "unique_dest_ports": 0.19687440434072256,
+      "unique_dest_ips": 0.19687440434072256,
+      "failed_login_count": 0.19687440434072256,
+      "port_entropy": 0.19711662513522848,
+      "dest_ip_entropy": 0.19687440434072256,
+      "syn_like_ratio": 0.19772888411347517,
+      "dns_amplification_ratio": 0.19701384569303776
+    },
+    "last_seen": "2026-04-04T20:57:05.919177+00:00"
+  },
+  "185.220.101.42": {
+    "sample_count": 7,
+    "mean": {
+      "request_rate": 137.60560396646838,
+      "avg_bytes_per_request": 94.57782547671871,
+      "bytes_out_ratio": 0.7069259671997283,
+      "unique_dest_ports": 1.0,
+      "unique_dest_ips": 1.0,
+      "failed_login_count": 15025.474321734375,
+      "port_entropy": 0.0,
+      "dest_ip_entropy": 0.0,
+      "syn_like_ratio": 27.595003806620753,
+      "dns_amplification_ratio": 0.7069259671997283
+    },
+    "variance": {
+      "request_rate": 7564.219994722103,
+      "avg_bytes_per_request": 1.4189185349816664,
+      "bytes_out_ratio": 0.37723741830523894,
+      "unique_dest_ports": 0.3771495156249999,
+      "unique_dest_ips": 0.3771495156249999,
+      "failed_login_count": 33428313.327891253,
+      "port_entropy": 0.3771495156249999,
+      "dest_ip_entropy": 0.3771495156249999,
+      "syn_like_ratio": 0.8807737777776286,
+      "dns_amplification_ratio": 0.37723741830523894
+    },
+    "last_seen": "2026-04-04T20:55:42.269979+00:00"
+  }
+}

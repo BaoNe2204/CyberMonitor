@@ -279,6 +279,7 @@ public class AlertsController : ControllerBase
 
         var server = await _db.Servers.FindAsync(alert.ServerId);
 
+        // Send to admin users
         foreach (var user in users)
         {
             // DB notification
@@ -294,6 +295,40 @@ public class AlertsController : ControllerBase
 
             // Email
             await _emailService.SendAlertEmailAsync(alert.TenantId, user.Email, alert, server);
+
+            // SignalR real-time push
+            var notifDto = new NotificationDto(
+                Guid.NewGuid(), alert.TenantId, user.Id,
+                $"[{alert.Severity}] {alert.AlertType}",
+                alert.Title,
+                alert.Severity == "Critical" ? "Alert" : "Warning",
+                false,
+                $"/dashboard/tickets/{ticket.Id}",
+                DateTime.UtcNow
+            );
+            await _alertHub.Clients.Group(alert.TenantId.ToString()).NotificationReceived(notifDto);
+        }
+
+        // Send to server-specific alert emails (if server is specified)
+        if (alert.ServerId.HasValue)
+        {
+            var serverAlertEmails = await _db.ServerAlertEmails
+                .Where(e => e.ServerId == alert.ServerId.Value && e.IsActive)
+                .ToListAsync();
+
+            foreach (var alertEmail in serverAlertEmails)
+            {
+                try
+                {
+                    await _emailService.SendAlertEmailAsync(alert.TenantId, alertEmail.Email, alert, server);
+                    _logger.LogInformation("Alert email sent to {Email} for server {ServerId}", 
+                        alertEmail.Email, alert.ServerId.Value);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send alert email to {Email}", alertEmail.Email);
+                }
+            }
         }
 
         await _db.SaveChangesAsync();

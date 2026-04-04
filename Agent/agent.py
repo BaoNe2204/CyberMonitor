@@ -777,7 +777,12 @@ class CyberMonitorAgentV3:
                 "os": metrics.os_name,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "agentVersion": "3.0-hybrid",
+                "cpuPercent": metrics.cpu_percent,
+                "ramPercent": metrics.ram_percent,
+                "diskPercent": metrics.disk_percent,
             }
+            logger.debug("[METRICS] Sending: CPU=%.1f%% RAM=%.1f%% DISK=%.1f%%", 
+                        metrics.cpu_percent, metrics.ram_percent, metrics.disk_percent)
             success = self._send_with_retry(payload)
             with self._lock:
                 if success:

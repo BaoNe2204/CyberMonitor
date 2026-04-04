@@ -24,9 +24,11 @@ interface DefenseProps {
   blockedIPs: BlockedIP[];
   onRefresh: () => void;
   onUnblock: (ip: string) => Promise<boolean>;
-  onManualBlock: (ip: string, reason?: string, severity?: string, durationMinutes?: number) => Promise<boolean>;
+  onManualBlock: (ip: string, reason?: string, severity?: string, durationMinutes?: number, serverId?: string | null) => Promise<boolean>;
   onCheckIP: (ip: string) => Promise<any>;
   userRole?: string;
+  selectedServerId?: string | null;  // Current selected server for context
+  servers?: Array<{ id: string; name: string }>;  // Available servers for selection
 }
 
 const severityColors: Record<string, string> = {
@@ -67,6 +69,8 @@ export const Defense = ({
   onManualBlock,
   onCheckIP,
   userRole,
+  selectedServerId,
+  servers = [],
 }: DefenseProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showBlockModal, setShowBlockModal] = useState(false);
@@ -74,11 +78,18 @@ export const Defense = ({
   const [blockReason, setBlockReason] = useState('');
   const [blockSeverity, setBlockSeverity] = useState('High');
   const [blockDuration, setBlockDuration] = useState('');
+  const [blockServerId, setBlockServerId] = useState<string | null>(null);  // Server to block on
   const [blockLoading, setBlockLoading] = useState(false);
   const [checkIPInput, setCheckIPInput] = useState('');
   const [checkResult, setCheckResult] = useState<any>(null);
   const [checkLoading, setCheckLoading] = useState(false);
   const [unblocking, setUnblocking] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 4000);
+  };
 
   const filteredIPs = blockedIPs.filter(
     (ip) =>
@@ -94,15 +105,40 @@ export const Defense = ({
   };
 
   const handleBlock = async () => {
-    if (!blockIP.trim()) return;
+    if (!blockIP.trim()) {
+      showNotification('error', 'Vui lòng nhập địa chỉ IP!');
+      return;
+    }
+
+    // Validate IP format
+    const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+    if (!ipRegex.test(blockIP.trim())) {
+      showNotification('error', 'Địa chỉ IP không hợp lệ! (vd: 192.168.1.100)');
+      return;
+    }
+
     setBlockLoading(true);
-    const duration = blockDuration ? parseInt(blockDuration) : undefined;
-    await onManualBlock(blockIP, blockReason, blockSeverity, duration);
-    setBlockLoading(false);
-    setShowBlockModal(false);
-    setBlockIP('');
-    setBlockReason('');
-    setBlockDuration('');
+    try {
+      const duration = blockDuration ? parseInt(blockDuration) : undefined;
+      const success = await onManualBlock(blockIP.trim(), blockReason || undefined, blockSeverity, duration, blockServerId);
+      
+      if (success) {
+        const scope = blockServerId ? servers.find(s => s.id === blockServerId)?.name : 'tất cả servers';
+        showNotification('success', `✅ Đã chặn IP ${blockIP} trên ${scope}!`);
+        setShowBlockModal(false);
+        setBlockIP('');
+        setBlockReason('');
+        setBlockDuration('');
+        setBlockSeverity('High');
+        setBlockServerId(null);
+      } else {
+        showNotification('error', 'Không thể chặn IP. Vui lòng thử lại!');
+      }
+    } catch (error) {
+      showNotification('error', 'Lỗi khi chặn IP. Vui lòng kiểm tra lại!');
+    } finally {
+      setBlockLoading(false);
+    }
   };
 
   const handleCheckIP = async () => {
@@ -114,13 +150,38 @@ export const Defense = ({
   };
 
   const handleUnblock = async (ip: string) => {
+    if (!confirm(`Bạn có chắc muốn bỏ chặn IP ${ip}?`)) return;
+    
     setUnblocking(ip);
-    await onUnblock(ip);
-    setUnblocking(null);
+    try {
+      const success = await onUnblock(ip);
+      if (success) {
+        showNotification('success', `✅ Đã bỏ chặn IP ${ip} thành công!`);
+      } else {
+        showNotification('error', 'Không thể bỏ chặn IP. Vui lòng thử lại!');
+      }
+    } catch (error) {
+      showNotification('error', 'Lỗi khi bỏ chặn IP!');
+    } finally {
+      setUnblocking(null);
+    }
   };
 
   return (
     <div className="space-y-6">
+      {/* Notification Toast */}
+      {notification && (
+        <div className={cn(
+          "fixed top-4 right-4 z-[200] px-6 py-4 rounded-lg shadow-2xl border flex items-center gap-3 animate-in slide-in-from-top-2",
+          notification.type === 'success' 
+            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500" 
+            : "bg-rose-500/10 border-rose-500/30 text-rose-500"
+        )}>
+          {notification.type === 'success' ? <CheckCircle size={20} /> : <XCircle size={20} />}
+          <span className="font-medium">{notification.message}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -145,7 +206,11 @@ export const Defense = ({
             Refresh
           </button>
           <button
-            onClick={() => setShowBlockModal(true)}
+            onClick={() => {
+              setShowBlockModal(true);
+              // Set initial server based on current selection
+              setBlockServerId(selectedServerId || null);
+            }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-red-600 hover:bg-red-700 text-white transition-all"
           >
             <Plus size={16} />
@@ -283,6 +348,7 @@ export const Defense = ({
               <thead>
                 <tr className={cn(theme === 'dark' ? 'bg-slate-800/50 text-slate-400' : 'bg-slate-50 text-slate-500')}>
                   <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">IP Address</th>
+                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">Server</th>
                   <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">Attack Type</th>
                   <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">Severity</th>
                   <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider">Blocked By</th>
@@ -296,7 +362,7 @@ export const Defense = ({
                   <tr
                     key={ip.id}
                     className={cn(
-                      "transition-colors hover:underline",
+                      "transition-colors",
                       theme === 'dark' ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50'
                     )}
                   >
@@ -307,6 +373,21 @@ export const Defense = ({
                           {ip.ipAddress}
                         </span>
                       </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {ip.serverName ? (
+                        <span className={cn(
+                          "inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium",
+                          theme === 'dark' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'bg-blue-100 text-blue-600 border border-blue-200'
+                        )}>
+                          <Server size={12} />
+                          {ip.serverName}
+                        </span>
+                      ) : (
+                        <span className={cn("text-xs italic", theme === 'dark' ? 'text-slate-500' : 'text-slate-400')}>
+                          Tất cả servers
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <span className={cn(
@@ -385,21 +466,50 @@ export const Defense = ({
                 </label>
                 <input
                   type="text"
-                  placeholder="vd: 192.168.1.100"
+                  placeholder="vd: 192.168.1.100 hoặc 203.0.113.45"
                   value={blockIP}
                   onChange={(e) => setBlockIP(e.target.value)}
                   className={cn(
-                    "w-full px-3 py-2 rounded-lg border text-sm outline-none",
+                    "w-full px-3 py-2 rounded-lg border text-sm outline-none font-mono",
                     theme === 'dark'
                       ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500 focus:border-red-500"
                       : "bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-red-500"
                   )}
                 />
+                <p className="text-xs text-slate-500 mt-1">Nhập địa chỉ IPv4 cần chặn</p>
               </div>
 
               <div>
                 <label className={cn("block text-xs font-medium mb-1", theme === 'dark' ? 'text-slate-400' : 'text-slate-500')}>
-                  Severity
+                  Áp dụng cho *
+                </label>
+                <select
+                  value={blockServerId || ''}
+                  onChange={(e) => setBlockServerId(e.target.value || null)}
+                  className={cn(
+                    "w-full px-3 py-2 rounded-lg border text-sm outline-none",
+                    theme === 'dark'
+                      ? "bg-slate-800 border-slate-700 text-white"
+                      : "bg-white border-slate-300 text-slate-900"
+                  )}
+                >
+                  <option value="">Tất cả servers (tenant-wide)</option>
+                  {servers.map((server) => (
+                    <option key={server.id} value={server.id}>
+                      {server.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-slate-500 mt-1">
+                  {blockServerId 
+                    ? `Chặn chỉ trên server: ${servers.find(s => s.id === blockServerId)?.name}`
+                    : `Chặn trên tất cả ${servers.length} servers`}
+                </p>
+              </div>
+
+              <div>
+                <label className={cn("block text-xs font-medium mb-1", theme === 'dark' ? 'text-slate-400' : 'text-slate-500')}>
+                  Severity *
                 </label>
                 <div className="grid grid-cols-4 gap-2">
                   {['Low', 'Medium', 'High', 'Critical'].map((s) => (
@@ -410,7 +520,7 @@ export const Defense = ({
                         "px-2 py-1.5 rounded-lg text-xs font-bold border transition-all",
                         blockSeverity === s
                           ? severityColors[s]
-                          : (theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500')
+                          : (theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700' : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200')
                       )}
                     >
                       {s}
@@ -421,15 +531,15 @@ export const Defense = ({
 
               <div>
                 <label className={cn("block text-xs font-medium mb-1", theme === 'dark' ? 'text-slate-400' : 'text-slate-500')}>
-                  Lý do (tùy chọn)
+                  Lý do chặn (tùy chọn)
                 </label>
-                <input
-                  type="text"
-                  placeholder="vd: Suspicious SSH brute force"
+                <textarea
+                  placeholder="vd: Phát hiện SSH brute force attack từ IP này"
                   value={blockReason}
                   onChange={(e) => setBlockReason(e.target.value)}
+                  rows={2}
                   className={cn(
-                    "w-full px-3 py-2 rounded-lg border text-sm outline-none",
+                    "w-full px-3 py-2 rounded-lg border text-sm outline-none resize-none",
                     theme === 'dark'
                       ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500"
                       : "bg-white border-slate-300 text-slate-900 placeholder-slate-400"
@@ -439,21 +549,46 @@ export const Defense = ({
 
               <div>
                 <label className={cn("block text-xs font-medium mb-1", theme === 'dark' ? 'text-slate-400' : 'text-slate-500')}>
-                  Thời hạn (phút) - để trống = vĩnh viễn
+                  Thời hạn chặn
                 </label>
-                <input
-                  type="number"
-                  placeholder="vd: 60"
-                  value={blockDuration}
-                  onChange={(e) => setBlockDuration(e.target.value)}
-                  min="1"
-                  className={cn(
-                    "w-full px-3 py-2 rounded-lg border text-sm outline-none",
-                    theme === 'dark'
-                      ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500"
-                      : "bg-white border-slate-300 text-slate-900 placeholder-slate-400"
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="number"
+                    placeholder="Số phút"
+                    value={blockDuration}
+                    onChange={(e) => setBlockDuration(e.target.value)}
+                    min="1"
+                    className={cn(
+                      "px-3 py-2 rounded-lg border text-sm outline-none",
+                      theme === 'dark'
+                        ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500"
+                        : "bg-white border-slate-300 text-slate-900 placeholder-slate-400"
+                    )}
+                  />
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => setBlockDuration('60')}
+                      className={cn("flex-1 px-2 py-1.5 rounded text-xs font-medium transition-all", theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600')}
+                    >
+                      1h
+                    </button>
+                    <button
+                      onClick={() => setBlockDuration('1440')}
+                      className={cn("flex-1 px-2 py-1.5 rounded text-xs font-medium transition-all", theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600')}
+                    >
+                      1d
+                    </button>
+                    <button
+                      onClick={() => setBlockDuration('')}
+                      className={cn("flex-1 px-2 py-1.5 rounded text-xs font-medium transition-all", theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600')}
+                    >
+                      ∞
+                    </button>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  {blockDuration ? `Chặn trong ${blockDuration} phút` : 'Chặn vĩnh viễn (không tự động hết hạn)'}
+                </p>
               </div>
             </div>
 

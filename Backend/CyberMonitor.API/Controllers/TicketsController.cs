@@ -162,6 +162,52 @@ public class TicketsController : ControllerBase
         // Real-time notification
         await _hub.Clients.Group(request.TenantId.ToString()).TicketCreated(dto);
 
+        // === NOTIFICATION EMAIL ===
+        // Gửi email cho tất cả Admin/SuperAdmin trong tenant về ticket mới
+        var admins = await _db.Users
+            .Where(u => u.TenantId == request.TenantId && (u.Role == "Admin" || u.Role == "SuperAdmin"))
+            .ToListAsync();
+
+        var creator = await _db.Users.FindAsync(request.CreatedBy);
+
+        foreach (var admin in admins)
+        {
+            // DB notification
+            _db.Notifications.Add(new Notification
+            {
+                TenantId = request.TenantId,
+                UserId = admin.Id,
+                Title = $"🎫 Ticket mới: {ticketNumber}",
+                Message = $"{ticket.Title} (Priority: {ticket.Priority})",
+                Type = "Ticket",
+                Link = $"/dashboard/tickets/{ticket.Id}"
+            });
+
+            // Email - gửi cho người được assign hoặc tất cả admin nếu chưa assign
+            if (request.AssignedTo.HasValue && request.AssignedTo.Value == admin.Id)
+            {
+                await _emailService.SendTicketNotificationAsync(request.TenantId, admin.Email, ticket, "đã được phân công cho bạn");
+            }
+            else if (!request.AssignedTo.HasValue)
+            {
+                await _emailService.SendTicketNotificationAsync(request.TenantId, admin.Email, ticket, "Ticket mới được tạo");
+            }
+        }
+
+        // SignalR real-time notification push
+        var notifDto = new NotificationDto(
+            Guid.NewGuid(), request.TenantId, Guid.Empty,
+            $"🎫 Ticket mới: {ticketNumber}",
+            $"{ticket.Title} (Priority: {ticket.Priority})",
+            "Ticket",
+            false,
+            $"/dashboard/tickets/{ticket.Id}",
+            DateTime.UtcNow
+        );
+        await _hub.Clients.Group(request.TenantId.ToString()).NotificationReceived(notifDto);
+
+        await _db.SaveChangesAsync();
+
         _logger.LogInformation("Ticket {Number} created: {Title}", ticketNumber, ticket.Title);
 
         return Ok(new ApiResponse<TicketDto>(true, $"Ticket {ticketNumber} đã được tạo!", dto));
@@ -256,6 +302,62 @@ public class TicketsController : ControllerBase
         // Real-time notification
         await _hub.Clients.Group(ticket.TenantId.ToString()).TicketUpdated(dto);
 
+        // === NOTIFICATION EMAIL ===
+        var statusAction = request.Status switch
+        {
+            "IN_PROGRESS" => "chuyển sang IN_PROGRESS",
+            "RESOLVED" => "đã được RESOLVED",
+            "CLOSED" => "đã được CLOSED",
+            "OPEN" => "mở lại",
+            _ => $"cập nhật trạng thái thành {request.Status}"
+        };
+
+        var allAdmins = await _db.Users
+            .Where(u => u.TenantId == ticket.TenantId && (u.Role == "Admin" || u.Role == "SuperAdmin"))
+            .ToListAsync();
+
+        foreach (var admin in allAdmins)
+        {
+            // DB notification
+            _db.Notifications.Add(new Notification
+            {
+                TenantId = ticket.TenantId,
+                UserId = admin.Id,
+                Title = $"🔔 Ticket {ticket.TicketNumber} {statusAction}",
+                Message = ticket.Title,
+                Type = "Ticket",
+                Link = $"/dashboard/tickets/{ticket.Id}"
+            });
+
+            // Email - gửi cho người được assign và người tạo
+            if (ticket.AssignedTo.HasValue && ticket.AssignedTo.Value == admin.Id)
+            {
+                await _emailService.SendTicketNotificationAsync(ticket.TenantId, admin.Email, ticket, statusAction);
+            }
+            else if (ticket.CreatedBy.HasValue)
+            {
+                var createdBy = await _db.Users.FindAsync(ticket.CreatedBy.Value);
+                if (createdBy != null && createdBy.Id == admin.Id)
+                {
+                    await _emailService.SendTicketNotificationAsync(ticket.TenantId, admin.Email, ticket, statusAction);
+                }
+            }
+        }
+
+        // SignalR real-time notification push
+        var notifDto = new NotificationDto(
+            Guid.NewGuid(), ticket.TenantId, Guid.Empty,
+            $"🔔 Ticket {ticket.TicketNumber} {statusAction}",
+            ticket.Title,
+            "Ticket",
+            false,
+            $"/dashboard/tickets/{ticket.Id}",
+            DateTime.UtcNow
+        );
+        await _hub.Clients.Group(ticket.TenantId.ToString()).NotificationReceived(notifDto);
+
+        await _db.SaveChangesAsync();
+
         return Ok(new ApiResponse<TicketDto>(true, $"Ticket status updated to {request.Status}", dto));
     }
 
@@ -303,6 +405,64 @@ public class TicketsController : ControllerBase
         var dto = MapTicketDto(ticket);
         await _hub.Clients.Group(ticket.TenantId.ToString()).TicketUpdated(dto);
 
+        // === NOTIFICATION EMAIL ===
+        // Lấy thông tin người được assign và người gán
+        var assignedUser = await _db.Users.FindAsync(request.AssignedTo);
+        var assigner = await _db.Users.FindAsync(request.AssignedBy);
+
+        // Gửi email cho người được assign
+        if (assignedUser != null)
+        {
+            _db.Notifications.Add(new Notification
+            {
+                TenantId = ticket.TenantId,
+                UserId = assignedUser.Id,
+                Title = $"📋 Bạn được phân công ticket: {ticket.TicketNumber}",
+                Message = ticket.Title,
+                Type = "Ticket",
+                Link = $"/dashboard/tickets/{ticket.Id}"
+            });
+
+            await _emailService.SendTicketNotificationAsync(
+                ticket.TenantId, assignedUser.Email, ticket,
+                $"đã phân công cho bạn (bởi {assigner?.FullName ?? "System"})"
+            );
+        }
+
+        // Gửi cho tất cả Admin khác (không phải người được assign)
+        var admins = await _db.Users
+            .Where(u => u.TenantId == ticket.TenantId &&
+                   (u.Role == "Admin" || u.Role == "SuperAdmin") &&
+                   u.Id != request.AssignedTo)
+            .ToListAsync();
+
+        foreach (var admin in admins)
+        {
+            _db.Notifications.Add(new Notification
+            {
+                TenantId = ticket.TenantId,
+                UserId = admin.Id,
+                Title = $"📋 Ticket {ticket.TicketNumber} được phân công cho {assignedUser?.FullName ?? "Unknown"}",
+                Message = ticket.Title,
+                Type = "Ticket",
+                Link = $"/dashboard/tickets/{ticket.Id}"
+            });
+        }
+
+        // SignalR real-time notification push
+        var notifDto = new NotificationDto(
+            Guid.NewGuid(), ticket.TenantId, request.AssignedTo ?? Guid.Empty,
+            $"📋 Bạn được phân công ticket: {ticket.TicketNumber}",
+            ticket.Title,
+            "Ticket",
+            false,
+            $"/dashboard/tickets/{ticket.Id}",
+            DateTime.UtcNow
+        );
+        await _hub.Clients.Group(ticket.TenantId.ToString()).NotificationReceived(notifDto);
+
+        await _db.SaveChangesAsync();
+
         return Ok(new ApiResponse<TicketDto>(true, "Ticket đã được phân công!", dto));
     }
 
@@ -333,6 +493,59 @@ public class TicketsController : ControllerBase
         await _db.SaveChangesAsync();
 
         var user = await _db.Users.FindAsync(request.UserId);
+
+        // === NOTIFICATION EMAIL ===
+        // Load ticket relationships for notification
+        var ticketForNotif = await _db.Tickets
+            .Include(t => t.AssignedToUser)
+            .Include(t => t.CreatedByUser)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        if (ticketForNotif != null && user != null)
+        {
+            // Gửi cho người được assign và người tạo (nếu khác người comment)
+            var recipients = new HashSet<Guid>();
+            if (ticketForNotif.AssignedTo.HasValue) recipients.Add(ticketForNotif.AssignedTo.Value);
+            if (ticketForNotif.CreatedBy.HasValue) recipients.Add(ticketForNotif.CreatedBy.Value);
+
+            foreach (var recipientId in recipients)
+            {
+                if (recipientId == request.UserId) continue; // Không gửi cho chính mình
+
+                var recipient = await _db.Users.FindAsync(recipientId);
+                if (recipient != null)
+                {
+                    _db.Notifications.Add(new Notification
+                    {
+                        TenantId = ticketForNotif.TenantId,
+                        UserId = recipient.Id,
+                        Title = $"💬 Comment mới trên {ticketForNotif.TicketNumber}",
+                        Message = $"{user.FullName}: {request.Content[..Math.Min(request.Content.Length, 100)]}...",
+                        Type = "Ticket",
+                        Link = $"/dashboard/tickets/{ticketForNotif.Id}"
+                    });
+
+                    await _emailService.SendTicketCommentEmailAsync(
+                        ticketForNotif.TenantId, recipient.Email, ticketForNotif,
+                        user.FullName ?? "System", request.Content
+                    );
+                }
+            }
+
+            // SignalR push
+            var notifDto = new NotificationDto(
+                Guid.NewGuid(), ticketForNotif.TenantId, request.UserId,
+                $"💬 Comment mới trên {ticketForNotif.TicketNumber}",
+                $"{user.FullName}: {request.Content[..Math.Min(request.Content.Length, 100)]}...",
+                "Ticket",
+                false,
+                $"/dashboard/tickets/{ticketForNotif.Id}",
+                DateTime.UtcNow
+            );
+            await _hub.Clients.Group(ticketForNotif.TenantId.ToString()).NotificationReceived(notifDto);
+        }
+
+        await _db.SaveChangesAsync();
 
         return Ok(new ApiResponse<TicketCommentDto>(true, "Comment added!", new TicketCommentDto(
             comment.Id,

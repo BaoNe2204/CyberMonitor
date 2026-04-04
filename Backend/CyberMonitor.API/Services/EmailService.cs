@@ -12,6 +12,9 @@ public interface IEmailService
     Task SendTicketNotificationAsync(Guid tenantId, string toEmail, Ticket ticket, string action);
     Task SendWelcomeEmailAsync(string toEmail, string companyName, string planName);
     Task SendPaymentConfirmationAsync(string toEmail, PaymentOrder order);
+    Task SendNewUserCreatedEmailAsync(string toEmail, string fullName, string password, string role);
+    Task SendPasswordChangedEmailAsync(string toEmail, string fullName);
+    Task SendTicketCommentEmailAsync(Guid tenantId, string toEmail, Ticket ticket, string commenterName, string commentContent);
 }
 
 public class EmailService : IEmailService
@@ -25,23 +28,37 @@ public class EmailService : IEmailService
         _logger = logger;
     }
 
+    // private SmtpClient BuildSmtpClient()
+    // {
+    //     var host = "smtp.gmail.com";
+    //     var port = 587;
+        
+    //     var user = "cybermonitor.nttu@gmail.com"; 
+    //     var pass = "jukjvhlhanvlkhlg";            
+    //     var client = new SmtpClient(host, port);
+    //     client.UseDefaultCredentials = false; 
+    //     client.Credentials = new NetworkCredential(user, pass);
+    //     client.EnableSsl = true;
+
+    //     return client;
+    // }
     private SmtpClient BuildSmtpClient()
     {
-        var host = _configuration["EmailConfig:SmtpHost"] ?? "smtp.gmail.com";
-        var port = int.Parse(_configuration["EmailConfig:SmtpPort"] ?? "587");
-        var user = _configuration["EmailConfig:SmtpUser"] ?? "";
-        var pass = _configuration["EmailConfig:SmtpPass"] ?? "";
+        var host = _configuration["ConnectionStrings:EmailConfig:SmtpHost"] ?? "smtp.gmail.com";
+        var port = int.Parse(_configuration["ConnectionStrings:EmailConfig:SmtpPort"] ?? "587");
+        var user = _configuration["ConnectionStrings:EmailConfig:SmtpUser"] ?? "";
+        var pass = _configuration["ConnectionStrings:EmailConfig:SmtpPass"] ?? "";
 
-        var client = new SmtpClient(host, port)
-        {
-            EnableSsl = true,
-            Credentials = new NetworkCredential(user, pass)
-        };
+        var client = new SmtpClient(host, port);
+        client.UseDefaultCredentials = false;
+        client.Credentials = new NetworkCredential(user, pass);
+        client.EnableSsl = true;
+
         return client;
     }
 
-    private string GetFromEmail() => _configuration["EmailConfig:FromEmail"] ?? "noreply@cybermonitor.vn";
-    private string GetFromName() => _configuration["EmailConfig:FromName"] ?? "CyberMonitor SOC";
+    private string GetFromEmail() => _configuration["ConnectionStrings:EmailConfig:FromEmail"] ?? "noreply@cybermonitor.vn";
+    private string GetFromName() => _configuration["ConnectionStrings:EmailConfig:FromName"] ?? "CyberMonitor SOC";
 
     public async Task SendAlertEmailAsync(Guid tenantId, string toEmail, Alert alert, Server? server)
     {
@@ -255,6 +272,201 @@ public class EmailService : IEmailService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send payment confirmation to {Email}", toEmail);
+        }
+    }
+
+    public async Task SendNewUserCreatedEmailAsync(string toEmail, string fullName, string password, string role)
+    {
+        try
+        {
+            var body = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; color: #f1f5f9; margin: 0; padding: 20px; }}
+        .container {{ max-width: 600px; margin: 0 auto; background: #1e293b; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }}
+        .header {{ background: linear-gradient(135deg, #3b82f6, #1d4ed8); padding: 24px; text-align: center; }}
+        .header h1 {{ color: white; margin: 0; font-size: 24px; }}
+        .content {{ padding: 24px; }}
+        .info-box {{ background: #334155; padding: 16px; border-radius: 8px; margin: 16px 0; }}
+        .info-row {{ padding: 8px 0; border-bottom: 1px solid #475569; }}
+        .info-label {{ color: #94a3b8; font-size: 12px; text-transform: uppercase; }}
+        .info-value {{ color: #f1f5f9; font-size: 16px; font-weight: bold; }}
+        .credentials {{ background: #0f172a; padding: 16px; border-radius: 8px; font-family: monospace; }}
+        .footer {{ background: #0f172a; padding: 16px; text-align: center; color: #64748b; font-size: 12px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>👤 TÀI KHOẢN MỚI ĐƯỢC TẠO</h1>
+        </div>
+        <div class='content'>
+            <p>Xin chào <strong>{fullName}</strong>,</p>
+            <p>Tài khoản của bạn đã được tạo trên <strong>CyberMonitor SOC Platform</strong>.</p>
+            <div class='info-box'>
+                <div class='info-row'>
+                    <div class='info-label'>Họ tên</div>
+                    <div class='info-value'>{fullName}</div>
+                </div>
+                <div class='info-row'>
+                    <div class='info-label'>Email</div>
+                    <div class='info-value'>{toEmail}</div>
+                </div>
+                <div class='info-row'>
+                    <div class='info-label'>Vai trò</div>
+                    <div class='info-value'>{role}</div>
+                </div>
+            </div>
+            <div class='credentials'>
+                <div class='info-label'>Mật khẩu tạm thời</div>
+                <div class='info-value' style='font-size: 20px; color: #10b981;'>{password}</div>
+            </div>
+            <p style='margin-top: 16px;'>⚠️ <strong>Vì lý do bảo mật</strong>, vui lòng đổi mật khẩu ngay sau khi đăng nhập.</p>
+            <a href='#' style='display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 8px;'>ĐĂNG NHẬP NGAY</a>
+        </div>
+        <div class='footer'>
+            CyberMonitor SOC Platform | Email tự động - Vui lòng không reply
+        </div>
+    </div>
+</body>
+</html>";
+
+            var msg = new MailMessage
+            {
+                From = new MailAddress(GetFromEmail(), GetFromName()),
+                Subject = $"👤 Tài khoản CyberMonitor SOC của bạn đã được tạo",
+                Body = body,
+                IsBodyHtml = true
+            };
+            msg.To.Add(toEmail);
+
+            using var client = BuildSmtpClient();
+            await client.SendMailAsync(msg);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send new user created email to {Email}", toEmail);
+        }
+    }
+
+    public async Task SendPasswordChangedEmailAsync(string toEmail, string fullName)
+    {
+        try
+        {
+            var body = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; color: #f1f5f9; margin: 0; padding: 20px; }}
+        .container {{ max-width: 600px; margin: 0 auto; background: #1e293b; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }}
+        .header {{ background: linear-gradient(135deg, #dc2626, #991b1b); padding: 24px; text-align: center; }}
+        .header h1 {{ color: white; margin: 0; font-size: 24px; }}
+        .content {{ padding: 24px; }}
+        .warning {{ background: #7f1d1d; border-left: 4px solid #ef4444; padding: 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }}
+        .footer {{ background: #0f172a; padding: 16px; text-align: center; color: #64748b; font-size: 12px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>🔐 MẬT KHẨU ĐÃ ĐƯỢC THAY ĐỔI</h1>
+        </div>
+        <div class='content'>
+            <p>Xin chào <strong>{fullName}</strong>,</p>
+            <p>Mật khẩu tài khoản CyberMonitor SOC của bạn đã được thay đổi thành công.</p>
+            <div class='warning'>
+                <p style='margin: 0;'>⚠️ Nếu bạn <strong>không thực hiện</strong> thay đổi này, vui lòng liên hệ quản trị viên ngay lập tức!</p>
+            </div>
+            <p>Thời gian: <strong>{DateTime.UtcNow:dd/MM/yyyy HH:mm} UTC</strong></p>
+        </div>
+        <div class='footer'>
+            CyberMonitor SOC Platform | Email tự động - Vui lòng không reply
+        </div>
+    </div>
+</body>
+</html>";
+
+            var msg = new MailMessage
+            {
+                From = new MailAddress(GetFromEmail(), GetFromName()),
+                Subject = "🔐 Thông báo: Mật khẩu đã được thay đổi",
+                Body = body,
+                IsBodyHtml = true
+            };
+            msg.To.Add(toEmail);
+
+            using var client = BuildSmtpClient();
+            await client.SendMailAsync(msg);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send password changed email to {Email}", toEmail);
+        }
+    }
+
+    public async Task SendTicketCommentEmailAsync(Guid tenantId, string toEmail, Ticket ticket, string commenterName, string commentContent)
+    {
+        try
+        {
+            var preview = commentContent.Length > 200 ? commentContent[..200] + "..." : commentContent;
+
+            var body = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; color: #f1f5f9; margin: 0; padding: 20px; }}
+        .container {{ max-width: 600px; margin: 0 auto; background: #1e293b; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }}
+        .header {{ background: linear-gradient(135deg, #8b5cf6, #6d28d9); padding: 24px; text-align: center; }}
+        .content {{ padding: 24px; }}
+        .ticket-number {{ background: #334155; padding: 8px 16px; border-radius: 6px; font-family: monospace; font-size: 18px; color: #60a5fa; display: inline-block; }}
+        .comment-box {{ background: #0f172a; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #8b5cf6; }}
+        .comment-author {{ color: #a78bfa; font-weight: bold; }}
+        .footer {{ background: #0f172a; padding: 16px; text-align: center; color: #64748b; font-size: 12px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>💬 Comment mới trên Ticket</h1>
+        </div>
+        <div class='content'>
+            <div class='ticket-number'>{ticket.TicketNumber}</div>
+            <h2 style='color: #f1f5f9; margin-top: 16px;'>{ticket.Title}</h2>
+            <div class='comment-box'>
+                <div class='comment-author'>{commenterName}</div>
+                <p style='margin: 8px 0 0 0; color: #e2e8f0;'>{preview}</p>
+            </div>
+            <a href='#' style='display: inline-block; background: #8b5cf6; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 8px;'>XEM CHI TIẾT</a>
+        </div>
+        <div class='footer'>
+            CyberMonitor SOC Platform | Email tự động - Vui lòng không reply
+        </div>
+    </div>
+</body>
+</html>";
+
+            var msg = new MailMessage
+            {
+                From = new MailAddress(GetFromEmail(), GetFromName()),
+                Subject = $"💬 [{ticket.TicketNumber}] {commenterName} đã bình luận",
+                Body = body,
+                IsBodyHtml = true
+            };
+            msg.To.Add(toEmail);
+
+            using var client = BuildSmtpClient();
+            await client.SendMailAsync(msg);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send ticket comment email to {Email}", toEmail);
         }
     }
 }

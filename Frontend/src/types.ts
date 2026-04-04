@@ -105,12 +105,14 @@ export interface ServerKeyModalState {
 // --- Notification ---
 export interface Notification {
   id: string;
+  tenantId: string;
+  userId: string;
   title: string;
   message: string;
-  type: 'info' | 'warning' | 'error' | 'success';
+  type: 'Alert' | 'Warning' | 'Ticket' | 'Info';
   isRead: boolean;
-  createdAt: string;
   link?: string;
+  createdAt: string;
 }
 
 // --- Report ---
@@ -141,6 +143,33 @@ export interface DashboardSummary {
   currentBandwidthOut: number;
   recentAlerts: Alert[];
   serverHealth: Agent[];
+  trafficData?: TrafficDataPoint[];
+  attackTypes?: AttackType[];
+  mitreData?: MitreItem[];
+  aiStats?: AIStats;
+  predictions?: Prediction[];
+}
+
+// --- AI Engine Stats ---
+export interface AIStats {
+  anomalyScore: number;
+  threshold: number;
+  totalAlerts: number;
+  engine: string;
+}
+
+export interface Prediction {
+  risk: 'Critical' | 'High' | 'Medium' | 'Low';
+  confidence: number;
+  message: string;
+  description?: string;
+}
+
+export interface MitreItem {
+  technique: string;
+  name: string;
+  count: number;
+  risk: 'Critical' | 'High' | 'Medium' | 'Low';
 }
 
 // --- Traffic Data Point ---

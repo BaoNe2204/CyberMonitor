@@ -203,6 +203,9 @@ public class AuthController : ControllerBase
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         await _db.SaveChangesAsync();
 
+        // Gửi email thông báo đổi mật khẩu
+        await _emailService.SendPasswordChangedEmailAsync(user.Email, user.FullName);
+
         return Ok(new ApiResponse<object>(true, "Đổi mật khẩu thành công!", null));
     }
 
@@ -293,6 +296,40 @@ public class AuthController : ControllerBase
         };
 
         _db.Users.Add(user);
+        await _db.SaveChangesAsync();
+
+        // === NOTIFICATION EMAIL ===
+        // Gửi email cho người vừa được tạo tài khoản
+        await _emailService.SendNewUserCreatedEmailAsync(user.Email, user.FullName, request.Password, "Admin");
+
+        // Gửi email thông báo cho tất cả Admin/SuperAdmin trong tenant
+        var admins = await _db.Users
+            .Where(u => u.TenantId == user.TenantId && u.Id != user.Id && (u.Role == "Admin" || u.Role == "SuperAdmin"))
+            .ToListAsync();
+
+        foreach (var admin in admins)
+        {
+            _db.Notifications.Add(new Notification
+            {
+                TenantId = user.TenantId!.Value,
+                UserId = admin.Id,
+                Title = $"👤 User mới: {user.FullName}",
+                Message = $"Tài khoản {user.Email} với vai trò {user.Role} đã được tạo.",
+                Type = "Info",
+                Link = $"/dashboard/users"
+            });
+        }
+
+        // DB notification cho user mới
+        _db.Notifications.Add(new Notification
+        {
+            TenantId = user.TenantId!.Value,
+            UserId = user.Id,
+            Title = "👋 Chào mừng bạn!",
+            Message = $"Tài khoản của bạn đã được tạo. Vai trò: {user.Role}",
+            Type = "Info",
+            Link = "/dashboard"
+        });
         await _db.SaveChangesAsync();
 
         return Ok(new ApiResponse<UserDto>(true, "Tạo user thành công!", new UserDto(

@@ -75,86 +75,88 @@ export const Sidebar = ({
     typeof userRole === 'string' && userRole.toLowerCase() === 'superadmin';
   return (
     <aside className={cn(
-      "transition-all duration-300 flex flex-col fixed inset-y-0 left-0 z-50 lg:sticky lg:top-0 lg:h-screen border-r",
+      "transition-all duration-300 fixed inset-y-0 left-0 z-50 h-dvh overflow-y-auto overflow-x-hidden border-r lg:sticky lg:top-0 lg:h-dvh",
       theme === 'dark' ? "bg-slate-950 border-slate-800" : "bg-white border-slate-200",
       isSidebarOpen ? "w-64" : "w-20",
       isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
     )}>
-      <div className="p-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="bg-blue-600 p-2 rounded-lg">
-            <Shield className="text-white" size={24} />
+      <div className="flex min-h-full flex-col">
+        <div className="shrink-0 p-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-600 p-2 rounded-lg">
+              <Shield className="text-white" size={24} />
+            </div>
+            {(isSidebarOpen || isMobileMenuOpen) && (
+              <span className={cn("text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r", theme === 'dark' ? "from-white to-slate-400" : "from-slate-900 to-slate-600")}>
+                CyberGuard
+              </span>
+            )}
           </div>
-          {(isSidebarOpen || isMobileMenuOpen) && (
-            <span className={cn("text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r", theme === 'dark' ? "from-white to-slate-400" : "from-slate-900 to-slate-600")}>
-              CyberGuard
-            </span>
-          )}
+          <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden text-slate-400">
+            <XCircle size={20} />
+          </button>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden text-slate-400">
-          <XCircle size={20} />
-        </button>
-      </div>
 
-      <nav className="flex-1 px-3 space-y-1 mt-4 overflow-y-auto">
-        <SidebarItem icon={LayoutDashboard} label={t.dashboard} active={activeTab === 'dashboard'} onClick={() => { setActiveTab('dashboard'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
-        <SidebarItem icon={Server} label={t.agents} active={activeTab === 'agents'} onClick={() => { setActiveTab('agents'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
-        <SidebarItem icon={ShieldAlert} label={t.incidents} active={activeTab === 'incidents'} onClick={() => { setActiveTab('incidents'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
-        <SidebarItem icon={Bot} label={t.ai} active={activeTab === 'ai'} onClick={() => { setActiveTab('ai'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
-        <SidebarItem icon={Shield} label="Defense" active={activeTab === 'defense'} onClick={() => { setActiveTab('defense'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
-        <SidebarItem icon={FileText} label={t.reports} active={activeTab === 'reports'} onClick={() => { setActiveTab('reports'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
-        <SidebarItem icon={CreditCard} label={t.billing} active={activeTab === 'billing'} onClick={() => { setActiveTab('billing'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
-        <SidebarItem icon={Book} label={t.apiGuide} active={activeTab === 'apiGuide'} onClick={() => { setActiveTab('apiGuide'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
-        
-        {isSuperAdmin && (
-          <div className="pt-4 space-y-1 border-t border-slate-800/50 mt-4">
-            <p className={cn("px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest", !isSidebarOpen && !isMobileMenuOpen && "hidden")}>Management</p>
-            <SidebarItem icon={Users} label={t.userManagement} active={activeTab === 'userManagement'} onClick={() => { setActiveTab('userManagement'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
-            <SidebarItem icon={CreditCard} label={t.pricingManagement} active={activeTab === 'pricingManagement'} onClick={() => { setActiveTab('pricingManagement'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
-            <SidebarItem icon={Terminal} label={t.apiManagement} active={activeTab === 'apiManagement'} onClick={() => { setActiveTab('apiManagement'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
-            <SidebarItem icon={FileText} label={t.systemLogs} active={activeTab === 'systemLogs'} onClick={() => { setActiveTab('systemLogs'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
-          </div>
-        )}
-      </nav>
-
-      <div className={cn("p-4 border-t", theme === 'dark' ? "border-slate-800" : "border-slate-200")}>
-        <SidebarItem icon={Settings} label={t.settings} active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
-        <button 
-          onClick={handleLogout}
-          className={cn(
-            "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all mt-2 group",
-            theme === 'dark' ? "text-rose-400 hover:bg-rose-500/10" : "text-rose-600 hover:bg-rose-50",
-            !(isSidebarOpen || isMobileMenuOpen) && "justify-center px-0"
-          )}
-        >
-          <LogOut size={20} className="group-hover:scale-110 shrink-0" />
-          {(isSidebarOpen || isMobileMenuOpen) && <span className="font-medium whitespace-nowrap overflow-hidden">{t.logout}</span>}
-        </button>
-        <button 
-          onClick={() => { setActiveTab('account'); setIsMobileMenuOpen(false); }}
-          className={cn(
-            "mt-4 flex items-center gap-3 px-2 py-2 rounded-lg transition-all hover:bg-slate-800/50 group",
-            activeTab === 'account' && (theme === 'dark' ? "bg-blue-600/20" : "bg-blue-50")
-          )}
-        >
-          <div className={cn("w-8 h-8 rounded-full flex items-center justify-center border shrink-0", theme === 'dark' ? "bg-slate-800 border-slate-700" : "bg-slate-100 border-slate-200")}>
-            <User size={16} className={cn(activeTab === 'account' ? "text-blue-400" : "text-slate-400")} />
-          </div>
-          {(isSidebarOpen || isMobileMenuOpen) && (
-            <div className="overflow-hidden text-left">
-              <p className={cn("text-sm font-medium truncate", theme === 'dark' ? "text-white" : "text-slate-900")}>{user?.fullName || 'CyberGuard User'}</p>
-              <p className="text-xs text-slate-500 truncate">
-                {isSuperAdmin
-                  ? 'Super Admin'
-                  : user?.tenantName || user?.tenantId
-                    ? [user?.tenantName || 'Workspace', user?.tenantId ? `${String(user.tenantId).slice(0, 8)}…` : null]
-                        .filter(Boolean)
-                        .join(' · ')
-                    : 'Khách hàng'}
-              </p>
+        <nav className="flex-1 px-3 pb-4 space-y-1 mt-4">
+          <SidebarItem icon={LayoutDashboard} label={t.dashboard} active={activeTab === 'dashboard'} onClick={() => { setActiveTab('dashboard'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+          <SidebarItem icon={Server} label={t.agents} active={activeTab === 'agents'} onClick={() => { setActiveTab('agents'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+          <SidebarItem icon={ShieldAlert} label={t.incidents} active={activeTab === 'incidents'} onClick={() => { setActiveTab('incidents'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+          <SidebarItem icon={Bot} label={t.ai} active={activeTab === 'ai'} onClick={() => { setActiveTab('ai'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+          <SidebarItem icon={Shield} label="Defense" active={activeTab === 'defense'} onClick={() => { setActiveTab('defense'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+          <SidebarItem icon={FileText} label={t.reports} active={activeTab === 'reports'} onClick={() => { setActiveTab('reports'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+          <SidebarItem icon={CreditCard} label={t.billing} active={activeTab === 'billing'} onClick={() => { setActiveTab('billing'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+          <SidebarItem icon={Book} label={t.apiGuide} active={activeTab === 'apiGuide'} onClick={() => { setActiveTab('apiGuide'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+          
+          {isSuperAdmin && (
+            <div className="pt-4 mt-4 space-y-1 border-t border-slate-800/50">
+              <p className={cn("px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest", !isSidebarOpen && !isMobileMenuOpen && "hidden")}>Management</p>
+              <SidebarItem icon={Users} label={t.userManagement} active={activeTab === 'userManagement'} onClick={() => { setActiveTab('userManagement'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+              <SidebarItem icon={CreditCard} label={t.pricingManagement} active={activeTab === 'pricingManagement'} onClick={() => { setActiveTab('pricingManagement'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+              <SidebarItem icon={Terminal} label={t.apiManagement} active={activeTab === 'apiManagement'} onClick={() => { setActiveTab('apiManagement'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+              <SidebarItem icon={FileText} label={t.systemLogs} active={activeTab === 'systemLogs'} onClick={() => { setActiveTab('systemLogs'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
             </div>
           )}
-        </button>
+        </nav>
+
+        <div className={cn("mt-auto p-4 border-t", theme === 'dark' ? "border-slate-800" : "border-slate-200")}>
+          <SidebarItem icon={Settings} label={t.settings} active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+          <button 
+            onClick={handleLogout}
+            className={cn(
+              "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all mt-2 group",
+              theme === 'dark' ? "text-rose-400 hover:bg-rose-500/10" : "text-rose-600 hover:bg-rose-50",
+              !(isSidebarOpen || isMobileMenuOpen) && "justify-center px-0"
+            )}
+          >
+            <LogOut size={20} className="group-hover:scale-110 shrink-0" />
+            {(isSidebarOpen || isMobileMenuOpen) && <span className="font-medium whitespace-nowrap overflow-hidden">{t.logout}</span>}
+          </button>
+          <button 
+            onClick={() => { setActiveTab('account'); setIsMobileMenuOpen(false); }}
+            className={cn(
+              "mt-4 flex items-center gap-3 px-2 py-2 rounded-lg transition-all hover:bg-slate-800/50 group",
+              activeTab === 'account' && (theme === 'dark' ? "bg-blue-600/20" : "bg-blue-50")
+            )}
+          >
+            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center border shrink-0", theme === 'dark' ? "bg-slate-800 border-slate-700" : "bg-slate-100 border-slate-200")}>
+              <User size={16} className={cn(activeTab === 'account' ? "text-blue-400" : "text-slate-400")} />
+            </div>
+            {(isSidebarOpen || isMobileMenuOpen) && (
+              <div className="overflow-hidden text-left">
+                <p className={cn("text-sm font-medium truncate", theme === 'dark' ? "text-white" : "text-slate-900")}>{user?.fullName || 'CyberGuard User'}</p>
+                <p className="text-xs text-slate-500 truncate">
+                  {isSuperAdmin
+                    ? 'Super Admin'
+                    : user?.tenantName || user?.tenantId
+                      ? [user?.tenantName || 'Workspace', user?.tenantId ? `${String(user.tenantId).slice(0, 8)}…` : null]
+                          .filter(Boolean)
+                          .join(' · ')
+                      : 'Khách hàng'}
+                </p>
+              </div>
+            )}
+          </button>
+        </div>
       </div>
     </aside>
   );

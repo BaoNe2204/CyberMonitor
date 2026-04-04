@@ -73,9 +73,9 @@ public class DefenseController : ControllerBase
             return BadRequest(new ApiResponse<object>(false, "Rate limit exceeded. Max 10 blocks per minute.", null));
         }
 
-        // Check if already blocked
+        // Check if already blocked — FILTER BY TENANT to prevent cross-tenant IDOR
         var existing = await _db.BlockedIPs
-            .FirstOrDefaultAsync(b => b.IpAddress == request.Ip && b.IsActive);
+            .FirstOrDefaultAsync(b => b.IpAddress == request.Ip && b.IsActive && b.TenantId == effectiveTenantId);
 
         if (existing != null)
         {
@@ -322,16 +322,12 @@ public class DefenseController : ControllerBase
         var userId = GetUserId();
 
         var blocked = await _db.BlockedIPs
-            .FirstOrDefaultAsync(b => b.IpAddress == request.Ip && b.IsActive);
+            .FirstOrDefaultAsync(b => b.IpAddress == request.Ip && b.IsActive 
+                && (!tenantId.HasValue || b.TenantId == tenantId.Value));
 
         if (blocked == null)
         {
             return NotFound(new ApiResponse<object>(false, $"IP {request.Ip} is not currently blocked.", null));
-        }
-
-        if (tenantId.HasValue && blocked.TenantId != tenantId.Value)
-        {
-            return Forbid();
         }
 
         blocked.IsActive = false;
@@ -404,6 +400,7 @@ public class DefenseController : ControllerBase
 
         var total = await query.CountAsync();
         var items = await query
+            .Include(b => b.Server)
             .OrderByDescending(b => b.BlockedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -419,7 +416,9 @@ public class DefenseController : ControllerBase
                 b.IsActive,
                 b.UnblockedAt,
                 b.UnblockedBy,
-                b.AnomalyScore
+                b.AnomalyScore,
+                b.ServerId,
+                b.Server != null ? b.Server.Name : null
             ))
             .ToListAsync();
 
@@ -436,7 +435,7 @@ public class DefenseController : ControllerBase
     // GET /api/defense/check/{ip}
     // ============================================================================
     [HttpGet("check/{ip}")]
-    [AllowAnonymous]
+    [Authorize]
     public async Task<ActionResult<ApiResponse<IPCheckResult>>> CheckIP(string ip)
     {
         var blocked = await _db.BlockedIPs
@@ -492,26 +491,53 @@ public class DefenseController : ControllerBase
     public async Task<ActionResult<ApiResponse<object>>> ManualBlock([FromBody] ManualBlockRequest request)
     {
         var tenantId = GetTenantId();
-        if (!tenantId.HasValue)
-            return BadRequest(new ApiResponse<object>(false, "TenantId required.", null));
+        var role = GetUserRole();
+        var userId = GetUserId();
+
+        // SuperAdmin có thể block mà không cần tenantId (global block)
+        // Admin phải có tenantId
+        if (role == "Admin" && !tenantId.HasValue)
+        {
+            return BadRequest(new ApiResponse<object>(false, "Admin requires TenantId.", null));
+        }
+
+        // Nếu là SuperAdmin và không có tenantId, tạo một global block (tenantId = null hoặc dùng tenant đầu tiên)
+        Guid effectiveTenantId;
+        if (!tenantId.HasValue && role == "SuperAdmin")
+        {
+            // SuperAdmin: lấy tenant đầu tiên hoặc tạo global block
+            var firstTenant = await _db.Tenants.FirstOrDefaultAsync();
+            if (firstTenant == null)
+            {
+                return BadRequest(new ApiResponse<object>(false, "No tenant found in system. Please create a tenant first.", null));
+            }
+            effectiveTenantId = firstTenant.Id;
+        }
+        else
+        {
+            effectiveTenantId = tenantId!.Value;
+        }
 
         var existing = await _db.BlockedIPs
-            .FirstOrDefaultAsync(b => b.IpAddress == request.Ip && b.IsActive);
+            .FirstOrDefaultAsync(b => b.IpAddress == request.Ip && b.IsActive && 
+                (request.ServerId.HasValue ? b.ServerId == request.ServerId : b.ServerId == null));
 
         if (existing != null)
         {
-            return BadRequest(new ApiResponse<object>(false, $"IP {request.Ip} is already blocked.", null));
+            var scope = request.ServerId.HasValue ? "on this server" : "tenant-wide";
+            return BadRequest(new ApiResponse<object>(false, $"IP {request.Ip} is already blocked {scope}.", null));
         }
 
         var blockedIP = new BlockedIP
         {
             Id = Guid.NewGuid(),
             IpAddress = request.Ip,
-            TenantId = tenantId.Value,
+            TenantId = effectiveTenantId,
+            ServerId = request.ServerId,  // Set ServerId if specified
             AttackType = "Manual Block",
             Severity = request.Severity ?? "Medium",
             Reason = request.Reason ?? "Manual block by admin",
-            BlockedBy = GetUserId().ToString(),
+            BlockedBy = userId.ToString(),
             BlockedAt = DateTime.UtcNow,
             ExpiresAt = request.DurationMinutes.HasValue
                 ? DateTime.UtcNow.AddMinutes(request.DurationMinutes.Value)
@@ -521,27 +547,82 @@ public class DefenseController : ControllerBase
 
         _db.BlockedIPs.Add(blockedIP);
 
+        var blockScope = request.ServerId.HasValue ? $"on server {request.ServerId}" : "on all servers (tenant-wide)";
         _db.AuditLogs.Add(new AuditLog
         {
-            TenantId = tenantId.Value,
-            UserId = GetUserId(),
+            TenantId = effectiveTenantId,
+            UserId = userId,
             Action = "MANUAL_BLOCK",
             EntityType = "BlockedIP",
             EntityId = blockedIP.Id.ToString(),
-            Details = $"Manual block: {request.Ip} - {request.Reason}"
+            Details = $"Manual block: {request.Ip} {blockScope} - {request.Reason}"
         });
 
         await _db.SaveChangesAsync();
 
-        _logger.LogWarning("[MANUAL-BLOCK] {User} blocked {Ip}: {Reason}",
-            GetUserId(), request.Ip, request.Reason);
+        // Push block command to agents
+        // If ServerId specified: push only to that server
+        // If ServerId is null: push to all servers in tenant (tenant-wide block)
+        List<Guid> targetServers;
+        if (request.ServerId.HasValue)
+        {
+            targetServers = new List<Guid> { request.ServerId.Value };
+        }
+        else
+        {
+            targetServers = await _db.Servers
+                .Where(s => s.TenantId == effectiveTenantId)
+                .Select(s => s.Id)
+                .ToListAsync();
+        }
+
+        if (targetServers.Count > 0)
+        {
+            var blockCmd = new BlockCommandDto
+            {
+                Ip = request.Ip,
+                Reason = request.Reason ?? "Manual block by admin",
+                AttackType = "Manual Block",
+                Severity = request.Severity ?? "Medium",
+                DurationMinutes = request.DurationMinutes,
+                BlockId = blockedIP.Id,
+                IssuedAt = DateTime.UtcNow
+            };
+
+            foreach (var serverId in targetServers)
+            {
+                await _agentHub.Clients.Group(serverId.ToString())
+                    .ReceiveBlockCommand(blockCmd);
+            }
+
+            var serverScope = request.ServerId.HasValue ? $"server {request.ServerId}" : $"{targetServers.Count} servers (tenant-wide)";
+            _logger.LogWarning(
+                "[MANUAL-BLOCK] Block command sent to {Scope}: IP={Ip} by User={UserId}",
+                serverScope, request.Ip, userId);
+        }
+
+        // Push to dashboard
+        await _alertHub.Clients.Group(effectiveTenantId.ToString()).ReceiveBlockCommand(new BlockCommandDto
+        {
+            Ip = request.Ip,
+            Reason = request.Reason ?? "Manual block by admin",
+            AttackType = "Manual Block",
+            Severity = request.Severity ?? "Medium",
+            DurationMinutes = request.DurationMinutes,
+            BlockId = blockedIP.Id,
+            IssuedAt = DateTime.UtcNow
+        });
+
+        _logger.LogWarning("[MANUAL-BLOCK] User {User} blocked {Ip}: {Reason}",
+            userId, request.Ip, request.Reason);
 
         return Ok(new ApiResponse<object>(true, $"IP {request.Ip} has been manually blocked.", new
         {
             ip = request.Ip,
             blockedAt = blockedIP.BlockedAt,
             expiresAt = blockedIP.ExpiresAt,
-            blockedBy = blockedIP.BlockedBy
+            blockedBy = blockedIP.BlockedBy,
+            tenantId = effectiveTenantId
         }));
     }
 
@@ -636,7 +717,8 @@ public record ManualBlockRequest(
     [Required] string Ip,
     string? Reason,
     string? Severity,
-    int? DurationMinutes
+    int? DurationMinutes,
+    Guid? ServerId  // If specified, block only on this server. If null, block on all servers (tenant-wide)
 );
 
 public record BlockedIPDto(
@@ -651,7 +733,9 @@ public record BlockedIPDto(
     bool IsActive,
     DateTime? UnblockedAt,
     string? UnblockedBy,
-    decimal? AnomalyScore
+    decimal? AnomalyScore,
+    Guid? ServerId,
+    string? ServerName
 );
 
 public record IPCheckResult(

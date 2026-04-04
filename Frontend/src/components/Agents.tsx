@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cpu, Plus, Server, Activity, Database, AlertTriangle, CheckCircle2, Trash2, KeyRound } from 'lucide-react';
+import { Cpu, Plus, Server, Activity, Database, AlertTriangle, CheckCircle2, Trash2, KeyRound, Mail } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Theme, Agent } from '../types';
 
@@ -11,6 +11,7 @@ interface AgentsProps {
   canManageServers?: boolean;
   onDeleteServer?: (id: string) => Promise<void>;
   onViewServerKey?: (id: string, name: string) => void;
+  onManageEmails?: (id: string, name: string) => void;
 }
 
 export const Agents = ({
@@ -21,6 +22,7 @@ export const Agents = ({
   canManageServers,
   onDeleteServer,
   onViewServerKey,
+  onManageEmails,
 }: AgentsProps) => {
   return (
     <div className="space-y-8">
@@ -70,6 +72,21 @@ export const Agents = ({
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
+                {onManageEmails && canManageServers && (
+                  <button
+                    type="button"
+                    title="Quản lý email nhận thông báo"
+                    onClick={() => onManageEmails(agent.id, agent.name)}
+                    className={cn(
+                      'p-2 rounded-lg border transition-colors',
+                      theme === 'dark'
+                        ? 'border-slate-700 text-purple-400 hover:bg-purple-500/10 hover:border-purple-500/30'
+                        : 'border-slate-200 text-purple-600 hover:bg-purple-50 hover:border-purple-200'
+                    )}
+                  >
+                    <Mail size={16} />
+                  </button>
+                )}
                 {onViewServerKey && (
                   <button
                     type="button"

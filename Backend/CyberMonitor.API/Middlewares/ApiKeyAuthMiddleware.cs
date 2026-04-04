@@ -2,6 +2,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using CyberMonitor.API.Data;
+using CyberMonitor.API.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace CyberMonitor.API.Middlewares;
@@ -10,11 +12,16 @@ public class ApiKeyAuthMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ApiKeyAuthMiddleware> _logger;
+    private readonly IHubContext<AlertHub, IAlertHub> _alertHub;
 
-    public ApiKeyAuthMiddleware(RequestDelegate next, ILogger<ApiKeyAuthMiddleware> logger)
+    public ApiKeyAuthMiddleware(
+        RequestDelegate next,
+        ILogger<ApiKeyAuthMiddleware> logger,
+        IHubContext<AlertHub, IAlertHub> alertHub)
     {
         _next = next;
         _logger = logger;
+        _alertHub = alertHub;
     }
 
     public async Task InvokeAsync(HttpContext context, CyberMonitorDbContext db)
@@ -26,13 +33,15 @@ public class ApiKeyAuthMiddleware
         // - /api/logs          → AI Engine đọc log (GET)
         // - /api/logs/top-sources → AI Engine đọc top sources
         // - /api/defense/block-ip → AI Engine / Agent block IP
+        // - /api/alerts/trigger → Agent/AI Engine gửi alert (cần API Key hoặc JWT)
         var protectedRoutes = new[] {
             "/api/logs/ingest",
             "/api/logs",
             "/api/logs/top-sources",
             "/api/defense/block-ip",
-            "/api/alerts/trigger"
+            "/api/alerts/trigger",
         };
+
         var needsApiKeyAuth = protectedRoutes.Any(r => path.StartsWith(r));
 
         // Khai báo trước: chấp nhận cả Bearer (ASP.NET JWT tự xử) lẫn X-API-Key
@@ -121,6 +130,31 @@ public class ApiKeyAuthMiddleware
             }
 
             await db.SaveChangesAsync();
+
+            // Push server health via SignalR real-time (only for server-level keys)
+            if (apiKeyRecord.ServerId.HasValue)
+            {
+                var server = await db.Servers.FindAsync(apiKeyRecord.ServerId.Value);
+                if (server != null && apiKeyRecord.TenantId != Guid.Empty)
+                {
+                    try
+                    {
+                        await _alertHub.Clients
+                            .Group(apiKeyRecord.TenantId.ToString())
+                            .ServerStatusChanged(
+                                server.Id,
+                                server.Status,
+                                server.CpuUsage,
+                                server.RamUsage,
+                                server.DiskUsage
+                            );
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to push server status via SignalR");
+                    }
+                }
+            }
         }
 
         await _next(context);

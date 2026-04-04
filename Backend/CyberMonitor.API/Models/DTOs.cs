@@ -101,7 +101,10 @@ public record LogIngestRequest(
     List<TrafficLogEntry> Logs,
     string? Hostname,
     string? Os,
-    string? Timestamp
+    string? Timestamp,
+    double? CpuPercent,
+    double? RamPercent,
+    double? DiskPercent
 );
 
 public record TrafficLogEntry(
@@ -301,6 +304,8 @@ public record DailyStatDto(
 // ============ NOTIFICATION DTOs ============
 public record NotificationDto(
     Guid Id,
+    Guid TenantId,
+    Guid UserId,
     string Title,
     string Message,
     string Type,
@@ -334,6 +339,8 @@ public record DashboardSummary(
     int TotalTickets,
     int OpenTickets,
     int ClosedTicketsToday,
+    decimal TotalRequests,
+    decimal AvgResponseMs,
     decimal CurrentBandwidthIn,
     decimal CurrentBandwidthOut,
     List<ServerHealthDto> ServerHealth,
@@ -392,4 +399,17 @@ public record ApiErrorResponse(
     bool Success,
     string Message,
     List<string>? Errors
+);
+
+// ============ SERVER ALERT EMAIL DTOs ============
+public record ServerAlertEmailDto(
+    Guid Id,
+    Guid ServerId,
+    string Email,
+    bool IsActive,
+    DateTime CreatedAt
+);
+
+public record AddServerAlertEmailRequest(
+    string Email
 );

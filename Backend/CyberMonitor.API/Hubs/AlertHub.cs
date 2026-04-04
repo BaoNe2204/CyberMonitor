@@ -8,7 +8,7 @@ public interface IAlertHub
     Task AlertStatusChanged(AlertDto alert);
     Task TicketCreated(TicketDto ticket);
     Task TicketUpdated(TicketDto ticket);
-    Task ServerStatusChanged(Guid serverId, string status);
+    Task ServerStatusChanged(Guid serverId, string status, decimal? cpu, decimal? ram, decimal? disk);
     Task NotificationReceived(NotificationDto notification);
     /// <summary>Frontend nhận lệnh block IP (từ AI Engine hoặc SOC)</summary>
     Task ReceiveBlockCommand(BlockCommandDto command);

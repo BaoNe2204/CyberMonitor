@@ -32,6 +32,9 @@ public class LogsController : ControllerBase
         var tenantId = HttpContext.Items["TenantId"] as Guid?;
         var serverId = HttpContext.Items["ServerId"] as Guid?;
 
+        _logger.LogInformation("[INGEST] Received request from ServerId={ServerId}, Logs={LogCount}, CPU={Cpu}%, RAM={Ram}%, DISK={Disk}%", 
+            serverId, request.Logs?.Count ?? 0, request.CpuPercent, request.RamPercent, request.DiskPercent);
+
         if (!tenantId.HasValue)
         {
             return Unauthorized(new ApiResponse<object>(false, "API Key không hợp lệ.", null));
@@ -40,6 +43,33 @@ public class LogsController : ControllerBase
         if (request.Logs == null || request.Logs.Count == 0)
         {
             return BadRequest(new ApiResponse<object>(false, "Danh sách log rỗng.", null));
+        }
+
+        // Update server metrics if provided by agent
+        if (serverId.HasValue)
+        {
+            var server = await _db.Servers.FindAsync(serverId.Value);
+            if (server != null)
+            {
+                // Extract system metrics from agent payload if available
+                // Agent v3 sends metrics in request object
+                if (request.CpuPercent.HasValue)
+                    server.CpuUsage = (decimal)request.CpuPercent.Value;
+                if (request.RamPercent.HasValue)
+                    server.RamUsage = (decimal)request.RamPercent.Value;
+                if (request.DiskPercent.HasValue)
+                    server.DiskUsage = (decimal)request.DiskPercent.Value;
+                if (!string.IsNullOrEmpty(request.Os))
+                    server.OS = request.Os;
+                
+                server.Status = "Online";
+                server.LastSeenAt = DateTime.UtcNow;
+                
+                await _db.SaveChangesAsync();
+                
+                _logger.LogInformation("[INGEST] Updated server metrics: CPU={Cpu}%, RAM={Ram}%, DISK={Disk}%", 
+                    server.CpuUsage, server.RamUsage, server.DiskUsage);
+            }
         }
 
         // Giới hạn 5000 log per request để tránh abuse

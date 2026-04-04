@@ -10,6 +10,7 @@ Frontend/dist/
 # .NET
 **/bin/
 **/obj/
+**/appsettings.Development.json
 
 # Logs / local scripts
 *.log
@@ -18,3 +19,5 @@ Frontend/dist/
 CYBERMONITOR_TECHNICAL_DOC.md
 HƯỚNG_DẪN_CÀI_ĐẶT.md
 README.md
+test_fake_traffic.py
+test_attack_simulation.py

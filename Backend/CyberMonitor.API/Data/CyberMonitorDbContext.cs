@@ -21,6 +21,7 @@ public class CyberMonitorDbContext : DbContext
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<BlockedIP> BlockedIPs => Set<BlockedIP>();
+    public DbSet<ServerAlertEmail> ServerAlertEmails => Set<ServerAlertEmail>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -216,6 +217,17 @@ public class CyberMonitorDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(b => b.TenantId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // ServerAlertEmail
+        modelBuilder.Entity<ServerAlertEmail>(e =>
+        {
+            e.Property(s => s.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.HasIndex(s => new { s.ServerId, s.Email }).IsUnique().HasDatabaseName("IX_ServerAlertEmails_ServerId_Email");
+            e.HasOne(s => s.Server)
+                .WithMany(srv => srv.AlertEmails)
+                .HasForeignKey(s => s.ServerId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // Seed SuperAdmin

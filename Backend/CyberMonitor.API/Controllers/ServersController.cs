@@ -369,4 +369,149 @@ public class ServersController : ControllerBase
         var bytes = System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(input));
         return Convert.ToHexString(bytes).ToLower();
     }
+
+    // ============================================================================
+    // SERVER ALERT EMAIL MANAGEMENT
+    // ============================================================================
+
+    /// <summary>Lấy danh sách email nhận thông báo của server</summary>
+    [HttpGet("{id:guid}/alert-emails")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<List<ServerAlertEmailDto>>>> GetServerAlertEmails(Guid id)
+    {
+        var tenantId = GetTenantId();
+        var role = GetUserRole();
+
+        var server = await _db.Servers.FindAsync(id);
+        if (server == null)
+            return NotFound(new ApiResponse<List<ServerAlertEmailDto>>(false, "Server không tìm thấy.", null));
+
+        if (role != "SuperAdmin" && server.TenantId != tenantId)
+            return Forbid();
+
+        var emails = await _db.ServerAlertEmails
+            .Where(e => e.ServerId == id)
+            .OrderBy(e => e.CreatedAt)
+            .Select(e => new ServerAlertEmailDto(e.Id, e.ServerId, e.Email, e.IsActive, e.CreatedAt))
+            .ToListAsync();
+
+        return Ok(new ApiResponse<List<ServerAlertEmailDto>>(true, "OK", emails));
+    }
+
+    /// <summary>Thêm email nhận thông báo cho server (tối đa 5 email)</summary>
+    [HttpPost("{id:guid}/alert-emails")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<ServerAlertEmailDto>>> AddServerAlertEmail(
+        Guid id, 
+        [FromBody] AddServerAlertEmailRequest request)
+    {
+        var tenantId = GetTenantId();
+        var role = GetUserRole();
+
+        if (role != "SuperAdmin" && role != "Admin")
+            return Forbid();
+
+        var server = await _db.Servers.FindAsync(id);
+        if (server == null)
+            return NotFound(new ApiResponse<ServerAlertEmailDto>(false, "Server không tìm thấy.", null));
+
+        if (role != "SuperAdmin" && server.TenantId != tenantId)
+            return Forbid();
+
+        // Check limit: max 5 emails per server
+        var currentCount = await _db.ServerAlertEmails.CountAsync(e => e.ServerId == id && e.IsActive);
+        if (currentCount >= 5)
+            return BadRequest(new ApiResponse<ServerAlertEmailDto>(false, 
+                "Mỗi server chỉ được thêm tối đa 5 email nhận thông báo.", null));
+
+        // Check duplicate
+        var exists = await _db.ServerAlertEmails
+            .AnyAsync(e => e.ServerId == id && e.Email == request.Email);
+        if (exists)
+            return BadRequest(new ApiResponse<ServerAlertEmailDto>(false, 
+                "Email này đã được thêm cho server.", null));
+
+        var alertEmail = new ServerAlertEmail
+        {
+            ServerId = id,
+            Email = request.Email,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _db.ServerAlertEmails.Add(alertEmail);
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Alert email {Email} added for server {ServerId}", request.Email, id);
+
+        return Ok(new ApiResponse<ServerAlertEmailDto>(true, "Thêm email thành công!", 
+            new ServerAlertEmailDto(alertEmail.Id, alertEmail.ServerId, alertEmail.Email, 
+                alertEmail.IsActive, alertEmail.CreatedAt)));
+    }
+
+    /// <summary>Xóa email nhận thông báo</summary>
+    [HttpDelete("{serverId:guid}/alert-emails/{emailId:guid}")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<object>>> DeleteServerAlertEmail(Guid serverId, Guid emailId)
+    {
+        var tenantId = GetTenantId();
+        var role = GetUserRole();
+
+        if (role != "SuperAdmin" && role != "Admin")
+            return Forbid();
+
+        var server = await _db.Servers.FindAsync(serverId);
+        if (server == null)
+            return NotFound(new ApiResponse<object>(false, "Server không tìm thấy.", null));
+
+        if (role != "SuperAdmin" && server.TenantId != tenantId)
+            return Forbid();
+
+        var alertEmail = await _db.ServerAlertEmails.FindAsync(emailId);
+        if (alertEmail == null || alertEmail.ServerId != serverId)
+            return NotFound(new ApiResponse<object>(false, "Email không tìm thấy.", null));
+
+        _db.ServerAlertEmails.Remove(alertEmail);
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Alert email {Email} removed from server {ServerId}", alertEmail.Email, serverId);
+
+        return Ok(new ApiResponse<object>(true, "Xóa email thành công!", null));
+    }
+
+    /// <summary>Bật/tắt email nhận thông báo</summary>
+    [HttpPut("{serverId:guid}/alert-emails/{emailId:guid}/toggle")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<ServerAlertEmailDto>>> ToggleServerAlertEmail(
+        Guid serverId, 
+        Guid emailId)
+    {
+        var tenantId = GetTenantId();
+        var role = GetUserRole();
+
+        if (role != "SuperAdmin" && role != "Admin")
+            return Forbid();
+
+        var server = await _db.Servers.FindAsync(serverId);
+        if (server == null)
+            return NotFound(new ApiResponse<ServerAlertEmailDto>(false, "Server không tìm thấy.", null));
+
+        if (role != "SuperAdmin" && server.TenantId != tenantId)
+            return Forbid();
+
+        var alertEmail = await _db.ServerAlertEmails.FindAsync(emailId);
+        if (alertEmail == null || alertEmail.ServerId != serverId)
+            return NotFound(new ApiResponse<ServerAlertEmailDto>(false, "Email không tìm thấy.", null));
+
+        alertEmail.IsActive = !alertEmail.IsActive;
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Alert email {Email} toggled to {Status} for server {ServerId}", 
+            alertEmail.Email, alertEmail.IsActive ? "active" : "inactive", serverId);
+
+        return Ok(new ApiResponse<ServerAlertEmailDto>(true, 
+            alertEmail.IsActive ? "Email đã được bật!" : "Email đã được tắt!", 
+            new ServerAlertEmailDto(alertEmail.Id, alertEmail.ServerId, alertEmail.Email, 
+                alertEmail.IsActive, alertEmail.CreatedAt)));
+    }
 }

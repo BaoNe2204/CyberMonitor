@@ -333,6 +333,7 @@ class IPFeatures:
     protocols: list[str] = field(default_factory=list)
     ports: list[int] = field(default_factory=list)
     destination_ips: list[str] = field(default_factory=list)
+    server_ids: list[str] = field(default_factory=list)
 
     def to_vector(self) -> list[float]:
         return [
@@ -388,6 +389,7 @@ class ThreatDecision:
     evidence: dict[str, Any]
     auto_block: bool
     should_block: bool
+    server_id: str | None = None
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -424,6 +426,7 @@ class FeatureExtractor:
             dest_ips: list[str] = []
             protocols: list[str] = []
             payloads: list[str] = []
+            server_ids: list[str] = []
             login_failures = 0
             http_connections = 0
             ssh_connections = 0
@@ -458,6 +461,10 @@ class FeatureExtractor:
                 status_code = safe_int(item.get("statusCode") or item.get("StatusCode"))
                 login_success = item.get("loginSuccess")
                 ts = parse_ts(item.get("timestamp") or item.get("Timestamp"))
+                srv_id = str(
+                    item.get("serverId") or item.get("ServerId")
+                    or item.get("server_id") or ""
+                ).strip()
 
                 if ts:
                     timestamps.append(ts)
@@ -469,6 +476,8 @@ class FeatureExtractor:
                     protocols.append(proto)
                 if raw:
                     payloads.append(raw[:500])
+                if srv_id:
+                    server_ids.append(srv_id)
 
                 structured = self._parse_structured_payload(raw)
                 if structured:
@@ -575,6 +584,7 @@ class FeatureExtractor:
                 protocols=sorted(set(protocols)),
                 ports=dest_ports,
                 destination_ips=dest_ips,
+                server_ids=server_ids,
             )
         return features
 
@@ -687,6 +697,7 @@ class EnsembleScorer:
         ips = list(features.keys())
         vectors = np.array([features[ip].to_vector() for ip in ips], dtype=float)
         model_scores = {ip: 0.0 for ip in ips}
+        ml_available = False
 
         if _HAS_SKLEARN and len(ips) >= 4:
             try:
@@ -700,6 +711,7 @@ class EnsembleScorer:
                 for ip, v in zip(ips, raw):
                     normalized = 1.0 - ((float(v) - mn) / max(mx - mn, 1e-6))
                     model_scores[ip] = clamp(normalized)
+                ml_available = True
             except Exception as exc:
                 logger.warning("IsolationForest failed, using drift only: %s", exc)
 
@@ -707,7 +719,22 @@ class EnsembleScorer:
         for ip in ips:
             drift_score, drift_comp = baselines.drift_score(features[ip])
             pressure = self._feature_pressure(features[ip])
-            anomaly = clamp(0.45 * model_scores[ip] + 0.35 * drift_score + 0.20 * pressure)
+
+            # When ML model is available, use full ensemble weights
+            # When ML model is NOT available (< 4 IPs), rebalance to drift+pressure
+            if ml_available:
+                anomaly = clamp(0.45 * model_scores[ip] + 0.35 * drift_score + 0.20 * pressure)
+            else:
+                # No ML → redistribute weight: drift(40%) + pressure(60%)
+                anomaly = clamp(0.40 * drift_score + 0.60 * pressure)
+
+            # Rule-based override: if feature pressure is clearly elevated,
+            # the traffic has strong attack indicators (payload patterns,
+            # high request rate, etc.) — force anomaly even if ensemble is low
+            rule_override = self._rule_based_check(features[ip], pressure)
+            if rule_override:
+                anomaly = max(anomaly, rule_override)
+
             verdict = "normal"
             if anomaly >= self.threshold:
                 verdict = "anomaly"
@@ -741,6 +768,58 @@ class EnsembleScorer:
             clamp((f.dns_amplification_ratio - 1.0) / 12.0),
         ]
         return sum(signals) / len(signals)
+
+    @staticmethod
+    def _rule_based_check(f: IPFeatures, pressure: float) -> float:
+        """Rule-based override: returns minimum anomaly score if clear attack
+        indicators are present, 0.0 otherwise.
+        This ensures obvious attacks are detected even when ensemble ML
+        score is low (e.g., single-IP scenario, new IP with no baseline)."""
+        score = 0.0
+
+        # DDoS / SYN Flood: extremely high request count or request rate
+        if f.request_count >= 100 and f.request_rate >= 5.0:
+            score = max(score, clamp(0.65 + f.request_rate / 500.0))
+        if f.syn_like_ratio >= 3.0 and f.request_count >= 50:
+            score = max(score, 0.80)
+
+        # Brute Force: many failed logins
+        if f.failed_login_count >= 15:
+            score = max(score, clamp(0.70 + f.failed_login_count / 200.0))
+
+        # SQL Injection: payload pattern matches
+        if f.payload_sqli_hits >= 3:
+            score = max(score, clamp(0.72 + f.payload_sqli_hits / 50.0))
+
+        # Malware / Reverse Shell: dangerous command patterns
+        if f.payload_malware_hits >= 2:
+            score = max(score, clamp(0.75 + f.payload_malware_hits / 40.0))
+
+        # Web Shell upload
+        if f.payload_webshell_hits >= 2:
+            score = max(score, clamp(0.75 + f.payload_webshell_hits / 30.0))
+
+        # Port Scan: many unique destination ports
+        if f.unique_dest_ports >= 15:
+            score = max(score, clamp(0.68 + f.unique_dest_ports / 200.0))
+
+        # XSS: multiple hits
+        if f.payload_xss_hits >= 3:
+            score = max(score, clamp(0.70 + f.payload_xss_hits / 50.0))
+
+        # Privilege Escalation
+        if f.payload_priv_esc_hits >= 2:
+            score = max(score, clamp(0.72 + f.payload_priv_esc_hits / 30.0))
+
+        # DNS Tunneling
+        if f.payload_dns_tunnel_hits >= 3:
+            score = max(score, clamp(0.70 + f.payload_dns_tunnel_hits / 40.0))
+
+        # High overall pressure — catch-all for compound attacks
+        if pressure >= 0.25:
+            score = max(score, clamp(0.50 + pressure))
+
+        return clamp(score)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -918,6 +997,12 @@ class ThreatProfiler:
             block_threshold = profile.get("block_threshold", AUTO_BLOCK_THRESHOLD)
             should_block = auto_block and final_score >= max(block_threshold, AUTO_BLOCK_THRESHOLD * 0.9)
 
+            # Determine primary serverId from features
+            srv_id = None
+            if f.server_ids:
+                srv_counter = Counter(f.server_ids)
+                srv_id = srv_counter.most_common(1)[0][0]
+
             decisions.append(ThreatDecision(
                 source_ip=ip,
                 attack_type=attack_type,
@@ -929,6 +1014,7 @@ class ThreatProfiler:
                 evidence=evidence,
                 auto_block=auto_block,
                 should_block=should_block,
+                server_id=srv_id,
             ))
         return decisions
 
@@ -973,6 +1059,24 @@ class ThreatProfiler:
             total = sum(t.get(k, 0.0) * w for k, w in prof["weights"].items())
             weight_sum = sum(prof["weights"].values())
             scores[atype] = clamp(total / max(weight_sum, 1e-6))
+
+        # Post-processing: penalize UnknownAnomaly when specific attack
+        # indicators are present, so named attack types win classification
+        if "UnknownAnomaly" in scores:
+            has_specific_indicator = (
+                f.payload_sqli_hits >= 3
+                or f.payload_malware_hits >= 2
+                or f.payload_webshell_hits >= 2
+                or f.payload_xss_hits >= 3
+                or f.payload_priv_esc_hits >= 2
+                or f.payload_dns_tunnel_hits >= 3
+                or f.payload_mining_hits >= 2
+                or f.failed_login_count >= 15
+                or f.unique_dest_ports >= 15
+                or (f.request_count >= 100 and f.request_rate >= 5.0)
+            )
+            if has_specific_indicator:
+                scores["UnknownAnomaly"] *= 0.3  # Heavy penalty
         return scores
 
     def _build_rationale(
@@ -1409,12 +1513,15 @@ class AIEngineV3Service:
 
     def _trigger_alert(self, d: ThreatDecision) -> None:
         mitre = MITRE.get(d.attack_type, MITRE["UnknownAnomaly"])
+        # Determine serverId: from threat decision, or fallback to engine-level
+        server_id = d.server_id or self.server_id or None
         payload = {
             "severity": d.severity,
             "alertType": d.attack_type.upper(),
             "title": self._gen_title(d),
             "description": self._gen_description(d, mitre),
             "sourceIp": d.source_ip.split(",")[0].strip(),
+            "serverId": server_id,
             "targetAsset": None,
             "mitreTactic": d.mitre_tactic,
             "mitreTechnique": f"{d.mitre_id} - {d.mitre_tactic}",

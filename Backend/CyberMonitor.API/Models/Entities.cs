@@ -176,6 +176,7 @@ public class Server
     public ICollection<ApiKey> ApiKeys { get; set; } = new List<ApiKey>();
     public ICollection<TrafficLog> TrafficLogs { get; set; } = new List<TrafficLog>();
     public ICollection<Alert> Alerts { get; set; } = new List<Alert>();
+    public ICollection<ServerAlertEmail> AlertEmails { get; set; } = new List<ServerAlertEmail>();
 }
 
 public class ApiKey
@@ -467,6 +468,12 @@ public class BlockedIP
 
     public Guid? TenantId { get; set; }
 
+    /// <summary>
+    /// Server ID - if specified, block applies only to this server.
+    /// If NULL, block applies to all servers in the tenant (tenant-wide).
+    /// </summary>
+    public Guid? ServerId { get; set; }
+
     [Required, MaxLength(45)]
     public string IpAddress { get; set; } = string.Empty;
 
@@ -500,4 +507,25 @@ public class BlockedIP
 
     [ForeignKey(nameof(TenantId))]
     public Tenant? Tenant { get; set; }
+
+    [ForeignKey(nameof(ServerId))]
+    public Server? Server { get; set; }
+}
+
+public class ServerAlertEmail
+{
+    [Key]
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    [Required]
+    public Guid ServerId { get; set; }
+
+    [Required, MaxLength(255), EmailAddress]
+    public string Email { get; set; } = string.Empty;
+
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [ForeignKey(nameof(ServerId))]
+    public Server Server { get; set; } = null!;
 }
