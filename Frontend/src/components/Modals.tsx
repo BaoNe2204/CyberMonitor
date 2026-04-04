@@ -54,6 +54,10 @@ export const Modals = ({
     typeof import.meta.env.VITE_API_URL === 'string' && import.meta.env.VITE_API_URL
       ? import.meta.env.VITE_API_URL
       : 'http://localhost:5000';
+  const agentInstallCommand =
+    serverKeyToView?.plainApiKey && serverKeyToView?.serverId
+      ? `python agent.py --api-key "${serverKeyToView.plainApiKey}" --server-url "${agentBackendUrl}" --server-id "${serverKeyToView.serverId}"`
+      : '';
 
   // AddServer form state
   const [serverName, setServerName] = React.useState('');
@@ -387,17 +391,29 @@ export const Modals = ({
                     theme === 'dark' ? 'bg-amber-500/5 border-amber-500/20' : 'bg-amber-50 border-amber-200'
                   )}
                 >
-                  <p className="text-sm text-amber-600 font-medium flex items-center gap-2">
-                    <AlertTriangle size={16} className="shrink-0" />
-                    Chạy agent:
-                  </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm text-amber-600 font-medium flex items-center gap-2">
+                      <AlertTriangle size={16} className="shrink-0" />
+                      Chạy agent:
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(agentInstallCommand).catch(() => {});
+                      }}
+                      className="shrink-0 p-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+                      title="Sao chép lệnh"
+                    >
+                      <Copy size={16} />
+                    </button>
+                  </div>
                   <code
                     className={cn(
                       'block mt-2 text-xs font-mono break-all p-2 rounded',
                       theme === 'dark' ? 'bg-slate-950 text-slate-300' : 'bg-white border border-slate-200 text-slate-700'
                     )}
                   >
-                    python agent.py --api-key &quot;{serverKeyToView.plainApiKey}&quot; --server-url {agentBackendUrl} --server-id &quot;{serverKeyToView.serverId}&quot;
+                    {agentInstallCommand}
                   </code>
                 </div>
               </>
