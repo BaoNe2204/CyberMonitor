@@ -8,6 +8,7 @@
 -- Xóa theo thứ tự ngược từ bảng con lên bảng cha
 -- ============================================
 DROP TABLE IF EXISTS Notifications;
+DROP TABLE IF EXISTS ServerTelegramRecipients;
 DROP TABLE IF EXISTS AuditLogs;
 DROP TABLE IF EXISTS TicketComments;
 DROP TABLE IF EXISTS Tickets;
@@ -285,6 +286,22 @@ CREATE TABLE Notifications (
 );
 
 CREATE INDEX IX_Notifications_UserId_Unread ON Notifications(UserId, IsRead);
+
+-- ============================================
+-- 13. SERVER_TELEGRAM_RECIPIENTS (Telegram Chat nhận cảnh báo theo server)
+-- ============================================
+CREATE TABLE ServerTelegramRecipients (
+    Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    ServerId UNIQUEIDENTIFIER NOT NULL,
+    ChatId NVARCHAR(100) NOT NULL,
+    DisplayName NVARCHAR(200) NULL,
+    IsActive BIT DEFAULT 1,
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    CONSTRAINT FK_ServerTelegramRecipients_Servers FOREIGN KEY (ServerId) REFERENCES Servers(Id) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IX_ServerTelegramRecipients_ServerId_ChatId
+ON ServerTelegramRecipients(ServerId, ChatId);
 
 -- ============================================
 -- SEED: SuperAdmin

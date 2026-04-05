@@ -19,17 +19,20 @@ public class AlertsController : ControllerBase
     private readonly CyberMonitorDbContext _db;
     private readonly IHubContext<AlertHub, IAlertHub> _alertHub;
     private readonly IEmailService _emailService;
+    private readonly ITelegramService _telegramService;
     private readonly ILogger<AlertsController> _logger;
 
     public AlertsController(
         CyberMonitorDbContext db,
         IHubContext<AlertHub, IAlertHub> alertHub,
         IEmailService emailService,
+        ITelegramService telegramService,
         ILogger<AlertsController> logger)
     {
         _db = db;
         _alertHub = alertHub;
         _emailService = emailService;
+        _telegramService = telegramService;
         _logger = logger;
     }
 
@@ -329,6 +332,15 @@ public class AlertsController : ControllerBase
                     _logger.LogError(ex, "Failed to send alert email to {Email}", alertEmail.Email);
                 }
             }
+        }
+
+        var telegramSent = await _telegramService.SendAlertAsync(alert.TenantId, alert, server, ticket);
+        if (telegramSent > 0)
+        {
+            _logger.LogInformation(
+                "Telegram alert sent to {Count} chat(s) for alert {AlertId}",
+                telegramSent,
+                alert.Id);
         }
 
         await _db.SaveChangesAsync();

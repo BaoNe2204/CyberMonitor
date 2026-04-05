@@ -60,6 +60,7 @@ import { ApiManagement } from './components/ApiManagement';
 import { Defense } from './components/Defense';
 import { ServerSelector } from './components/ServerSelector';
 import ServerAlertEmailsModal from './components/ServerAlertEmailsModal';
+import ServerTelegramRecipientsModal from './components/ServerTelegramRecipientsModal';
 import { loadStoredPricingPlans } from './data/defaultPricingPlans';
 
 export default function App() {
@@ -97,6 +98,7 @@ export default function App() {
   const [serverKeyToView, setServerKeyToView] = useState<ServerKeyModalState | null>(null);
   // Server email management modal
   const [serverEmailModal, setServerEmailModal] = useState<{ serverId: string; serverName: string } | null>(null);
+  const [serverTelegramModal, setServerTelegramModal] = useState<{ serverId: string; serverName: string } | null>(null);
 
   // Real data from API
   const [servers, setServers] = useState<Agent[]>([]);
@@ -692,6 +694,10 @@ export default function App() {
     setServerEmailModal({ serverId, serverName });
   }, []);
 
+  const handleManageTelegram = useCallback((serverId: string, serverName: string) => {
+    setServerTelegramModal({ serverId, serverName });
+  }, []);
+
   const handleRegenerateServerKey = useCallback(
     async (serverId: string) => {
       const res = await ServersApi.regenerateKey(serverId);
@@ -778,6 +784,14 @@ export default function App() {
         />
       )}
 
+      {serverTelegramModal && (
+        <ServerTelegramRecipientsModal
+          serverId={serverTelegramModal.serverId}
+          serverName={serverTelegramModal.serverName}
+          onClose={() => setServerTelegramModal(null)}
+        />
+      )}
+
       <div className="flex h-screen overflow-hidden">
         <Sidebar
           theme={theme}
@@ -850,6 +864,7 @@ export default function App() {
                     onDeleteServer={handleDeleteServer}
                     onViewServerKey={handleViewServerKey}
                     onManageEmails={handleManageEmails}
+                    onManageTelegram={handleManageTelegram}
                   />
                 )}
 

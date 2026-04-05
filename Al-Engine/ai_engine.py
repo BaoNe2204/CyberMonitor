@@ -14,6 +14,7 @@ Detection pipeline:
 Cách chạy:
     python ai_engine.py --backend-url http://localhost:5000 --api-key sk-ai-engine-secret-key-2026
     python ai_engine.py -b http://192.168.1.6:5000 -i 5 -l 2 -t 0.70
+    python ai_engine.py --backend-url http://localhost:5000 -i 5 -l 2 -t 0.40
 
 Môi trường:
     BACKEND_URL          URL backend (default: http://localhost:5000)
@@ -29,6 +30,9 @@ Môi trường:
     BASELINE_FILE        File lưu baseline (default: ai_engine_v3_baselines.json)
     DISTRIBUTED_THRESH   Ngưỡng IP cho distributed attack (default: 12)
     DISTRIBUTED_REQ      Ngưỡng request cho distributed (default: 180)
+    IFOREST_ESTIMATORS   Số cây IsolationForest (default: 80)
+    MAX_IPS_FOR_ML       Số IP tối đa được fit ML mỗi cycle (default: 400)
+    MAX_LOGS_FOR_FEATURES Số logs tối đa được extract feature mỗi cycle (default: 3000)
 """
 
 from __future__ import annotations
@@ -60,7 +64,7 @@ BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:5000")
 AI_API_KEY = os.getenv("AI_API_KEY", "sk-ai-engine-secret-key-2026")
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "5"))
 LOOKBACK_MINUTES = int(os.getenv("LOOKBACK_MINUTES", "2"))
-PAGE_SIZE = int(os.getenv("PAGE_SIZE", "10000"))
+PAGE_SIZE = int(os.getenv("PAGE_SIZE", "3000"))
 ANOMALY_THRESHOLD = float(os.getenv("ANOMALY_THRESHOLD", "0.68"))
 AUTO_BLOCK_THRESHOLD = float(os.getenv("AUTO_BLOCK_THRESHOLD", "0.80"))
 RISK_DECAY = float(os.getenv("RISK_DECAY", "0.12"))
@@ -70,6 +74,9 @@ ALLOW_LOCAL_BLOCK = os.getenv("ALLOW_LOCAL_BLOCK", "true").lower() == "true"
 BASELINE_FILE = Path(os.getenv("BASELINE_FILE", "ai_engine_baselines.json"))
 DISTRIBUTED_SOURCE_THRESHOLD = int(os.getenv("DISTRIBUTED_SOURCE_THRESHOLD", "12"))
 DISTRIBUTED_REQUEST_THRESHOLD = int(os.getenv("DISTRIBUTED_REQUEST_THRESHOLD", "180"))
+IFOREST_ESTIMATORS = int(os.getenv("IFOREST_ESTIMATORS", "80"))
+MAX_IPS_FOR_ML = int(os.getenv("MAX_IPS_FOR_ML", "400"))
+MAX_LOGS_FOR_FEATURES = int(os.getenv("MAX_LOGS_FOR_FEATURES", "3000"))
 
 LOGGING_FORMAT = "%(asctime)s [%(levelname)s] AI-PRO - %(message)s"
 logging.basicConfig(
@@ -695,20 +702,27 @@ class EnsembleScorer:
             return {}
 
         ips = list(features.keys())
-        vectors = np.array([features[ip].to_vector() for ip in ips], dtype=float)
+        vectors = np.array([features[ip].to_vector() for ip in ips], dtype=np.float32)
         model_scores = {ip: 0.0 for ip in ips}
         ml_available = False
 
         if _HAS_SKLEARN and len(ips) >= 4:
             try:
+                ml_ips = self._select_ips_for_ml(features, ips)
+                ml_vectors = np.array([features[ip].to_vector() for ip in ml_ips], dtype=np.float32)
                 scaler = RobustScaler()
-                scaled = scaler.fit_transform(vectors)
-                contamination = min(max(1.0 / len(ips), 0.02), 0.25)
-                model = IsolationForest(n_estimators=200, contamination=contamination, random_state=42)
+                scaled = scaler.fit_transform(ml_vectors)
+                contamination = min(max(1.0 / len(ml_ips), 0.02), 0.25)
+                model = IsolationForest(
+                    n_estimators=max(20, IFOREST_ESTIMATORS),
+                    contamination=contamination,
+                    random_state=42,
+                    n_jobs=1,
+                )
                 model.fit(scaled)
                 raw = model.score_samples(scaled)
                 mn, mx = float(np.min(raw)), float(np.max(raw))
-                for ip, v in zip(ips, raw):
+                for ip, v in zip(ml_ips, raw):
                     normalized = 1.0 - ((float(v) - mn) / max(mx - mn, 1e-6))
                     model_scores[ip] = clamp(normalized)
                 ml_available = True
@@ -750,6 +764,28 @@ class EnsembleScorer:
                 "drift_components": drift_comp,
             }
         return results
+
+    @staticmethod
+    def _select_ips_for_ml(features: dict[str, IPFeatures], ips: list[str]) -> list[str]:
+        if len(ips) <= MAX_IPS_FOR_ML:
+            return ips
+
+        ranked = sorted(
+            ips,
+            key=lambda ip: (
+                features[ip].request_count,
+                features[ip].failed_login_count,
+                features[ip].payload_sqli_hits
+                + features[ip].payload_xss_hits
+                + features[ip].payload_webshell_hits
+                + features[ip].payload_malware_hits
+                + features[ip].payload_dns_tunnel_hits
+                + features[ip].payload_priv_esc_hits,
+                features[ip].unique_dest_ports,
+            ),
+            reverse=True,
+        )
+        return ranked[:MAX_IPS_FOR_ML]
 
     @staticmethod
     def _feature_pressure(f: IPFeatures) -> float:
@@ -1406,6 +1442,8 @@ class AIEngineV3Service:
         logger.info(" Backend: %s", self.backend_url)
         logger.info(" Interval: %ss | Lookback: %s min | Threshold: %.2f", self.interval, self.lookback, self.threshold)
         logger.info(" Ensemble: ML(45%%) + Drift(35%%) + Pressure(20%%)")
+        logger.info(" Performance caps: pageSize=%d | maxLogs=%d | maxMlIps=%d | trees=%d",
+            PAGE_SIZE, MAX_LOGS_FOR_FEATURES, MAX_IPS_FOR_ML, IFOREST_ESTIMATORS)
         logger.info(" Local firewall block: %s", "ENABLED" if ALLOW_LOCAL_BLOCK else "DISABLED")
         logger.info(" Distributed DDoS detection: ENABLED")
         logger.info(" Baseline file: %s", BASELINE_FILE)
@@ -1435,6 +1473,16 @@ class AIEngineV3Service:
             logger.debug("No logs fetched cycle #%d", self._stats["cycles"])
             return
 
+        raw_log_count = len(logs)
+        if len(logs) > MAX_LOGS_FOR_FEATURES:
+            logs = logs[:MAX_LOGS_FOR_FEATURES]
+            logger.info(
+                "[CYCLE #%d] Truncated logs for feature extraction: %d -> %d",
+                self._stats["cycles"],
+                raw_log_count,
+                len(logs),
+            )
+
         features = self.extractor.extract(logs)
 
         # Step 1: Ensemble anomaly scoring
@@ -1455,8 +1503,8 @@ class AIEngineV3Service:
         # Log summary
         high_conf = [d for d in all_decisions if d.score >= self.threshold]
         logger.info(
-            "[CYCLE #%d] logs=%d ips=%d suspicious=%d distributed=%d",
-            self._stats["cycles"], len(logs), len(features),
+            "[CYCLE #%d] logs=%d/%d ips=%d suspicious=%d distributed=%d",
+            self._stats["cycles"], len(logs), raw_log_count, len(features),
             len(high_conf), len(distributed)
         )
 

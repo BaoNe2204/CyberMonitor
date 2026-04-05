@@ -351,6 +351,15 @@ export interface ServerAlertEmail {
   createdAt: string;
 }
 
+export interface ServerTelegramRecipient {
+  id: string;
+  serverId: string;
+  chatId: string;
+  displayName: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface Alert {
   id: string;
   tenantId: string;
@@ -652,6 +661,31 @@ export const ServersApi = {
 
   toggleAlertEmail: async (serverId: string, emailId: string) => {
     return request<ServerAlertEmail>(`/api/servers/${serverId}/alert-emails/${emailId}/toggle`, undefined, { method: 'PUT' });
+  },
+
+  // Telegram recipient management
+  getTelegramRecipients: async (serverId: string) => {
+    return request<ServerTelegramRecipient[]>(`/api/servers/${serverId}/telegram-recipients`);
+  },
+
+  addTelegramRecipient: async (serverId: string, chatId: string, displayName?: string) => {
+    return request<ServerTelegramRecipient>(
+      `/api/servers/${serverId}/telegram-recipients`,
+      { chatId, displayName },
+      { method: 'POST' }
+    );
+  },
+
+  deleteTelegramRecipient: async (serverId: string, recipientId: string) => {
+    return request(`/api/servers/${serverId}/telegram-recipients/${recipientId}`, undefined, { method: 'DELETE' });
+  },
+
+  toggleTelegramRecipient: async (serverId: string, recipientId: string) => {
+    return request<ServerTelegramRecipient>(
+      `/api/servers/${serverId}/telegram-recipients/${recipientId}/toggle`,
+      undefined,
+      { method: 'PUT' }
+    );
   },
 };
 

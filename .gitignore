@@ -14,7 +14,7 @@ Frontend/dist/
 
 # Logs / local scripts
 *.log
-
+.dotnet
 # Local docs not for GitHub
 CYBERMONITOR_TECHNICAL_DOC.md
 HƯỚNG_DẪN_CÀI_ĐẶT.md

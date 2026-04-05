@@ -177,6 +177,7 @@ public class Server
     public ICollection<TrafficLog> TrafficLogs { get; set; } = new List<TrafficLog>();
     public ICollection<Alert> Alerts { get; set; } = new List<Alert>();
     public ICollection<ServerAlertEmail> AlertEmails { get; set; } = new List<ServerAlertEmail>();
+    public ICollection<ServerTelegramRecipient> TelegramRecipients { get; set; } = new List<ServerTelegramRecipient>();
 }
 
 public class ApiKey
@@ -522,6 +523,27 @@ public class ServerAlertEmail
 
     [Required, MaxLength(255), EmailAddress]
     public string Email { get; set; } = string.Empty;
+
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [ForeignKey(nameof(ServerId))]
+    public Server Server { get; set; } = null!;
+}
+
+public class ServerTelegramRecipient
+{
+    [Key]
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    [Required]
+    public Guid ServerId { get; set; }
+
+    [Required, MaxLength(100)]
+    public string ChatId { get; set; } = string.Empty;
+
+    [MaxLength(200)]
+    public string? DisplayName { get; set; }
 
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

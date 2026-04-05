@@ -22,6 +22,7 @@ public class CyberMonitorDbContext : DbContext
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<BlockedIP> BlockedIPs => Set<BlockedIP>();
     public DbSet<ServerAlertEmail> ServerAlertEmails => Set<ServerAlertEmail>();
+    public DbSet<ServerTelegramRecipient> ServerTelegramRecipients => Set<ServerTelegramRecipient>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -226,6 +227,17 @@ public class CyberMonitorDbContext : DbContext
             e.HasIndex(s => new { s.ServerId, s.Email }).IsUnique().HasDatabaseName("IX_ServerAlertEmails_ServerId_Email");
             e.HasOne(s => s.Server)
                 .WithMany(srv => srv.AlertEmails)
+                .HasForeignKey(s => s.ServerId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ServerTelegramRecipient
+        modelBuilder.Entity<ServerTelegramRecipient>(e =>
+        {
+            e.Property(s => s.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.HasIndex(s => new { s.ServerId, s.ChatId }).IsUnique().HasDatabaseName("IX_ServerTelegramRecipients_ServerId_ChatId");
+            e.HasOne(s => s.Server)
+                .WithMany(srv => srv.TelegramRecipients)
                 .HasForeignKey(s => s.ServerId)
                 .OnDelete(DeleteBehavior.Cascade);
         });

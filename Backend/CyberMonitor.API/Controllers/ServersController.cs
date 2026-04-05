@@ -514,4 +514,171 @@ public class ServersController : ControllerBase
             new ServerAlertEmailDto(alertEmail.Id, alertEmail.ServerId, alertEmail.Email, 
                 alertEmail.IsActive, alertEmail.CreatedAt)));
     }
+
+    // ============================================================================
+    // SERVER TELEGRAM RECIPIENT MANAGEMENT
+    // ============================================================================
+
+    /// <summary>Lấy danh sách Telegram chat nhận thông báo của server</summary>
+    [HttpGet("{id:guid}/telegram-recipients")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<List<ServerTelegramRecipientDto>>>> GetServerTelegramRecipients(Guid id)
+    {
+        var tenantId = GetTenantId();
+        var role = GetUserRole();
+
+        var server = await _db.Servers.FindAsync(id);
+        if (server == null)
+            return NotFound(new ApiResponse<List<ServerTelegramRecipientDto>>(false, "Server không tìm thấy.", null));
+
+        if (role != "SuperAdmin" && server.TenantId != tenantId)
+            return Forbid();
+
+        var recipients = await _db.ServerTelegramRecipients
+            .Where(r => r.ServerId == id)
+            .OrderBy(r => r.CreatedAt)
+            .Select(r => new ServerTelegramRecipientDto(
+                r.Id,
+                r.ServerId,
+                r.ChatId,
+                r.DisplayName,
+                r.IsActive,
+                r.CreatedAt))
+            .ToListAsync();
+
+        return Ok(new ApiResponse<List<ServerTelegramRecipientDto>>(true, "OK", recipients));
+    }
+
+    /// <summary>Thêm Telegram chat nhận thông báo cho server (tối đa 5 chat)</summary>
+    [HttpPost("{id:guid}/telegram-recipients")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<ServerTelegramRecipientDto>>> AddServerTelegramRecipient(
+        Guid id,
+        [FromBody] AddServerTelegramRecipientRequest request)
+    {
+        var tenantId = GetTenantId();
+        var role = GetUserRole();
+
+        if (role != "SuperAdmin" && role != "Admin")
+            return Forbid();
+
+        var server = await _db.Servers.FindAsync(id);
+        if (server == null)
+            return NotFound(new ApiResponse<ServerTelegramRecipientDto>(false, "Server không tìm thấy.", null));
+
+        if (role != "SuperAdmin" && server.TenantId != tenantId)
+            return Forbid();
+
+        var chatId = request.ChatId.Trim();
+        if (string.IsNullOrWhiteSpace(chatId))
+            return BadRequest(new ApiResponse<ServerTelegramRecipientDto>(false, "Chat ID là bắt buộc.", null));
+
+        var currentCount = await _db.ServerTelegramRecipients.CountAsync(r => r.ServerId == id && r.IsActive);
+        if (currentCount >= 5)
+            return BadRequest(new ApiResponse<ServerTelegramRecipientDto>(false,
+                "Mỗi server chỉ được thêm tối đa 5 Telegram chat nhận thông báo.", null));
+
+        var exists = await _db.ServerTelegramRecipients
+            .AnyAsync(r => r.ServerId == id && r.ChatId == chatId);
+        if (exists)
+            return BadRequest(new ApiResponse<ServerTelegramRecipientDto>(false,
+                "Chat ID này đã được thêm cho server.", null));
+
+        var recipient = new ServerTelegramRecipient
+        {
+            ServerId = id,
+            ChatId = chatId,
+            DisplayName = string.IsNullOrWhiteSpace(request.DisplayName) ? null : request.DisplayName.Trim(),
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _db.ServerTelegramRecipients.Add(recipient);
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Telegram recipient {ChatId} added for server {ServerId}", chatId, id);
+
+        return Ok(new ApiResponse<ServerTelegramRecipientDto>(true, "Thêm Telegram chat thành công!",
+            new ServerTelegramRecipientDto(
+                recipient.Id,
+                recipient.ServerId,
+                recipient.ChatId,
+                recipient.DisplayName,
+                recipient.IsActive,
+                recipient.CreatedAt)));
+    }
+
+    /// <summary>Xóa Telegram chat nhận thông báo</summary>
+    [HttpDelete("{serverId:guid}/telegram-recipients/{recipientId:guid}")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<object>>> DeleteServerTelegramRecipient(Guid serverId, Guid recipientId)
+    {
+        var tenantId = GetTenantId();
+        var role = GetUserRole();
+
+        if (role != "SuperAdmin" && role != "Admin")
+            return Forbid();
+
+        var server = await _db.Servers.FindAsync(serverId);
+        if (server == null)
+            return NotFound(new ApiResponse<object>(false, "Server không tìm thấy.", null));
+
+        if (role != "SuperAdmin" && server.TenantId != tenantId)
+            return Forbid();
+
+        var recipient = await _db.ServerTelegramRecipients.FindAsync(recipientId);
+        if (recipient == null || recipient.ServerId != serverId)
+            return NotFound(new ApiResponse<object>(false, "Telegram chat không tìm thấy.", null));
+
+        _db.ServerTelegramRecipients.Remove(recipient);
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Telegram recipient {ChatId} removed from server {ServerId}", recipient.ChatId, serverId);
+
+        return Ok(new ApiResponse<object>(true, "Xóa Telegram chat thành công!", null));
+    }
+
+    /// <summary>Bật/tắt Telegram chat nhận thông báo</summary>
+    [HttpPut("{serverId:guid}/telegram-recipients/{recipientId:guid}/toggle")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<ServerTelegramRecipientDto>>> ToggleServerTelegramRecipient(
+        Guid serverId,
+        Guid recipientId)
+    {
+        var tenantId = GetTenantId();
+        var role = GetUserRole();
+
+        if (role != "SuperAdmin" && role != "Admin")
+            return Forbid();
+
+        var server = await _db.Servers.FindAsync(serverId);
+        if (server == null)
+            return NotFound(new ApiResponse<ServerTelegramRecipientDto>(false, "Server không tìm thấy.", null));
+
+        if (role != "SuperAdmin" && server.TenantId != tenantId)
+            return Forbid();
+
+        var recipient = await _db.ServerTelegramRecipients.FindAsync(recipientId);
+        if (recipient == null || recipient.ServerId != serverId)
+            return NotFound(new ApiResponse<ServerTelegramRecipientDto>(false, "Telegram chat không tìm thấy.", null));
+
+        recipient.IsActive = !recipient.IsActive;
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Telegram recipient {ChatId} toggled to {Status} for server {ServerId}",
+            recipient.ChatId,
+            recipient.IsActive ? "active" : "inactive",
+            serverId);
+
+        return Ok(new ApiResponse<ServerTelegramRecipientDto>(true,
+            recipient.IsActive ? "Telegram chat đã được bật!" : "Telegram chat đã được tắt!",
+            new ServerTelegramRecipientDto(
+                recipient.Id,
+                recipient.ServerId,
+                recipient.ChatId,
+                recipient.DisplayName,
+                recipient.IsActive,
+                recipient.CreatedAt)));
+    }
 }

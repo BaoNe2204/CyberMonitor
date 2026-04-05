@@ -112,6 +112,8 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<CyberMonitor.API.Services.IJwtService, CyberMonitor.API.Services.JwtService>();
 builder.Services.AddScoped<CyberMonitor.API.Services.IVnpayService, CyberMonitor.API.Services.VnpayService>();
 builder.Services.AddScoped<CyberMonitor.API.Services.IEmailService, CyberMonitor.API.Services.EmailService>();
+builder.Services.AddScoped<CyberMonitor.API.Services.ITelegramService, CyberMonitor.API.Services.TelegramService>();
+builder.Services.AddHttpClient();
 
 builder.Services.AddCors(options =>
 {

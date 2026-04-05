@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cpu, Plus, Server, Activity, Database, AlertTriangle, CheckCircle2, Trash2, KeyRound, Mail } from 'lucide-react';
+import { Cpu, Plus, Server, Activity, Database, AlertTriangle, CheckCircle2, Trash2, KeyRound, Mail, Send } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Theme, Agent } from '../types';
 
@@ -12,6 +12,7 @@ interface AgentsProps {
   onDeleteServer?: (id: string) => Promise<void>;
   onViewServerKey?: (id: string, name: string) => void;
   onManageEmails?: (id: string, name: string) => void;
+  onManageTelegram?: (id: string, name: string) => void;
 }
 
 export const Agents = ({
@@ -23,6 +24,7 @@ export const Agents = ({
   onDeleteServer,
   onViewServerKey,
   onManageEmails,
+  onManageTelegram,
 }: AgentsProps) => {
   return (
     <div className="space-y-8">
@@ -85,6 +87,21 @@ export const Agents = ({
                     )}
                   >
                     <Mail size={16} />
+                  </button>
+                )}
+                {onManageTelegram && canManageServers && (
+                  <button
+                    type="button"
+                    title="Quản lý Telegram nhận thông báo"
+                    onClick={() => onManageTelegram(agent.id, agent.name)}
+                    className={cn(
+                      'p-2 rounded-lg border transition-colors',
+                      theme === 'dark'
+                        ? 'border-slate-700 text-sky-400 hover:bg-sky-500/10 hover:border-sky-500/30'
+                        : 'border-slate-200 text-sky-600 hover:bg-sky-50 hover:border-sky-200'
+                    )}
+                  >
+                    <Send size={16} />
                   </button>
                 )}
                 {onViewServerKey && (

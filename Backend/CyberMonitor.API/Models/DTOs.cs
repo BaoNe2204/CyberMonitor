@@ -413,3 +413,18 @@ public record ServerAlertEmailDto(
 public record AddServerAlertEmailRequest(
     string Email
 );
+
+// ============ SERVER TELEGRAM RECIPIENT DTOs ============
+public record ServerTelegramRecipientDto(
+    Guid Id,
+    Guid ServerId,
+    string ChatId,
+    string? DisplayName,
+    bool IsActive,
+    DateTime CreatedAt
+);
+
+public record AddServerTelegramRecipientRequest(
+    string ChatId,
+    string? DisplayName
+);

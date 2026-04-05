@@ -14,12 +14,12 @@ namespace CyberMonitor.API.Controllers;
 public class TestController : ControllerBase
 {
     private readonly IEmailService _emailService;
-    private readonly IConfiguration _configuration;
+    private readonly ITelegramService _telegramService;
 
-    public TestController(IEmailService emailService, IConfiguration configuration)
+    public TestController(IEmailService emailService, ITelegramService telegramService)
     {
         _emailService = emailService;
-        _configuration = configuration;
+        _telegramService = telegramService;
     }
 
     /// <summary>Test gửi email</summary>
@@ -154,14 +154,17 @@ public class TestController : ControllerBase
                 }
             }
 
-            Console.WriteLine($"[TestController] Alert created (tenant={tenantId}). Emails: {emailsSent} admins + {serverEmailsSent} server. Ticket: {ticketNumber}");
+            var telegramChatsSent = await _telegramService.SendAlertAsync(tenantId, alert, serverEntity, ticket);
 
-            return Ok(new ApiResponse<object>(true, $"Alert tao thanh cong! Email gui den {emailsSent} admin(s) + {serverEmailsSent} server email(s). Ticket: {ticketNumber}", new {
+            Console.WriteLine($"[TestController] Alert created (tenant={tenantId}). Emails: {emailsSent} admins + {serverEmailsSent} server. Telegram: {telegramChatsSent} chats. Ticket: {ticketNumber}");
+
+            return Ok(new ApiResponse<object>(true, $"Alert tao thanh cong! Email gui den {emailsSent} admin(s) + {serverEmailsSent} server email(s). Telegram gui den {telegramChatsSent} chat(s). Ticket: {ticketNumber}", new {
                 tenantId = tenantId,
                 alertId = alert.Id,
                 ticketNumber = ticketNumber,
                 emailsSent = emailsSent,
-                serverAlertEmailsSent = serverEmailsSent
+                serverAlertEmailsSent = serverEmailsSent,
+                telegramChatsSent = telegramChatsSent
             }));
         }
         catch (Exception ex)
