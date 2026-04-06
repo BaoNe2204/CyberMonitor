@@ -24,6 +24,7 @@ public class CyberMonitorDbContext : DbContext
     public DbSet<ServerAlertEmail> ServerAlertEmails => Set<ServerAlertEmail>();
     public DbSet<ServerTelegramRecipient> ServerTelegramRecipients => Set<ServerTelegramRecipient>();
     public DbSet<AlertDigestQueue> AlertDigestQueue => Set<AlertDigestQueue>();
+    public DbSet<PricingPlan> PricingPlans => Set<PricingPlan>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

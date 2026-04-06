@@ -851,6 +851,113 @@ export const SubscriptionsApi = {
 };
 
 // ============================================================================
+// PRICING PLANS API
+// ============================================================================
+
+interface PricingPlanLimits {
+  servers: number | 'unlimited';
+  users: number | 'unlimited';
+  storage: string;
+  bandwidth: string;
+  apiCalls: number | 'unlimited';
+  dailyAlerts: number | 'unlimited';
+  retention: string;
+  concurrentConnections: number;
+}
+
+interface PricingPlanCapabilities {
+  realTimeMonitoring: boolean;
+  threatIntelligence: boolean;
+  autoResponse: boolean;
+  customRules: boolean;
+  whiteLabel: boolean;
+  prioritySupport: boolean;
+  sla: string;
+  backupFrequency: string;
+  teamManagement: boolean;
+  auditLogs: boolean;
+  apiAccess: boolean;
+  sso: boolean;
+  customIntegrations: boolean;
+  dedicatedSupport: boolean;
+  slaCredits: boolean;
+}
+
+interface PricingPlan {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  originalPrice: string;
+  billingPeriod: string;
+  isActive: boolean;
+  isPopular: boolean;
+  isEnterprise: boolean;
+  isTrial: boolean;
+  features: string[];
+  limits: PricingPlanLimits;
+  capabilities: PricingPlanCapabilities;
+}
+
+interface CreatePricingPlanDto {
+  name: string;
+  description?: string;
+  price: number;
+  originalPrice?: number;
+  billingPeriod: string;
+  isActive: boolean;
+  isPopular: boolean;
+  isEnterprise: boolean;
+  isTrial: boolean;
+  features: string[];
+  limits: {
+    servers: number | 'unlimited';
+    users: number | 'unlimited';
+    storage: string;
+    bandwidth: string;
+    apiCalls: number | 'unlimited';
+    dailyAlerts: number | 'unlimited';
+    retention: string;
+    concurrentConnections: number;
+  };
+  capabilities: PricingPlanCapabilities;
+}
+
+export const PricingPlansApi = {
+  getAll: async (): Promise<ApiResponse<PricingPlan[]>> => {
+    return request<PricingPlan[]>('/api/pricing-plans');
+  },
+
+  getById: async (id: string): Promise<ApiResponse<PricingPlan>> => {
+    return request<PricingPlan>(`/api/pricing-plans/${id}`);
+  },
+
+  create: async (data: CreatePricingPlanDto): Promise<ApiResponse<PricingPlan>> => {
+    return request<PricingPlan>('/api/pricing-plans', data, { method: 'POST' });
+  },
+
+  update: async (id: string, data: CreatePricingPlanDto): Promise<ApiResponse<PricingPlan>> => {
+    return request<PricingPlan>(`/api/pricing-plans/${id}`, data, { method: 'PUT' });
+  },
+
+  delete: async (id: string): Promise<ApiResponse<null>> => {
+    return request<null>(`/api/pricing-plans/${id}`, {}, { method: 'DELETE' });
+  },
+
+  duplicate: async (id: string): Promise<ApiResponse<PricingPlan>> => {
+    return request<PricingPlan>(`/api/pricing-plans/${id}/duplicate`, {}, { method: 'POST' });
+  },
+
+  toggleActive: async (id: string): Promise<ApiResponse<PricingPlan>> => {
+    return request<PricingPlan>(`/api/pricing-plans/${id}/toggle-active`, {}, { method: 'PUT' });
+  },
+
+  togglePopular: async (id: string): Promise<ApiResponse<PricingPlan>> => {
+    return request<PricingPlan>(`/api/pricing-plans/${id}/toggle-popular`, {}, { method: 'PUT' });
+  },
+};
+
+// ============================================================================
 // PAYMENT API
 // ============================================================================
 

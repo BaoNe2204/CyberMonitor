@@ -113,6 +113,71 @@ namespace CyberMonitor.API.Migrations
                     b.ToTable("Alerts");
                 });
 
+            modelBuilder.Entity("CyberMonitor.API.Models.AlertDigestQueue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AlertCreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("AlertId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AlertMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AlertTitle")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("DigestMode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<bool>("IsSent")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("QueuedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Severity")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("TelegramChatId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AlertId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("DigestMode", "IsSent", "QueuedAt")
+                        .HasDatabaseName("IX_AlertDigestQueue_Mode_Sent_Queued");
+
+                    b.HasIndex("UserId", "DigestMode", "IsSent")
+                        .HasDatabaseName("IX_AlertDigestQueue_UserId_Mode_Sent");
+
+                    b.ToTable("AlertDigestQueue");
+                });
+
             modelBuilder.Entity("CyberMonitor.API.Models.ApiKey", b =>
                 {
                     b.Property<Guid>("Id")
@@ -226,6 +291,9 @@ namespace CyberMonitor.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal?>("AnomalyScore")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("AttackType")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -260,6 +328,9 @@ namespace CyberMonitor.API.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<Guid?>("ServerId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Severity")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -279,6 +350,8 @@ namespace CyberMonitor.API.Migrations
 
                     b.HasIndex("IpAddress")
                         .HasDatabaseName("IX_BlockedIPs_IpAddress");
+
+                    b.HasIndex("ServerId");
 
                     b.HasIndex("TenantId", "IsActive")
                         .HasDatabaseName("IX_BlockedIPs_TenantId_Active");
@@ -399,6 +472,141 @@ namespace CyberMonitor.API.Migrations
                     b.ToTable("PaymentOrders");
                 });
 
+            modelBuilder.Entity("CyberMonitor.API.Models.PricingPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("ApiAccess")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("ApiCalls")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("AuditLogs")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AutoResponse")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("BackupFrequency")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Bandwidth")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("BillingPeriod")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("ConcurrentConnections")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("CustomIntegrations")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("CustomRules")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("DailyAlerts")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("DedicatedSupport")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Features")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsEnterprise")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPopular")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsTrial")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal?>("OriginalPrice")
+                        .HasColumnType("decimal(18,0)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,0)");
+
+                    b.Property<bool>("PrioritySupport")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("RealTimeMonitoring")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Retention")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("Servers")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Sla")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<bool>("SlaCredits")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Sso")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Storage")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<bool>("TeamManagement")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ThreatIntelligence")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Users")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("WhiteLabel")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PricingPlans");
+                });
+
             modelBuilder.Entity("CyberMonitor.API.Models.Server", b =>
                 {
                     b.Property<Guid>("Id")
@@ -454,6 +662,72 @@ namespace CyberMonitor.API.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("Servers");
+                });
+
+            modelBuilder.Entity("CyberMonitor.API.Models.ServerAlertEmail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("ServerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ServerId", "Email")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ServerAlertEmails_ServerId_Email");
+
+                    b.ToTable("ServerAlertEmails");
+                });
+
+            modelBuilder.Entity("CyberMonitor.API.Models.ServerTelegramRecipient", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ChatId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("ServerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ServerId", "ChatId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ServerTelegramRecipients_ServerId_ChatId");
+
+                    b.ToTable("ServerTelegramRecipients");
                 });
 
             modelBuilder.Entity("CyberMonitor.API.Models.Subscription", b =>
@@ -561,7 +835,7 @@ namespace CyberMonitor.API.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
-                    b.Property<Guid>("CreatedBy")
+                    b.Property<Guid?>("CreatedBy")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Description")
@@ -734,6 +1008,16 @@ namespace CyberMonitor.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AlertDigestMode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("AlertSeverityThreshold")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -743,6 +1027,9 @@ namespace CyberMonitor.API.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
+
+                    b.Property<bool>("EmailAlertsEnabled")
+                        .HasColumnType("bit");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -760,10 +1047,26 @@ namespace CyberMonitor.API.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<bool>("PushNotificationsEnabled")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("SessionTimeoutEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SessionTimeoutMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("TelegramAlertsEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("TelegramChatId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uniqueidentifier");
@@ -787,12 +1090,19 @@ namespace CyberMonitor.API.Migrations
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000001"),
+                            AlertDigestMode = "realtime",
+                            AlertSeverityThreshold = "Medium",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@cybermonitor.vn",
+                            EmailAlertsEnabled = true,
                             FullName = "Super Administrator",
                             IsActive = true,
                             PasswordHash = "$2a$11$W6ghY.hmG5QQ6ciwQZO7Me3UB5oAmynLDf6OzYVv39c6xjTKwl4ym",
+                            PushNotificationsEnabled = true,
                             Role = "SuperAdmin",
+                            SessionTimeoutEnabled = false,
+                            SessionTimeoutMinutes = 30,
+                            TelegramAlertsEnabled = false,
                             TwoFactorEnabled = false
                         });
                 });
@@ -829,6 +1139,32 @@ namespace CyberMonitor.API.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("CyberMonitor.API.Models.AlertDigestQueue", b =>
+                {
+                    b.HasOne("CyberMonitor.API.Models.Alert", "Alert")
+                        .WithMany()
+                        .HasForeignKey("AlertId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("CyberMonitor.API.Models.Tenant", "Tenant")
+                        .WithMany("AlertDigestQueue")
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CyberMonitor.API.Models.User", "User")
+                        .WithMany("AlertDigestQueue")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Alert");
+
+                    b.Navigation("Tenant");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("CyberMonitor.API.Models.ApiKey", b =>
                 {
                     b.HasOne("CyberMonitor.API.Models.Server", "Server")
@@ -858,10 +1194,16 @@ namespace CyberMonitor.API.Migrations
 
             modelBuilder.Entity("CyberMonitor.API.Models.BlockedIP", b =>
                 {
+                    b.HasOne("CyberMonitor.API.Models.Server", "Server")
+                        .WithMany()
+                        .HasForeignKey("ServerId");
+
                     b.HasOne("CyberMonitor.API.Models.Tenant", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Server");
 
                     b.Navigation("Tenant");
                 });
@@ -906,6 +1248,28 @@ namespace CyberMonitor.API.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("CyberMonitor.API.Models.ServerAlertEmail", b =>
+                {
+                    b.HasOne("CyberMonitor.API.Models.Server", "Server")
+                        .WithMany("AlertEmails")
+                        .HasForeignKey("ServerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Server");
+                });
+
+            modelBuilder.Entity("CyberMonitor.API.Models.ServerTelegramRecipient", b =>
+                {
+                    b.HasOne("CyberMonitor.API.Models.Server", "Server")
+                        .WithMany("TelegramRecipients")
+                        .HasForeignKey("ServerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Server");
+                });
+
             modelBuilder.Entity("CyberMonitor.API.Models.Subscription", b =>
                 {
                     b.HasOne("CyberMonitor.API.Models.Tenant", "Tenant")
@@ -936,8 +1300,7 @@ namespace CyberMonitor.API.Migrations
                     b.HasOne("CyberMonitor.API.Models.User", "CreatedByUser")
                         .WithMany("CreatedTickets")
                         .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("CyberMonitor.API.Models.Tenant", "Tenant")
                         .WithMany("Tickets")
@@ -1011,15 +1374,21 @@ namespace CyberMonitor.API.Migrations
 
             modelBuilder.Entity("CyberMonitor.API.Models.Server", b =>
                 {
+                    b.Navigation("AlertEmails");
+
                     b.Navigation("Alerts");
 
                     b.Navigation("ApiKeys");
+
+                    b.Navigation("TelegramRecipients");
 
                     b.Navigation("TrafficLogs");
                 });
 
             modelBuilder.Entity("CyberMonitor.API.Models.Tenant", b =>
                 {
+                    b.Navigation("AlertDigestQueue");
+
                     b.Navigation("Alerts");
 
                     b.Navigation("ApiKeys");
@@ -1043,6 +1412,8 @@ namespace CyberMonitor.API.Migrations
             modelBuilder.Entity("CyberMonitor.API.Models.User", b =>
                 {
                     b.Navigation("AcknowledgedAlerts");
+
+                    b.Navigation("AlertDigestQueue");
 
                     b.Navigation("AssignedTickets");
 

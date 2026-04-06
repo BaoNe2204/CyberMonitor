@@ -61,7 +61,6 @@ import { Defense } from './components/Defense';
 import { ServerSelector } from './components/ServerSelector';
 import ServerAlertEmailsModal from './components/ServerAlertEmailsModal';
 import ServerTelegramRecipientsModal from './components/ServerTelegramRecipientsModal';
-import { loadStoredPricingPlans } from './data/defaultPricingPlans';
 
 export default function App() {
   // --- Web Worker for heavy data processing ---
@@ -90,7 +89,7 @@ export default function App() {
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [selectedDetail, setSelectedDetail] = useState<{ type: string; data: any } | null>(null);
-  const [pricingPlans, setPricingPlans] = useState<any[]>(() => loadStoredPricingPlans());
+  const [pricingPlans, setPricingPlans] = useState<any[]>([]);
   const [apiGuide, setApiGuide] = useState<any>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -528,6 +527,7 @@ export default function App() {
     setDashboardData(null);
     setServers([]);
     setAlerts([]);
+    setPricingPlans([]);
   }, []);
 
   // --- Auto-logout when 401 detected anywhere in the app ---
@@ -1114,7 +1114,7 @@ export default function App() {
                 )}
 
                 {activeTab === 'billing' && (
-                  <Billing theme={theme} t={t} plans={pricingPlans} />
+                  <Billing theme={theme} t={t} plans={pricingPlans} setPlans={setPricingPlans} />
                 )}
 
                 {activeTab === 'apiGuide' && (

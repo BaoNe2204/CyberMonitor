@@ -625,3 +625,74 @@ public class ServerTelegramRecipient
     [ForeignKey(nameof(ServerId))]
     public Server Server { get; set; } = null!;
 }
+
+public class PricingPlan
+{
+    [Key]
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    [Required, MaxLength(100)]
+    public string Name { get; set; } = string.Empty;
+
+    [MaxLength(500)]
+    public string? Description { get; set; }
+
+    [Column(TypeName = "decimal(18,0)")]
+    public decimal Price { get; set; } = 0;
+
+    [Column(TypeName = "decimal(18,0)")]
+    public decimal? OriginalPrice { get; set; }
+
+    [MaxLength(20)]
+    public string BillingPeriod { get; set; } = "monthly";
+
+    public bool IsActive { get; set; } = true;
+    public bool IsPopular { get; set; } = false;
+    public bool IsEnterprise { get; set; } = false;
+    public bool IsTrial { get; set; } = false;
+
+    public int Servers { get; set; } = 1;
+    public int Users { get; set; } = 1;
+
+    [MaxLength(20)]
+    public string Storage { get; set; } = "1 GB";
+
+    [MaxLength(20)]
+    public string Bandwidth { get; set; } = "100 GB";
+
+    public int ApiCalls { get; set; } = 1000;
+    public int DailyAlerts { get; set; } = 100;
+
+    [MaxLength(20)]
+    public string Retention { get; set; } = "7 days";
+
+    public int ConcurrentConnections { get; set; } = 10;
+
+    public bool RealTimeMonitoring { get; set; } = true;
+    public bool ThreatIntelligence { get; set; } = false;
+    public bool AutoResponse { get; set; } = false;
+    public bool CustomRules { get; set; } = false;
+    public bool WhiteLabel { get; set; } = false;
+    public bool PrioritySupport { get; set; } = false;
+
+    [MaxLength(10)]
+    public string Sla { get; set; } = "99%";
+
+    [MaxLength(20)]
+    public string BackupFrequency { get; set; } = "Daily";
+
+    public bool TeamManagement { get; set; } = false;
+    public bool AuditLogs { get; set; } = true;
+    public bool ApiAccess { get; set; } = true;
+    public bool Sso { get; set; } = false;
+    public bool CustomIntegrations { get; set; } = false;
+    public bool DedicatedSupport { get; set; } = false;
+    public bool SlaCredits { get; set; } = false;
+
+    [MaxLength(2000)]
+    public string? Features { get; set; } = "[]";
+
+    public int SortOrder { get; set; } = 0;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+}
