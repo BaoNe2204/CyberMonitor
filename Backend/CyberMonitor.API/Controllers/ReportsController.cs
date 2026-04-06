@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using CyberMonitor.API.Data;
-using CyberMonitor.API.Extensions;
 using CyberMonitor.API.Models;
 using CyberMonitor.API.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -50,7 +49,6 @@ public class ReportsController : ControllerBase
                 .ThenInclude(c => c.User)
             .AsQueryable();
 
-        // Filter by tenant
         if (role == "SuperAdmin")
         {
             if (tenantId.HasValue)
@@ -72,15 +70,12 @@ public class ReportsController : ControllerBase
             return Forbid();
         }
 
-        // Date filter
         alertQuery = alertQuery.Where(a => a.CreatedAt >= start && a.CreatedAt <= end);
         ticketQuery = ticketQuery.Where(t => t.CreatedAt >= start && t.CreatedAt <= end);
 
-        // Load data
         var alerts = await alertQuery.OrderByDescending(a => a.CreatedAt).ToListAsync();
         var tickets = await ticketQuery.OrderByDescending(t => t.CreatedAt).ToListAsync();
 
-        // Statistics
         var topAttackers = alerts
             .Where(a => !string.IsNullOrEmpty(a.SourceIp) && a.Status == "Resolved")
             .GroupBy(a => a.SourceIp!)
@@ -111,11 +106,9 @@ public class ReportsController : ControllerBase
             tenantName = tenant?.CompanyName ?? tenantName;
         }
 
-        // Build Excel using ClosedXML
         var workbook = new ClosedXML.Excel.XLWorkbook();
         var wsSummary = workbook.Worksheets.Add("Tổng Quan");
 
-        // --- Summary Sheet ---
         wsSummary.Cell("A1").Value = "CYBERMONITOR SOC - BÁO CÁO BẢO MẬT";
         wsSummary.Cell("A1").Style.Font.FontSize = 18;
         wsSummary.Cell("A1").Style.Font.Bold = true;
@@ -173,7 +166,6 @@ public class ReportsController : ControllerBase
             row++;
         }
 
-        // Top Attackers
         row += 2;
         wsSummary.Cell($"A{row}").Value = "TOP NGUỒN TẤN CÔNG";
         wsSummary.Cell($"A{row}").Style.Font.Bold = true;
@@ -194,13 +186,10 @@ public class ReportsController : ControllerBase
             wsSummary.Cell($"B{row}").Value = attacker.AttackCount;
             wsSummary.Cell($"C{row}").Value = attacker.MostCommonType;
             if (attacker.AttackCount > 5)
-            {
                 wsSummary.Range($"A{row}:C{row}").Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromHtml("#FED7D7");
-            }
             row++;
         }
 
-        // Alerts by Type
         row += 2;
         wsSummary.Cell($"A{row}").Value = "PHÂN BỔ CẢNH BÁO THEO LOẠI";
         wsSummary.Cell($"A{row}").Style.Font.Bold = true;
@@ -230,7 +219,6 @@ public class ReportsController : ControllerBase
 
         wsSummary.Columns().AdjustToContents();
 
-        // --- Alerts Sheet ---
         var wsAlerts = workbook.Worksheets.Add("Chi Tiết Cảnh Báo");
         wsAlerts.Cell("A1").Value = "CHI TIẾT CẢNH BÁO BẢO MẬT";
         wsAlerts.Cell("A1").Style.Font.FontSize = 14;
@@ -264,7 +252,6 @@ public class ReportsController : ControllerBase
             wsAlerts.Cell(alertRow, 11).Value = alert.AcknowledgedByUser?.FullName ?? "";
             wsAlerts.Cell(alertRow, 12).Value = alert.ResolvedByUser?.FullName ?? "";
 
-            // Color severity
             var sevFill = alert.Severity switch
             {
                 "Critical" => ClosedXML.Excel.XLColor.FromHtml("#FED7D7"),
@@ -274,7 +261,6 @@ public class ReportsController : ControllerBase
             };
             wsAlerts.Cell(alertRow, 4).Style.Fill.BackgroundColor = sevFill;
 
-            // Color status
             var statusFill = alert.Status switch
             {
                 "Resolved" => ClosedXML.Excel.XLColor.FromHtml("#C6F6D5"),
@@ -283,13 +269,11 @@ public class ReportsController : ControllerBase
                 _ => ClosedXML.Excel.XLColor.FromHtml("#E2E8F0")
             };
             wsAlerts.Cell(alertRow, 10).Style.Fill.BackgroundColor = statusFill;
-
             alertRow++;
         }
 
         wsAlerts.Columns().AdjustToContents();
 
-        // --- Tickets Sheet ---
         var wsTickets = workbook.Worksheets.Add("Phiếu Sự Cố");
         wsTickets.Cell("A1").Value = "DANH SÁCH PHIẾU SỰ CỐ";
         wsTickets.Cell("A1").Style.Font.FontSize = 14;
@@ -323,7 +307,6 @@ public class ReportsController : ControllerBase
             wsTickets.Cell(ticketRow, 9).Value = ticket.Category ?? "";
             wsTickets.Cell(ticketRow, 10).Value = ticket.Comments?.Count ?? 0;
 
-            // Priority color
             var prioFill = ticket.Priority switch
             {
                 "Critical" => ClosedXML.Excel.XLColor.FromHtml("#FED7D7"),
@@ -333,7 +316,6 @@ public class ReportsController : ControllerBase
             };
             wsTickets.Cell(ticketRow, 3).Style.Fill.BackgroundColor = prioFill;
 
-            // Status color
             var statusFill2 = ticket.Status switch
             {
                 "CLOSED" => ClosedXML.Excel.XLColor.FromHtml("#C6F6D5"),
@@ -343,13 +325,11 @@ public class ReportsController : ControllerBase
                 _ => ClosedXML.Excel.XLColor.FromHtml("#E2E8F0")
             };
             wsTickets.Cell(ticketRow, 4).Style.Fill.BackgroundColor = statusFill2;
-
             ticketRow++;
         }
 
         wsTickets.Columns().AdjustToContents();
 
-        // --- Attack Sources Sheet ---
         if (topAttackers.Count > 0)
         {
             var wsAttack = workbook.Worksheets.Add("Nguồn Tấn Công");
@@ -378,7 +358,6 @@ public class ReportsController : ControllerBase
                     ? ClosedXML.Excel.XLColor.FromHtml("#FED7D7")
                     : ClosedXML.Excel.XLColor.FromHtml("#FEEBC8");
                 wsAttack.Range($"A{atRow}:C{atRow}").Style.Fill.BackgroundColor = dangerColor;
-
                 atRow++;
             }
 
@@ -397,290 +376,6 @@ public class ReportsController : ControllerBase
             fileName);
     }
 
-    /// <summary>Lấy dashboard summary - OPTIMIZED</summary>
-    [HttpGet("dashboard")]
-    [Authorize]
-    public async Task<ActionResult<ApiResponse<DashboardSummary>>> GetDashboard()
-    {
-        var tenantId = GetTenantId();
-        var role = GetUserRole();
-
-        // Build base queries with tenant filter
-        IQueryable<Server> serverQuery = _db.Servers.AsNoTracking();
-        IQueryable<Alert> alertQuery = _db.Alerts.AsNoTracking();
-        IQueryable<Ticket> ticketQuery = _db.Tickets.AsNoTracking();
-        IQueryable<TrafficLog> trafficQuery = _db.TrafficLogs.AsNoTracking();
-
-        if (role == "Admin")
-        {
-            if (!tenantId.HasValue) return Forbid();
-            serverQuery = serverQuery.Where(s => s.TenantId == tenantId);
-            alertQuery = alertQuery.Where(a => a.TenantId == tenantId);
-            ticketQuery = ticketQuery.Where(t => t.TenantId == tenantId);
-            trafficQuery = trafficQuery.Where(t => t.TenantId == tenantId);
-        }
-        else if (role == "User")
-        {
-            return Forbid();
-        }
-
-        var today = DateTime.UtcNow.Date;
-        var oneHourAgo = DateTime.UtcNow.AddHours(-1);
-        var oneDayAgo = DateTime.UtcNow.AddHours(-24);
-
-        // Execute queries SEQUENTIALLY to avoid DbContext concurrency issues
-        // EF Core doesn't support parallel queries on same DbContext instance
-        
-        // Server list
-        var servers = await serverQuery.ToListAsync();
-        
-        // Alert counts
-        var openAlertsCount = await alertQuery.Where(a => a.Status == "Open").CountAsync();
-        var totalAlertsCount = await alertQuery.CountAsync();
-        var criticalAlertsCount = await alertQuery.Where(a => a.Severity == "Critical" && a.Status == "Open").CountAsync();
-        
-        // Ticket counts
-        var openTicketsCount = await ticketQuery.Where(t => t.Status == "OPEN").CountAsync();
-        var closedTicketsCount = await ticketQuery.Where(t => t.Status == "CLOSED").CountAsync();
-        var todayClosedCount = await ticketQuery.Where(t => t.ClosedAt >= today).CountAsync();
-        
-        // Recent alerts
-        var recentAlerts = await alertQuery
-            .Include(a => a.Server)
-            .OrderByDescending(a => a.CreatedAt)
-            .Take(10)
-            .ToListAsync();
-        
-        // Bandwidth
-        var bandwidthIn = await trafficQuery.Where(t => t.Timestamp >= oneHourAgo).SumAsync(t => t.BytesIn);
-        var bandwidthOut = await trafficQuery.Where(t => t.Timestamp >= oneHourAgo).SumAsync(t => t.BytesOut);
-        
-        // Traffic data (last 24h) - aggregated in DB
-        var trafficGroups = await trafficQuery
-            .Where(t => t.Timestamp >= oneDayAgo)
-            .GroupBy(t => new { Hour = t.Timestamp.Hour })
-            .Select(g => new {
-                Hour = g.Key.Hour,
-                Requests = g.Count(),
-                Attacks = g.Count(l => l.IsAnomaly)
-            })
-            .ToListAsync();
-        
-        // Attack types
-        var attackTypeGroups = await alertQuery
-            .GroupBy(a => a.AlertType ?? "Unknown")
-            .Select(g => new { Type = g.Key, Count = g.Count() })
-            .OrderByDescending(g => g.Count)
-            .Take(10)
-            .ToListAsync();
-        
-        // MITRE techniques
-        var mitreGroups = await alertQuery
-            .Where(a => a.MitreTechnique != null)
-            .GroupBy(a => a.MitreTechnique!)
-            .Select(g => new {
-                Tech = g.Key,
-                Count = g.Count(),
-                Severity = g.Max(a => a.Severity)
-            })
-            .OrderByDescending(g => g.Count)
-            .Take(6)
-            .ToListAsync();
-
-        // Build traffic data from aggregated results
-        var now = DateTime.UtcNow;
-        var trafficData = new List<TrafficPointDto>();
-        for (int i = 23; i >= 0; i--)
-        {
-            var hourStart = now.AddHours(-i);
-            var hourValue = hourStart.Hour;
-            var match = trafficGroups.FirstOrDefault(g => g.Hour == hourValue);
-            trafficData.Add(new TrafficPointDto(
-                hourStart.ToString("HH:mm"),
-                match?.Requests ?? 0,
-                match?.Attacks ?? 0
-            ));
-        }
-
-        // Build attack types breakdown
-        var colors = new[] { "#ef4444", "#f97316", "#3b82f6", "#8b5cf6", "#10b981", "#f59e0b" };
-        var totalAttacks = attackTypeGroups.Sum(g => g.Count);
-        var attackTypes = attackTypeGroups
-            .Select((g, idx) => new AttackTypeDto(
-                g.Type,
-                totalAttacks > 0 ? Math.Round((decimal)g.Count / totalAttacks * 100, 1) : 0,
-                colors[idx % colors.Length]
-            ))
-            .ToList();
-
-        // Build MITRE data
-        var mitreData = mitreGroups
-            .Select(m => new MitrelDto(
-                m.Tech,
-                GetMitreName(m.Tech),
-                m.Count,
-                MapSeverity(m.Severity)
-            ))
-            .ToList();
-
-        var summary = new DashboardSummary(
-            servers.Count,
-            servers.Count(s => s.Status == "Online"),
-            servers.Count(s => s.Status == "Offline"),
-            openAlertsCount,
-            totalAlertsCount,
-            criticalAlertsCount,
-            openTicketsCount,
-            closedTicketsCount,
-            todayClosedCount,
-            bandwidthIn + bandwidthOut,
-            closedTicketsCount > 0 ? 120m : 85m,
-            bandwidthIn,
-            bandwidthOut,
-            servers.Select(s => new ServerHealthDto(
-                s.Id, s.Name, s.IpAddress, s.Status, s.CpuUsage,
-                s.RamUsage, s.DiskUsage, s.LastSeenAt
-            )).ToList(),
-            recentAlerts.Select(a => new AlertDto(
-                a.Id, a.TenantId, a.ServerId, a.Server?.Name, a.Severity,
-                a.AlertType, a.Title, a.Description, a.SourceIp, a.TargetAsset,
-                a.MitreTactic, a.MitreTechnique, a.Status, a.AnomalyScore,
-                a.RecommendedAction, a.CreatedAt, a.AcknowledgedAt, a.ResolvedAt,
-                a.AcknowledgedByUser?.FullName, a.ResolvedByUser?.FullName
-            )).ToList(),
-            trafficData,
-            attackTypes,
-            mitreData
-        );
-
-        return Ok(new ApiResponse<DashboardSummary>(true, "OK", summary));
-    }
-
-    /// <summary>Lấy subscription info</summary>
-    [HttpGet("subscription")]
-    [Authorize]
-    public async Task<ActionResult<ApiResponse<SubscriptionDto>>> GetSubscription()
-    {
-        var tenantId = GetTenantId();
-        var role = GetUserRole();
-
-        if (role == "SuperAdmin")
-        {
-            if (!tenantId.HasValue)
-                return Ok(new ApiResponse<SubscriptionDto>(true, "OK", new SubscriptionDto(
-                    Guid.Empty, Guid.Empty, "Unlimited", 0, 999, 0, "Active",
-                    DateTime.UtcNow, DateTime.UtcNow.AddYears(100), 99999
-                )));
-        }
-
-        if (!tenantId.HasValue) return Forbid();
-
-        var subscription = await _db.Subscriptions
-            .Where(s => s.TenantId == tenantId)
-            .OrderByDescending(s => s.EndDate)
-            .FirstOrDefaultAsync();
-
-        if (subscription == null)
-            return NotFound(new ApiResponse<SubscriptionDto>(false, "No subscription found.", null));
-
-        var usedServers = await _db.Servers.CountAsync(s => s.TenantId == tenantId);
-
-        return Ok(new ApiResponse<SubscriptionDto>(true, "OK", new SubscriptionDto(
-            subscription.Id,
-            subscription.TenantId,
-            subscription.PlanName,
-            subscription.PlanPrice,
-            subscription.MaxServers,
-            usedServers,
-            subscription.Status,
-            subscription.StartDate,
-            subscription.EndDate,
-            Math.Max(0, (subscription.EndDate - DateTime.UtcNow).Days)
-        )));
-    }
-
-    /// <summary>Lấy notifications</summary>
-    [HttpGet("notifications")]
-    [Authorize]
-    public async Task<ActionResult<ApiResponse<PagedResult<NotificationDto>>>> GetNotifications(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
-    {
-        var userId = GetUserId();
-
-        var query = _db.Notifications.Where(n => n.UserId == userId);
-        var totalCount = await query.CountAsync();
-
-        var items = await query
-            .OrderByDescending(n => n.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(n => new NotificationDto(n.Id, n.TenantId, n.UserId, n.Title, n.Message, n.Type, n.IsRead, n.Link, n.CreatedAt))
-            .ToListAsync();
-
-        return Ok(new ApiResponse<PagedResult<NotificationDto>>(true, "OK", new PagedResult<NotificationDto>(
-            items, totalCount, page, pageSize, (int)Math.Ceiling(totalCount / (double)pageSize)
-        )));
-    }
-
-    /// <summary>Đánh dấu notification đã đọc</summary>
-    [HttpPut("notifications/{id:guid}/read")]
-    [Authorize]
-    public async Task<ActionResult<ApiResponse<object>>> MarkNotificationRead(Guid id)
-    {
-        var userId = GetUserId();
-        var notification = await _db.Notifications.FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
-
-        if (notification == null)
-            return NotFound(new ApiResponse<object>(false, "Notification not found.", null));
-
-        notification.IsRead = true;
-        await _db.SaveChangesAsync();
-
-        return Ok(new ApiResponse<object>(true, "OK", null));
-    }
-
-    /// <summary>Lấy audit logs</summary>
-    [HttpGet("audit-logs")]
-    [Authorize]
-    public async Task<ActionResult<ApiResponse<PagedResult<AuditLogDto>>>> GetAuditLogs(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 50,
-        [FromQuery] string? action = null)
-    {
-        var tenantId = GetTenantId();
-        var role = GetUserRole();
-
-        if (role == "User")
-            return Forbid();
-
-        IQueryable<AuditLog> query = _db.AuditLogs.Include(a => a.User);
-
-        if (role == "Admin")
-        {
-            if (!tenantId.HasValue) return Forbid();
-            query = query.Where(a => a.TenantId == tenantId);
-        }
-
-        if (!string.IsNullOrEmpty(action))
-            query = query.Where(a => a.Action.Contains(action));
-
-        var totalCount = await query.CountAsync();
-        var items = await query
-            .OrderByDescending(a => a.Timestamp)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(a => new AuditLogDto(a.Id, a.TenantId, a.UserId, a.User != null ? a.User.FullName : null, a.Action,a.EntityType, a.EntityId, a.IpAddress, a.Timestamp, a.Details))
-            .ToListAsync();
-
-        return Ok(new ApiResponse<PagedResult<AuditLogDto>>(true, "OK", new PagedResult<AuditLogDto>(
-            items, totalCount, page, pageSize, (int)Math.Ceiling(totalCount / (double)pageSize)
-        )));
-    }
-
-    private Guid GetUserId() =>
-        Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? Guid.Empty.ToString());
-
     private Guid? GetTenantId()
     {
         if (HttpContext.Items.TryGetValue("TenantId", out var tenantObj) && tenantObj is Guid tenantFromKey)
@@ -691,33 +386,4 @@ public class ReportsController : ControllerBase
 
     private string GetUserRole() =>
         User.FindFirstValue(ClaimTypes.Role) ?? "User";
-
-    private string GetMitreName(string technique)
-    {
-        var names = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            { "T1190", "Exploit Public-Facing App" },
-            { "T1110", "Brute Force" },
-            { "T1498", "Network Denial of Service" },
-            { "T1059", "Command & Scripting Interpreter" },
-            { "T1070", "Data Destruction" },
-            { "T1047", "Windows Management Instrumentation" },
-            { "T1055", "Process Injection" },
-            { "T1566", "Phishing" },
-            { "T1005", "Data from Local System" },
-            { "T1041", "Exfiltration Over C2" },
-        };
-        return names.TryGetValue(technique, out var name) ? name : technique;
-    }
-
-    private string MapSeverity(string? severity)
-    {
-        return severity?.ToUpperInvariant() switch
-        {
-            "CRITICAL" => "Critical",
-            "HIGH" => "High",
-            "MEDIUM" => "Medium",
-            _ => "Low"
-        };
-    }
 }

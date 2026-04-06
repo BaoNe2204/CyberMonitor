@@ -186,11 +186,13 @@ public class TicketsController : ControllerBase
             // Email - gửi cho người được assign hoặc tất cả admin nếu chưa assign
             if (request.AssignedTo.HasValue && request.AssignedTo.Value == admin.Id)
             {
-                await _emailService.SendTicketNotificationAsync(request.TenantId, admin.Email, ticket, "đã được phân công cho bạn");
+                if (admin.EmailAlertsEnabled)
+                    await _emailService.SendTicketNotificationAsync(request.TenantId, admin.Email, ticket, "đã được phân công cho bạn");
             }
             else if (!request.AssignedTo.HasValue)
             {
-                await _emailService.SendTicketNotificationAsync(request.TenantId, admin.Email, ticket, "Ticket mới được tạo");
+                if (admin.EmailAlertsEnabled)
+                    await _emailService.SendTicketNotificationAsync(request.TenantId, admin.Email, ticket, "Ticket mới được tạo");
             }
         }
 
@@ -332,14 +334,16 @@ public class TicketsController : ControllerBase
             // Email - gửi cho người được assign và người tạo
             if (ticket.AssignedTo.HasValue && ticket.AssignedTo.Value == admin.Id)
             {
-                await _emailService.SendTicketNotificationAsync(ticket.TenantId, admin.Email, ticket, statusAction);
+                if (admin.EmailAlertsEnabled)
+                    await _emailService.SendTicketNotificationAsync(ticket.TenantId, admin.Email, ticket, statusAction);
             }
             else if (ticket.CreatedBy.HasValue)
             {
                 var createdBy = await _db.Users.FindAsync(ticket.CreatedBy.Value);
                 if (createdBy != null && createdBy.Id == admin.Id)
                 {
-                    await _emailService.SendTicketNotificationAsync(ticket.TenantId, admin.Email, ticket, statusAction);
+                    if (admin.EmailAlertsEnabled)
+                        await _emailService.SendTicketNotificationAsync(ticket.TenantId, admin.Email, ticket, statusAction);
                 }
             }
         }
@@ -410,9 +414,9 @@ public class TicketsController : ControllerBase
         var assignedUser = await _db.Users.FindAsync(request.AssignedTo);
         var assigner = await _db.Users.FindAsync(request.AssignedBy);
 
-        // Gửi email cho người được assign
-        if (assignedUser != null)
-        {
+            // Gửi email cho người được assign
+            if (assignedUser != null)
+            {
             _db.Notifications.Add(new Notification
             {
                 TenantId = ticket.TenantId,
@@ -423,11 +427,14 @@ public class TicketsController : ControllerBase
                 Link = $"/dashboard/tickets/{ticket.Id}"
             });
 
-            await _emailService.SendTicketNotificationAsync(
-                ticket.TenantId, assignedUser.Email, ticket,
-                $"đã phân công cho bạn (bởi {assigner?.FullName ?? "System"})"
-            );
-        }
+                if (assignedUser.EmailAlertsEnabled)
+                {
+                    await _emailService.SendTicketNotificationAsync(
+                        ticket.TenantId, assignedUser.Email, ticket,
+                        $"đã phân công cho bạn (bởi {assigner?.FullName ?? "System"})"
+                    );
+                }
+            }
 
         // Gửi cho tất cả Admin khác (không phải người được assign)
         var admins = await _db.Users
@@ -525,10 +532,13 @@ public class TicketsController : ControllerBase
                         Link = $"/dashboard/tickets/{ticketForNotif.Id}"
                     });
 
-                    await _emailService.SendTicketCommentEmailAsync(
-                        ticketForNotif.TenantId, recipient.Email, ticketForNotif,
-                        user.FullName ?? "System", request.Content
-                    );
+                    if (recipient.EmailAlertsEnabled)
+                    {
+                        await _emailService.SendTicketCommentEmailAsync(
+                            ticketForNotif.TenantId, recipient.Email, ticketForNotif,
+                            user.FullName ?? "System", request.Content
+                        );
+                    }
                 }
             }
 

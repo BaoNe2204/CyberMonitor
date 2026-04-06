@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Shield, Bell, Lock, Camera, Eye, EyeOff, Check, X } from 'lucide-react';
+import { User, Shield, Lock, Camera, Eye, EyeOff, Check, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Theme } from '../types';
 import { AuthApi } from '../services/api';
@@ -27,6 +27,9 @@ export const Account = ({ theme }: AccountProps) => {
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState('');
+  const [securitySaving, setSecuritySaving] = useState(false);
+  const [securityMessage, setSecurityMessage] = useState('');
+  const [securityError, setSecurityError] = useState('');
 
   useEffect(() => {
     fetchUserInfo();
@@ -101,6 +104,41 @@ export const Account = ({ theme }: AccountProps) => {
       setPasswordError(error.response?.data?.message || 'Đổi mật khẩu thất bại!');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleSecurity = async (
+    field: 'twoFactorEnabled' | 'sessionTimeoutEnabled',
+    value: boolean
+  ) => {
+    if (!userInfo) return;
+
+    const updatedUser = { ...userInfo, [field]: value };
+    setUserInfo(updatedUser);
+    setSecuritySaving(true);
+    setSecurityMessage('');
+    setSecurityError('');
+
+    try {
+      const response = await AuthApi.updateSecuritySettings({
+        twoFactorEnabled: updatedUser.twoFactorEnabled ?? false,
+        sessionTimeoutEnabled: updatedUser.sessionTimeoutEnabled ?? false,
+        sessionTimeoutMinutes: updatedUser.sessionTimeoutMinutes ?? 30,
+      });
+
+      if (response.success && response.data) {
+        setUserInfo(response.data);
+        setSecurityMessage('Đã cập nhật cài đặt bảo mật.');
+        setTimeout(() => setSecurityMessage(''), 2500);
+      } else {
+        setUserInfo(userInfo);
+        setSecurityError(response.message || 'Cập nhật cài đặt bảo mật thất bại.');
+      }
+    } catch (error: any) {
+      setUserInfo(userInfo);
+      setSecurityError(error?.message || 'Cập nhật cài đặt bảo mật thất bại.');
+    } finally {
+      setSecuritySaving(false);
     }
   };
 
@@ -411,65 +449,73 @@ export const Account = ({ theme }: AccountProps) => {
           )}
 
           {/* Security & Preferences */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className={cn(
-              "border rounded-2xl p-6 transition-colors",
-              theme === 'dark' ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200 shadow-sm"
-            )}>
-              <div className="flex items-center gap-3 mb-6">
-                <Shield className="text-blue-500" size={20} />
-                <h4 className={cn("font-bold", theme === 'dark' ? "text-white" : "text-slate-900")}>Security</h4>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className={cn("text-sm font-medium", theme === 'dark' ? "text-slate-200" : "text-slate-700")}>Two-Factor Auth</p>
-                    <p className="text-xs text-slate-500">Secure your account with 2FA</p>
-                  </div>
-                  <div className="w-10 h-5 bg-blue-600 rounded-full relative cursor-pointer">
-                    <div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full" />
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className={cn("text-sm font-medium", theme === 'dark' ? "text-slate-200" : "text-slate-700")}>Session Timeout</p>
-                    <p className="text-xs text-slate-500">Auto logout after 30 mins</p>
-                  </div>
-                  <div className="w-10 h-5 bg-slate-700 rounded-full relative cursor-pointer">
-                    <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full" />
-                  </div>
-                </div>
-              </div>
+          <div className={cn(
+            "border rounded-2xl p-6 transition-colors",
+            theme === 'dark' ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200 shadow-sm"
+          )}>
+            <div className="flex items-center gap-3 mb-6">
+              <Shield className="text-blue-500" size={20} />
+              <h4 className={cn("font-bold", theme === 'dark' ? "text-white" : "text-slate-900")}>Security</h4>
             </div>
-
-            <div className={cn(
-              "border rounded-2xl p-6 transition-colors",
-              theme === 'dark' ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200 shadow-sm"
-            )}>
-              <div className="flex items-center gap-3 mb-6">
-                <Bell className="text-amber-500" size={20} />
-                <h4 className={cn("font-bold", theme === 'dark' ? "text-white" : "text-slate-900")}>Notifications</h4>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className={cn("text-sm font-medium", theme === 'dark' ? "text-slate-200" : "text-slate-700")}>Email Alerts</p>
-                    <p className="text-xs text-slate-500">Critical threat notifications</p>
-                  </div>
-                  <div className="w-10 h-5 bg-blue-600 rounded-full relative cursor-pointer">
-                    <div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full" />
-                  </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={cn("text-sm font-medium", theme === 'dark' ? "text-slate-200" : "text-slate-700")}>Two-Factor Auth</p>
+                  <p className="text-xs text-slate-500">Secure your account with 2FA</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className={cn("text-sm font-medium", theme === 'dark' ? "text-slate-200" : "text-slate-700")}>Browser Push</p>
-                    <p className="text-xs text-slate-500">Real-time desktop alerts</p>
-                  </div>
-                  <div className="w-10 h-5 bg-blue-600 rounded-full relative cursor-pointer">
-                    <div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full" />
-                  </div>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => void handleToggleSecurity('twoFactorEnabled', !(userInfo?.twoFactorEnabled ?? false))}
+                  disabled={securitySaving}
+                  className={cn(
+                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-60",
+                    userInfo?.twoFactorEnabled ?? false
+                      ? "bg-blue-600"
+                      : (theme === 'dark' ? "bg-slate-700" : "bg-slate-200")
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                      userInfo?.twoFactorEnabled ?? false ? "translate-x-6" : "translate-x-1"
+                    )}
+                  />
+                </button>
               </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={cn("text-sm font-medium", theme === 'dark' ? "text-slate-200" : "text-slate-700")}>Session Timeout</p>
+                  <p className="text-xs text-slate-500">Auto logout after 30 mins</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void handleToggleSecurity('sessionTimeoutEnabled', !(userInfo?.sessionTimeoutEnabled ?? false))}
+                  disabled={securitySaving}
+                  className={cn(
+                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-60",
+                    userInfo?.sessionTimeoutEnabled ?? false
+                      ? "bg-blue-600"
+                      : (theme === 'dark' ? "bg-slate-700" : "bg-slate-200")
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                      userInfo?.sessionTimeoutEnabled ?? false ? "translate-x-6" : "translate-x-1"
+                    )}
+                  />
+                </button>
+              </div>
+              {(securityMessage || securityError) && (
+                <div className={cn(
+                  "rounded-lg border px-3 py-2 text-sm",
+                  securityError
+                    ? "border-red-500/30 bg-red-500/10 text-red-400"
+                    : "border-green-500/30 bg-green-500/10 text-green-400"
+                )}>
+                  {securityError || securityMessage}
+                </div>
+              )}
             </div>
           </div>
         </div>

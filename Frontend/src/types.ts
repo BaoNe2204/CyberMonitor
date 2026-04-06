@@ -9,17 +9,27 @@ export type AuthMode = 'login' | 'register';
 // --- User & Auth ---
 export interface User {
   id: string;
+  tenantId: string | null;
+  tenantName?: string | null;
   email: string;
   fullName: string;
-  role: 'superAdmin' | 'admin' | 'user';
-  tenantId: string;
-  isActive: boolean;
-  createdAt: string;
+  role: 'superAdmin' | 'admin' | 'user' | 'SuperAdmin' | 'Admin' | 'User';
+  isActive?: boolean;
+  createdAt?: string;
   updatedAt?: string;
   lastLoginAt?: string;
   avatar?: string;
   phone?: string;
   companyName?: string;
+  twoFactorEnabled?: boolean;
+  sessionTimeoutEnabled?: boolean;
+  sessionTimeoutMinutes?: number;
+  emailAlertsEnabled?: boolean;
+  telegramAlertsEnabled?: boolean;
+  pushNotificationsEnabled?: boolean;
+  telegramChatId?: string | null;
+  alertSeverityThreshold?: string;
+  alertDigestMode?: string;
 }
 
 export interface AuthResponse {
@@ -56,7 +66,7 @@ export interface Alert {
   serverName?: string;
   mitreTechnique?: string;
   mitreTactic?: string;
-  status: 'open' | 'acknowledged' | 'resolved' | 'closed';
+  status: 'open' | 'acknowledged' | 'resolved' | 'closed' | 'Open' | 'Acknowledged' | 'Investigating' | 'Resolved' | 'Closed';
   isRead: boolean;
   createdAt: string;
   updatedAt?: string;
@@ -64,6 +74,7 @@ export interface Alert {
   assignee?: string;
   notes?: string;
   tenantId?: string;
+  mitre?: string;
 }
 
 // --- Ticket ---

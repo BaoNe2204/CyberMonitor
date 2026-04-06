@@ -132,12 +132,13 @@ public class TestController : ControllerBase
             await db.SaveChangesAsync();
 
             var adminUsers = await db.Users
-                .Where(u => u.TenantId == tenantId && (u.Role == "Admin" || u.Role == "SuperAdmin"))
+                .Where(u => u.TenantId == tenantId && u.IsActive)
                 .ToListAsync();
 
             int emailsSent = 0;
             foreach (var user in adminUsers)
             {
+                if (!user.EmailAlertsEnabled) continue;
                 try { await _emailService.SendAlertEmailAsync(tenantId, user.Email, alert, serverEntity); emailsSent++; }
                 catch (Exception ex) { Console.WriteLine($"[TestController] Email fail {user.Email}: {ex.Message}"); }
             }

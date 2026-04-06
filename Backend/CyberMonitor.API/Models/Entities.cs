@@ -26,6 +26,7 @@ public class Tenant
     public ICollection<Alert> Alerts { get; set; } = new List<Alert>();
     public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+    public ICollection<AlertDigestQueue> AlertDigestQueue { get; set; } = new List<AlertDigestQueue>();
 }
 
 public class User
@@ -52,6 +53,21 @@ public class User
     public DateTime? LastLoginAt { get; set; }
     public bool TwoFactorEnabled { get; set; } = false;
     public string? TwoFactorSecret { get; set; }
+    public bool SessionTimeoutEnabled { get; set; } = false;
+    public int SessionTimeoutMinutes { get; set; } = 30;
+    public bool EmailAlertsEnabled { get; set; } = true;
+    public bool TelegramAlertsEnabled { get; set; } = false;
+    public bool PushNotificationsEnabled { get; set; } = true;
+    [MaxLength(100)]
+    public string? TelegramChatId { get; set; }
+
+    /// <summary>Minimum severity level to receive alerts (Critical, High, Medium, Low). Default: Medium.</summary>
+    [MaxLength(20)]
+    public string AlertSeverityThreshold { get; set; } = "Medium";
+
+    /// <summary>Alert digest mode: realtime, hourly, daily, weekly. Default: realtime.</summary>
+    [MaxLength(20)]
+    public string AlertDigestMode { get; set; } = "realtime";
 
     // Navigation
     [ForeignKey(nameof(TenantId))]
@@ -63,6 +79,7 @@ public class User
     public ICollection<Ticket> CreatedTickets { get; set; } = new List<Ticket>();
     public ICollection<TicketComment> TicketComments { get; set; } = new List<TicketComment>();
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+    public ICollection<AlertDigestQueue> AlertDigestQueue { get; set; } = new List<AlertDigestQueue>();
 }
 
 public class Subscription
@@ -460,6 +477,63 @@ public class Notification
 
     [ForeignKey(nameof(UserId))]
     public User User { get; set; } = null!;
+}
+
+/// <summary>
+/// Queues alert notifications for digest sending (hourly / daily / weekly).
+/// The AlertDigestBackgroundService processes this queue at the configured interval.
+/// </summary>
+public class AlertDigestQueue
+{
+    [Key]
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    [Required]
+    public Guid TenantId { get; set; }
+
+    [Required]
+    public Guid UserId { get; set; }
+
+    /// <summary>Chat ID to send the digest to (denormalised from User for reliability).</summary>
+    [Required, MaxLength(100)]
+    public string TelegramChatId { get; set; } = string.Empty;
+
+    [Required, MaxLength(20)]
+    public string DigestMode { get; set; } = "hourly"; // hourly | daily | weekly
+
+    /// <summary>The alert that triggered this queue entry.</summary>
+    public Guid? AlertId { get; set; }
+
+    /// <summary>Alert severity for grouping in digest.</summary>
+    [MaxLength(20)]
+    public string? Severity { get; set; }
+
+    /// <summary>Alert title for display in digest.</summary>
+    [MaxLength(500)]
+    public string? AlertTitle { get; set; }
+
+    /// <summary>Full HTML message for the digest entry.</summary>
+    public string? AlertMessage { get; set; }
+
+    /// <summary>When the alert was created (UTC).</summary>
+    public DateTime AlertCreatedAt { get; set; }
+
+    /// <summary>Whether this entry has been sent and can be cleaned up.</summary>
+    public bool IsSent { get; set; } = false;
+
+    /// <summary>When this entry was processed.</summary>
+    public DateTime? SentAt { get; set; }
+
+    public DateTime QueuedAt { get; set; } = DateTime.UtcNow;
+
+    [ForeignKey(nameof(TenantId))]
+    public Tenant? Tenant { get; set; }
+
+    [ForeignKey(nameof(UserId))]
+    public User? User { get; set; }
+
+    [ForeignKey(nameof(AlertId))]
+    public Alert? Alert { get; set; }
 }
 
 public class BlockedIP

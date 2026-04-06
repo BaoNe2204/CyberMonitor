@@ -23,6 +23,7 @@ public class CyberMonitorDbContext : DbContext
     public DbSet<BlockedIP> BlockedIPs => Set<BlockedIP>();
     public DbSet<ServerAlertEmail> ServerAlertEmails => Set<ServerAlertEmail>();
     public DbSet<ServerTelegramRecipient> ServerTelegramRecipients => Set<ServerTelegramRecipient>();
+    public DbSet<AlertDigestQueue> AlertDigestQueue => Set<AlertDigestQueue>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -240,6 +241,26 @@ public class CyberMonitorDbContext : DbContext
                 .WithMany(srv => srv.TelegramRecipients)
                 .HasForeignKey(s => s.ServerId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // AlertDigestQueue
+        modelBuilder.Entity<AlertDigestQueue>(e =>
+        {
+            e.Property(q => q.QueuedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.HasIndex(q => new { q.UserId, q.DigestMode, q.IsSent }).HasDatabaseName("IX_AlertDigestQueue_UserId_Mode_Sent");
+            e.HasIndex(q => new { q.DigestMode, q.IsSent, q.QueuedAt }).HasDatabaseName("IX_AlertDigestQueue_Mode_Sent_Queued");
+            e.HasOne(q => q.Tenant)
+                .WithMany(t => t.AlertDigestQueue)
+                .HasForeignKey(q => q.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(q => q.User)
+                .WithMany(u => u.AlertDigestQueue)
+                .HasForeignKey(q => q.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(q => q.Alert)
+                .WithMany()
+                .HasForeignKey(q => q.AlertId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         // Seed SuperAdmin

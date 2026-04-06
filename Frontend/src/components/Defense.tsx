@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Plus,
   X,
+  Server,
   CheckCircle,
   XCircle,
   ShieldAlert,

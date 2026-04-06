@@ -27,7 +27,15 @@ public record UserDto(
     string FullName,
     string Role,
     DateTime? LastLoginAt,
-    bool TwoFactorEnabled
+    bool TwoFactorEnabled,
+    bool SessionTimeoutEnabled,
+    int SessionTimeoutMinutes,
+    bool EmailAlertsEnabled,
+    bool TelegramAlertsEnabled,
+    bool PushNotificationsEnabled,
+    string? TelegramChatId,
+    string AlertSeverityThreshold,
+    string AlertDigestMode
 );
 
 public record CreateUserRequest(
@@ -44,6 +52,21 @@ public record UpdateUserRequest(
     string? Role,
     bool? IsActive,
     Guid? UpdatedBy
+);
+
+public record UpdateNotificationSettingsRequest(
+    bool EmailAlertsEnabled,
+    bool TelegramAlertsEnabled,
+    bool PushNotificationsEnabled,
+    string? TelegramChatId,
+    string? AlertSeverityThreshold,
+    string? AlertDigestMode
+);
+
+public record UpdateSecuritySettingsRequest(
+    bool TwoFactorEnabled,
+    bool SessionTimeoutEnabled,
+    int SessionTimeoutMinutes
 );
 
 // ============ SERVER DTOs ============

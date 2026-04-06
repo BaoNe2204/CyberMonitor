@@ -147,8 +147,8 @@ export const Incidents = ({ theme, t, recentAlerts, setSelectedDetail }: Inciden
                     <td className="px-6 py-4">
                       <span className={cn(
                         "text-[10px] font-bold px-2 py-0.5 rounded",
-                        alert.status === 'Resolved' || alert.status === 'Closed' ? "bg-emerald-500/10 text-emerald-500" :
-                        alert.status === 'Investigating' ? "bg-blue-500/10 text-blue-500" :
+                        alert.status === 'Resolved' || alert.status === 'Closed' || alert.status === 'resolved' || alert.status === 'closed' ? "bg-emerald-500/10 text-emerald-500" :
+                        alert.status === 'Investigating' || alert.status === 'Acknowledged' || alert.status === 'acknowledged' ? "bg-blue-500/10 text-blue-500" :
                         "bg-slate-500/10 text-slate-400"
                       )}>
                         {alert.status || 'Open'}

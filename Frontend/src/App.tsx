@@ -121,8 +121,13 @@ export default function App() {
 
   // Ref to hold fetchDashboardStats so SignalR callbacks can call latest version without deps
   const fetchDashboardStatsRef = useRef<() => void>(() => {});
+  const sessionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const t = translations[language];
+
+  useEffect(() => {
+    setIs2FAEnabled(user?.twoFactorEnabled ?? false);
+  }, [user?.twoFactorEnabled]);
 
   // --- SignalR Connection - Real-time Updates ---
   useEffect(() => {
@@ -539,6 +544,47 @@ export default function App() {
     window.addEventListener('cm:auth:expired', onExpired);
     return () => window.removeEventListener('cm:auth:expired', onExpired);
   }, []);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    if (!(user?.sessionTimeoutEnabled ?? false)) {
+      if (sessionTimeoutRef.current) {
+        clearTimeout(sessionTimeoutRef.current);
+        sessionTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    const timeoutMinutes = user?.sessionTimeoutMinutes ?? 30;
+    const timeoutMs = timeoutMinutes * 60 * 1000;
+
+    const resetTimer = () => {
+      if (sessionTimeoutRef.current) {
+        clearTimeout(sessionTimeoutRef.current);
+      }
+      sessionTimeoutRef.current = setTimeout(() => {
+        alert(`Phiên làm việc đã hết hạn sau ${timeoutMinutes} phút không hoạt động.`);
+        handleLogout();
+      }, timeoutMs);
+    };
+
+    const events: Array<keyof WindowEventMap> = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'];
+    for (const event of events) {
+      window.addEventListener(event, resetTimer, { passive: true });
+    }
+
+    resetTimer();
+
+    return () => {
+      for (const event of events) {
+        window.removeEventListener(event, resetTimer);
+      }
+      if (sessionTimeoutRef.current) {
+        clearTimeout(sessionTimeoutRef.current);
+        sessionTimeoutRef.current = null;
+      }
+    };
+  }, [isLoggedIn, user?.sessionTimeoutEnabled, user?.sessionTimeoutMinutes, handleLogout]);
 
   const handleExport = useCallback(async (startDate?: string, endDate?: string) => {
     const token = localStorage.getItem('cm_token');
@@ -1084,7 +1130,11 @@ export default function App() {
                     t={t}
                     is2FAEnabled={is2FAEnabled}
                     setShow2FAModal={setShow2FAModal}
-                    setShowAPIKeyModal={setShowAPIKeyModal}
+                    user={user}
+                    setUser={setUser}
+                    setActiveTab={setActiveTab}
+                    serverCount={servers.length}
+                    setShowAddServerModal={setShowAddServerModal}
                   />
                 )}
 

@@ -11,7 +11,8 @@ Frontend/dist/
 **/bin/
 **/obj/
 **/appsettings.Development.json
-
+**/.vscode
+build-verify
 # Logs / local scripts
 *.log
 .dotnet

@@ -113,6 +113,7 @@ builder.Services.AddScoped<CyberMonitor.API.Services.IJwtService, CyberMonitor.A
 builder.Services.AddScoped<CyberMonitor.API.Services.IVnpayService, CyberMonitor.API.Services.VnpayService>();
 builder.Services.AddScoped<CyberMonitor.API.Services.IEmailService, CyberMonitor.API.Services.EmailService>();
 builder.Services.AddScoped<CyberMonitor.API.Services.ITelegramService, CyberMonitor.API.Services.TelegramService>();
+builder.Services.AddHostedService<CyberMonitor.API.Services.AlertDigestBackgroundService>();
 builder.Services.AddHttpClient();
 
 builder.Services.AddCors(options =>
@@ -156,6 +157,46 @@ using (var scope = app.Services.CreateScope())
     try
     {
         await db.Database.EnsureCreatedAsync();
+        await db.Database.ExecuteSqlRawAsync(@"
+IF COL_LENGTH('Users', 'EmailAlertsEnabled') IS NULL
+BEGIN
+    ALTER TABLE Users ADD EmailAlertsEnabled BIT NOT NULL CONSTRAINT DF_Users_EmailAlertsEnabled DEFAULT 1;
+END;
+
+IF COL_LENGTH('Users', 'TelegramAlertsEnabled') IS NULL
+BEGIN
+    ALTER TABLE Users ADD TelegramAlertsEnabled BIT NOT NULL CONSTRAINT DF_Users_TelegramAlertsEnabled DEFAULT 0;
+END;
+
+IF COL_LENGTH('Users', 'PushNotificationsEnabled') IS NULL
+BEGIN
+    ALTER TABLE Users ADD PushNotificationsEnabled BIT NOT NULL CONSTRAINT DF_Users_PushNotificationsEnabled DEFAULT 1;
+END;
+
+IF COL_LENGTH('Users', 'TelegramChatId') IS NULL
+BEGIN
+    ALTER TABLE Users ADD TelegramChatId NVARCHAR(100) NULL;
+END;
+
+IF COL_LENGTH('Users', 'SessionTimeoutEnabled') IS NULL
+BEGIN
+    ALTER TABLE Users ADD SessionTimeoutEnabled BIT NOT NULL CONSTRAINT DF_Users_SessionTimeoutEnabled DEFAULT 0;
+END;
+
+IF COL_LENGTH('Users', 'SessionTimeoutMinutes') IS NULL
+BEGIN
+    ALTER TABLE Users ADD SessionTimeoutMinutes INT NOT NULL CONSTRAINT DF_Users_SessionTimeoutMinutes DEFAULT 30;
+END;
+
+IF COL_LENGTH('Users', 'AlertSeverityThreshold') IS NULL
+BEGIN
+    ALTER TABLE Users ADD AlertSeverityThreshold NVARCHAR(20) NOT NULL CONSTRAINT DF_Users_AlertSeverityThreshold DEFAULT 'Medium';
+END;
+
+IF COL_LENGTH('Users', 'AlertDigestMode') IS NULL
+BEGIN
+    ALTER TABLE Users ADD AlertDigestMode NVARCHAR(20) NOT NULL CONSTRAINT DF_Users_AlertDigestMode DEFAULT 'realtime';
+END;");
         Console.WriteLine("Database connected successfully!");
     }
     catch (Exception ex)

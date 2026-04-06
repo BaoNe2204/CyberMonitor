@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace CyberMonitor.API.Controllers;
 
@@ -21,19 +22,22 @@ public class AlertsController : ControllerBase
     private readonly IEmailService _emailService;
     private readonly ITelegramService _telegramService;
     private readonly ILogger<AlertsController> _logger;
+    private readonly IConfiguration _configuration = null!;
 
     public AlertsController(
         CyberMonitorDbContext db,
         IHubContext<AlertHub, IAlertHub> alertHub,
         IEmailService emailService,
         ITelegramService telegramService,
-        ILogger<AlertsController> logger)
+        ILogger<AlertsController> logger,
+        IConfiguration configuration)
     {
         _db = db;
         _alertHub = alertHub;
         _emailService = emailService;
         _telegramService = telegramService;
         _logger = logger;
+        _configuration = configuration;
     }
 
     /// <summary>AI Engine gọi webhook này để tạo alert</summary>
@@ -277,7 +281,7 @@ public class AlertsController : ControllerBase
     private async Task SendAlertNotifications(Alert alert, Ticket ticket)
     {
         var users = await _db.Users
-            .Where(u => u.TenantId == alert.TenantId && (u.Role == "Admin" || u.Role == "SuperAdmin"))
+            .Where(u => u.TenantId == alert.TenantId && u.IsActive)
             .ToListAsync();
 
         var server = await _db.Servers.FindAsync(alert.ServerId);
@@ -297,7 +301,10 @@ public class AlertsController : ControllerBase
             });
 
             // Email
-            await _emailService.SendAlertEmailAsync(alert.TenantId, user.Email, alert, server);
+            if (user.EmailAlertsEnabled)
+            {
+                await _emailService.SendAlertEmailAsync(alert.TenantId, user.Email, alert, server);
+            }
 
             // SignalR real-time push
             var notifDto = new NotificationDto(
@@ -323,6 +330,21 @@ public class AlertsController : ControllerBase
             {
                 try
                 {
+                    var ownerDisabled = await _db.Users.AnyAsync(u =>
+                        u.TenantId == alert.TenantId &&
+                        u.IsActive &&
+                        u.Email == alertEmail.Email &&
+                        !u.EmailAlertsEnabled);
+
+                    if (ownerDisabled)
+                    {
+                        _logger.LogInformation(
+                            "Skipped alert email {Email} for server {ServerId} because owner disabled email alerts",
+                            alertEmail.Email,
+                            alert.ServerId.Value);
+                        continue;
+                    }
+
                     await _emailService.SendAlertEmailAsync(alert.TenantId, alertEmail.Email, alert, server);
                     _logger.LogInformation("Alert email sent to {Email} for server {ServerId}", 
                         alertEmail.Email, alert.ServerId.Value);
@@ -334,16 +356,86 @@ public class AlertsController : ControllerBase
             }
         }
 
-        var telegramSent = await _telegramService.SendAlertAsync(alert.TenantId, alert, server, ticket);
-        if (telegramSent > 0)
-        {
-            _logger.LogInformation(
-                "Telegram alert sent to {Count} chat(s) for alert {AlertId}",
-                telegramSent,
-                alert.Id);
-        }
+        // Telegram — route per-user based on their digest mode + severity threshold
+        await RouteTelegramAlert(alert, server, ticket);
 
         await _db.SaveChangesAsync();
+    }
+
+    private async Task RouteTelegramAlert(Alert alert, Server? server, Ticket? ticket)
+    {
+        if (!IsTelegramEnabled())
+            return;
+
+        // Step 1: Always send to server-level recipients (they are independent of user digest settings)
+        var serverRecipients = new List<string>();
+        if (alert.ServerId.HasValue)
+        {
+            var rawChatIds = await _db.ServerTelegramRecipients
+                .Where(r => r.ServerId == alert.ServerId.Value && r.IsActive)
+                .Select(r => r.ChatId)
+                .ToListAsync();
+
+            var disabledChats = await _db.Users
+                .Where(u => u.TenantId == alert.TenantId && u.IsActive && u.TelegramChatId != null && !u.TelegramAlertsEnabled)
+                .Select(u => u.TelegramChatId!)
+                .ToListAsync();
+
+            var disabledSet = new HashSet<string>(disabledChats.Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.Trim()), StringComparer.Ordinal);
+
+            serverRecipients = rawChatIds
+                .Where(c => !string.IsNullOrWhiteSpace(c) && !disabledSet.Contains(c.Trim()))
+                .Select(c => c.Trim())
+                .ToList();
+        }
+
+        // Step 2: Check user-level recipients
+        var allUsers = await _db.Users
+            .Where(u => u.TenantId == alert.TenantId
+                        && u.IsActive
+                        && u.TelegramAlertsEnabled
+                        && !string.IsNullOrWhiteSpace(u.TelegramChatId))
+            .ToListAsync();
+
+        var realtimeUsers = allUsers.Where(u => MeetsSeverityThreshold(alert.Severity, u.AlertSeverityThreshold) && u.AlertDigestMode == "realtime").ToList();
+        var digestUsers = allUsers.Where(u => MeetsSeverityThreshold(alert.Severity, u.AlertSeverityThreshold) && u.AlertDigestMode != "realtime").ToList();
+
+        var hasRealtimeRecipients = serverRecipients.Count > 0 || realtimeUsers.Count > 0;
+
+        if (hasRealtimeRecipients)
+        {
+            var sent = await _telegramService.SendAlertAsync(alert.TenantId, alert, server, ticket);
+            _logger.LogInformation("Telegram alert sent. ServerRecipients={ServerCount}, RealtimeUsers={RealtimeCount}, DigestUsers={DigestCount}, SentCount={SentCount}, AlertId={AlertId}",
+                serverRecipients.Count, realtimeUsers.Count, digestUsers.Count, sent, alert.Id);
+        }
+
+        if (digestUsers.Count > 0)
+        {
+            await _telegramService.QueueAlertAsync(alert.TenantId, alert, server, ticket);
+            _logger.LogInformation("Queued {Count} digest entries for alert {AlertId}", digestUsers.Count, alert.Id);
+        }
+
+        if (!hasRealtimeRecipients && digestUsers.Count == 0)
+        {
+            _logger.LogInformation("No Telegram recipients matched for alert {AlertId}. ServerRecipients={Srv}, RealtimeUsers={RT}, DigestUsers={Dig}",
+                alert.Id, serverRecipients.Count, realtimeUsers.Count, digestUsers.Count);
+        }
+    }
+
+    private static bool MeetsSeverityThreshold(string alertSeverity, string userThreshold)
+    {
+        var order = new[] { "Low", "Medium", "High", "Critical" };
+        var alertIdx = Array.IndexOf(order, alertSeverity);
+        if (alertIdx < 0) alertIdx = 0;
+        var thresholdIdx = Array.IndexOf(order, userThreshold);
+        if (thresholdIdx < 0) thresholdIdx = 1; // default Medium
+        return alertIdx >= thresholdIdx;
+    }
+
+    private bool IsTelegramEnabled()
+    {
+        var enabled = _configuration["TelegramBot:Enabled"];
+        return bool.TryParse(enabled, out var value) && value;
     }
 
     private static AlertDto MapAlertDto(Alert a) => new(

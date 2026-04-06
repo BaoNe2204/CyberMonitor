@@ -242,7 +242,7 @@ export async function fetchDashboardParallel(
   errors: Record<string, any>;
 }> {
   const results = await parallelFetch([
-    { endpoint: '/api/reports/dashboard' },
+    { endpoint: '/api/dashboard' },
     { endpoint: '/api/alerts?page=1&pageSize=20' },
     { endpoint: '/api/servers?page=1&pageSize=50' },
     { endpoint: '/api/defense/blocked-ips?page=1&pageSize=20&active=true' },
@@ -255,7 +255,7 @@ export async function fetchDashboardParallel(
     }
   }
 
-  const dashboardData = results['/api/reports/dashboard']?.data?.data || {};
+  const dashboardData = results['/api/dashboard']?.data?.data || {};
   const alerts = results['/api/alerts']?.data?.data?.items || [];
   const servers = results['/api/servers']?.data?.data?.items || [];
   const blockedIPs = results['/api/defense/blocked-ips']?.data?.data?.items || [];
@@ -297,6 +297,14 @@ export interface User {
   role: 'SuperAdmin' | 'Admin' | 'User';
   lastLoginAt: string | null;
   twoFactorEnabled: boolean;
+  sessionTimeoutEnabled?: boolean;
+  sessionTimeoutMinutes?: number;
+  emailAlertsEnabled?: boolean;
+  telegramAlertsEnabled?: boolean;
+  pushNotificationsEnabled?: boolean;
+  telegramChatId?: string | null;
+  alertSeverityThreshold?: string;
+  alertDigestMode?: string;
 }
 
 export interface Server {
@@ -600,7 +608,40 @@ export const AuthApi = {
   },
 
   updateProfile: async (userId: string, data: { fullName?: string }) => {
-    return request<User>(`/api/auth/users/${userId}`, data, { method: 'PUT' });
+    const res = await request<User>(`/api/auth/users/${userId}`, data, { method: 'PUT' });
+    if (res.success && res.data) {
+      setStoredUser(res.data);
+    }
+    return res;
+  },
+
+  updateNotificationSettings: async (data: {
+    emailAlertsEnabled: boolean;
+    telegramAlertsEnabled: boolean;
+    pushNotificationsEnabled: boolean;
+    telegramChatId?: string | null;
+    alertSeverityThreshold?: string;
+    alertDigestMode?: string;
+  }): Promise<ApiResponse<User>> => {
+    const userId = getStoredUser()?.id;
+    const res = await request<User>(`/api/users/${userId}/notification-settings`, data, { method: 'PUT' });
+    if (res.success && res.data) {
+      setStoredUser(res.data);
+    }
+    return res;
+  },
+
+  updateSecuritySettings: async (data: {
+    twoFactorEnabled: boolean;
+    sessionTimeoutEnabled: boolean;
+    sessionTimeoutMinutes: number;
+  }): Promise<ApiResponse<User>> => {
+    const userId = getStoredUser()?.id;
+    const res = await request<User>(`/api/users/${userId}/security-settings`, data, { method: 'PUT' });
+    if (res.success && res.data) {
+      setStoredUser(res.data);
+    }
+    return res;
   },
 
   logout: () => {
@@ -784,6 +825,32 @@ export const TicketsApi = {
 };
 
 // ============================================================================
+// SUBSCRIPTIONS API
+// ============================================================================
+
+export const SubscriptionsApi = {
+  get: async (): Promise<ApiResponse<Subscription>> => {
+    return request<Subscription>('/api/subscriptions');
+  },
+
+  getHistory: async () => {
+    return request<Subscription[]>('/api/subscriptions/history');
+  },
+
+  createTrial: async () => {
+    return request<Subscription>('/api/subscriptions/trial', undefined, { method: 'POST' });
+  },
+
+  createPayment: async (tenantId: string, planName: string, amount: number) => {
+    return request<{ orderId: string; paymentUrl: string }>('/api/subscriptions/create-payment', {
+      tenantId,
+      planName,
+      amount,
+    }, { method: 'POST' });
+  },
+};
+
+// ============================================================================
 // PAYMENT API
 // ============================================================================
 
@@ -807,11 +874,11 @@ export const PaymentApi = {
 
 export const ReportsApi = {
   getDashboard: async (): Promise<ApiResponse<DashboardSummary>> => {
-    return request<DashboardSummary>('/api/reports/dashboard');
+    return request<DashboardSummary>('/api/dashboard');
   },
 
   getSubscription: async (): Promise<ApiResponse<Subscription>> => {
-    return request<Subscription>('/api/reports/subscription');
+    return request<Subscription>('/api/subscriptions');
   },
 
   exportExcel: (startDate?: string, endDate?: string, tenantId?: string) => {
@@ -829,17 +896,43 @@ export const ReportsApi = {
 
   getNotifications: async (page = 1, pageSize = 20) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
-    return request<PagedResult<Notification>>(`/api/reports/notifications?${params}`);
+    return request<PagedResult<Notification>>(`/api/notifications?${params}`);
   },
 
   markNotificationRead: async (id: string) => {
-    return request(`/api/reports/notifications/${id}/read`, undefined, { method: 'PUT' });
+    return request(`/api/notifications/${id}/read`, undefined, { method: 'PUT' });
   },
 
   getAuditLogs: async (page = 1, pageSize = 50, action?: string) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (action) params.append('action', action);
-    return request(`/api/reports/audit-logs?${params}`);
+    return request(`/api/audit-logs?${params}`);
+  },
+};
+
+// ============================================================================
+// DASHBOARD API
+// ============================================================================
+
+export const DashboardApi = {
+  getStats: async (): Promise<ApiResponse<DashboardSummary>> => {
+    return request<DashboardSummary>('/api/dashboard');
+  },
+
+  getAlertStats: async (days = 7, serverId?: string) => {
+    const params = new URLSearchParams({ days: String(days) });
+    if (serverId) params.append('serverId', serverId);
+    return request(`/api/dashboard/alert-stats?${params}`);
+  },
+
+  getTicketStats: async (days = 7) => {
+    const params = new URLSearchParams({ days: String(days) });
+    return request(`/api/dashboard/ticket-stats?${params}`);
+  },
+
+  getTopAttackers: async (top = 10, days = 30) => {
+    const params = new URLSearchParams({ top: String(top), days: String(days) });
+    return request(`/api/dashboard/top-attackers?${params}`);
   },
 };
 
@@ -851,7 +944,7 @@ export const UsersApi = {
   getAll: async (page = 1, pageSize = 20, search?: string) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (search) params.append('search', search);
-    return request<PagedResult<User>>(`/api/auth/users?${params}`);
+    return request<PagedResult<User>>(`/api/users?${params}`);
   },
 
   create: async (data: {
@@ -861,7 +954,7 @@ export const UsersApi = {
     role: string;
     tenantId?: string;
   }): Promise<ApiResponse<User>> => {
-    return request<User>('/api/auth/users', data, { method: 'POST' });
+    return request<User>('/api/users', data, { method: 'POST' });
   },
 
   update: async (id: string, data: {
@@ -870,19 +963,45 @@ export const UsersApi = {
     isActive?: boolean;
     updatedBy?: string;
   }): Promise<ApiResponse<User>> => {
-    return request<User>(`/api/auth/users/${id}`, data, { method: 'PUT' });
+    return request<User>(`/api/users/${id}`, data, { method: 'PUT' });
   },
 
   delete: async (id: string) => {
-    return request(`/api/auth/users/${id}`, undefined, { method: 'DELETE' });
+    return request(`/api/users/${id}`, undefined, { method: 'DELETE' });
   },
 
   changePassword: async (id: string, newPassword: string): Promise<ApiResponse<any>> => {
-    return request(`/api/auth/users/${id}/password`, { newPassword }, { method: 'PUT' });
+    return request(`/api/users/${id}/password`, { newPassword }, { method: 'PUT' });
   },
 
   toggleStatus: async (id: string, isActive: boolean): Promise<ApiResponse<User>> => {
-    return request<User>(`/api/auth/users/${id}`, { isActive }, { method: 'PUT' });
+    return request<User>(`/api/users/${id}`, { isActive }, { method: 'PUT' });
+  },
+};
+
+// ============================================================================
+// AUDIT LOGS API
+// ============================================================================
+
+export const AuditLogsApi = {
+  getAll: async (page = 1, pageSize = 50, filters?: {
+    action?: string;
+    entityType?: string;
+    userId?: string;
+    fromDate?: string;
+    toDate?: string;
+  }) => {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    if (filters?.action) params.append('action', filters.action);
+    if (filters?.entityType) params.append('entityType', filters.entityType);
+    if (filters?.userId) params.append('userId', filters.userId);
+    if (filters?.fromDate) params.append('fromDate', filters.fromDate);
+    if (filters?.toDate) params.append('toDate', filters.toDate);
+    return request(`/api/audit-logs?${params}`);
+  },
+
+  getStats: async (days = 30) => {
+    return request(`/api/audit-logs/stats?days=${days}`);
   },
 };
 
