@@ -970,8 +970,22 @@ export const PaymentApi = {
     }, { method: 'POST' });
   },
 
+  /** Tạo link thanh toán VNPay từ planId (dùng cho CheckoutPage) */
+  createPaymentUrl: async (planId: string, planName: string, amount: number) => {
+    return request<{ orderId: string; paymentUrl: string }>('/api/payments/create', {
+      planId,
+      planName,
+      amount,
+    }, { method: 'POST' });
+  },
+
+  /** Xác minh kết quả VNPay callback (dùng cho PaymentResultPage) */
+  vnpayReturn: async (queryString: string) => {
+    return request<{ transactionId?: string; orderId?: string }>(`/api/payments/vnpay-return${queryString}`);
+  },
+
   getHistory: async () => {
-    return request('/api/payment/history');
+    return request<any[]>('/api/payment/history');
   },
 };
 

@@ -58,6 +58,9 @@ import { SystemLogs } from './components/SystemLogs';
 import { ApiGuide } from './components/ApiGuide';
 import { ApiManagement } from './components/ApiManagement';
 import { Defense } from './components/Defense';
+import { CheckoutPage } from './components/CheckoutPage';
+import { PaymentResultPage } from './components/PaymentResultPage';
+import { MySubscription } from './components/MySubscription';
 import { ServerSelector } from './components/ServerSelector';
 import ServerAlertEmailsModal from './components/ServerAlertEmailsModal';
 import ServerTelegramRecipientsModal from './components/ServerTelegramRecipientsModal';
@@ -90,6 +93,7 @@ export default function App() {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [selectedDetail, setSelectedDetail] = useState<{ type: string; data: any } | null>(null);
   const [pricingPlans, setPricingPlans] = useState<any[]>([]);
+  const [checkoutPlan, setCheckoutPlan] = useState<any | null>(null); // plan đang checkout
   const [apiGuide, setApiGuide] = useState<any>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -767,6 +771,25 @@ export default function App() {
   );
 
   // --- Rendering ---
+
+  // Payment result page — accessible without login (VNPay redirects here)
+  if (window.location.pathname === '/payment-result') {
+    return (
+      <PaymentResultPage
+        theme={theme}
+        onGoToDashboard={() => {
+          window.history.pushState({}, '', '/');
+          setIsLoggedIn(isAuthenticated());
+          setActiveTab('my-subscription');
+        }}
+        onRetry={() => {
+          window.history.pushState({}, '', '/');
+          setActiveTab('billing');
+        }}
+      />
+    );
+  }
+
   if (!isLoggedIn) {
     if (showAuth) {
       return (
@@ -1113,8 +1136,29 @@ export default function App() {
                   />
                 )}
 
-                {activeTab === 'billing' && (
-                  <Billing theme={theme} t={t} plans={pricingPlans} setPlans={setPricingPlans} />
+                {activeTab === 'billing' && !checkoutPlan && (
+                  <Billing
+                    theme={theme}
+                    t={t}
+                    plans={pricingPlans}
+                    setPlans={setPricingPlans}
+                    onSelectPlan={(plan) => setCheckoutPlan(plan)}
+                  />
+                )}
+
+                {activeTab === 'billing' && checkoutPlan && (
+                  <CheckoutPage
+                    theme={theme}
+                    plan={checkoutPlan}
+                    onBack={() => setCheckoutPlan(null)}
+                  />
+                )}
+
+                {activeTab === 'my-subscription' && (
+                  <MySubscription
+                    theme={theme}
+                    onUpgrade={() => { setCheckoutPlan(null); setActiveTab('billing'); }}
+                  />
                 )}
 
                 {activeTab === 'apiGuide' && (
