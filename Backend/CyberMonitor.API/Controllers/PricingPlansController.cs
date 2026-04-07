@@ -23,8 +23,9 @@ public class PricingPlansController : ControllerBase
         _logger = logger;
     }
 
-    // GET: /api/pricing-plans
+    // GET: /api/pricing-plans — public, không cần đăng nhập
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<ApiResponse<List<PricingPlan>>>> GetAll()
     {
         var plans = await _db.PricingPlans
@@ -92,8 +93,9 @@ public class PricingPlansController : ControllerBase
         return Ok(new ApiResponse<object>(true, "Lấy danh sách gói thành công", result));
     }
 
-    // GET: /api/pricing-plans/{id}
+    // GET: /api/pricing-plans/{id} — public
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<ActionResult<ApiResponse<object>>> GetById(Guid id)
     {
         var p = await _db.PricingPlans.FindAsync(id);
