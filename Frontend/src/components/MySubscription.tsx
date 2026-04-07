@@ -7,6 +7,8 @@ import { SubscriptionsApi, PaymentApi } from '../services/api';
 interface MySubscriptionProps {
   theme: Theme;
   onUpgrade: () => void;
+  /** Tăng giá trị này để force refresh data (sau khi mua xong) */
+  refreshKey?: number;
 }
 
 interface Subscription {
@@ -58,13 +60,19 @@ const paymentStatusLabel = (status: string) => {
   }
 };
 
-export const MySubscription = ({ theme, onUpgrade }: MySubscriptionProps) => {
+export const MySubscription = ({ theme, onUpgrade, refreshKey = 0 }: MySubscriptionProps) => {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [history, setHistory] = useState<PaymentOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(true);
 
   useEffect(() => {
+    // Reset state khi refreshKey thay đổi
+    setLoading(true);
+    setHistoryLoading(true);
+    setSubscription(null);
+    setHistory([]);
+
     SubscriptionsApi.get().then(res => {
       if (res.success && res.data) setSubscription(res.data as Subscription);
     }).finally(() => setLoading(false));
@@ -72,7 +80,7 @@ export const MySubscription = ({ theme, onUpgrade }: MySubscriptionProps) => {
     PaymentApi.getHistory().then((res: any) => {
       if (res.success && res.data) setHistory(res.data as PaymentOrder[]);
     }).finally(() => setHistoryLoading(false));
-  }, []);
+  }, [refreshKey]); // re-fetch khi refreshKey thay đổi
 
   const card = cn(
     'rounded-2xl border p-6',
