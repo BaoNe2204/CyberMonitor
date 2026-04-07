@@ -255,8 +255,8 @@ public class PaymentController : ControllerBase
 
         if (existing == null) _db.PaymentOrders.Add(order);
 
-        // Kích hoạt subscription
-        await ActivateSubscriptionAsync(order);
+        // Kích hoạt subscription — dùng billingPeriod từ request nếu có
+        await ActivateSubscriptionAsync(order, request.BillingPeriod);
 
         _db.AuditLogs.Add(new AuditLog
         {
@@ -374,16 +374,17 @@ public class PaymentController : ControllerBase
     // Private helpers
     // ─────────────────────────────────────────────────────────────────────────
 
-    private async Task ActivateSubscriptionAsync(PaymentOrder order)
+    private async Task ActivateSubscriptionAsync(PaymentOrder order, string? overrideBillingPeriod = null)
     {
         if (!order.TenantId.HasValue) return;
 
-        // Lấy config từ DB PricingPlans trước, fallback về hardcode
         var plan = await _db.PricingPlans
             .FirstOrDefaultAsync(p => p.Name == order.PlanName && p.IsActive);
 
-        var maxServers   = plan?.Servers ?? GetFallbackPlanConfig(order.PlanName).maxServers;
-        var durationDays = GetBillingDays(plan?.BillingPeriod ?? "monthly");
+        var maxServers    = plan?.Servers ?? GetFallbackPlanConfig(order.PlanName).maxServers;
+        // Ưu tiên: override từ request → plan DB → fallback monthly
+        var billingPeriod = overrideBillingPeriod ?? plan?.BillingPeriod ?? "monthly";
+        var durationDays  = GetBillingDays(billingPeriod);
 
         var subscription = await _db.Subscriptions
             .Where(s => s.TenantId == order.TenantId.Value)
@@ -485,7 +486,8 @@ public record DemoConfirmRequest(
     string? OrderId,
     string PlanName,
     decimal Amount,
-    string? PaymentMethod
+    string? PaymentMethod,
+    string? BillingPeriod
 );
 
 public record PaymentResultData(

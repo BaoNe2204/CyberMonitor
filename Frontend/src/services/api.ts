@@ -980,10 +980,10 @@ export const PaymentApi = {
   },
 
   /** Xác nhận thanh toán demo — lưu vào DB không qua VNPay */
-  demoConfirm: async (orderId: string, planName: string, amount: number, paymentMethod: string) => {
+  demoConfirm: async (orderId: string, planName: string, amount: number, paymentMethod: string, billingPeriod?: string) => {
     return request<{ orderId: string; transactionId?: string; planName: string; amount: number }>(
       '/api/payment/demo-confirm',
-      { orderId, planName, amount, paymentMethod },
+      { orderId, planName, amount, paymentMethod, billingPeriod },
       { method: 'POST' }
     );
   },

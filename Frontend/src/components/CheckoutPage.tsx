@@ -79,8 +79,11 @@ export const CheckoutPage = ({ theme, plan, onBack, onPaymentSuccess }: Checkout
     ? parseInt(plan.price.replace(/\D/g, ''), 10) || 0
     : Number(plan.price) || 0;
 
+  // Nếu chọn hàng năm thì tính giá x12 x0.8 (giảm 20%)
+  const finalPrice = plan.billingPeriod === 'yearly' ? Math.round(price * 12 * 0.8) : price;
+
   const transferContent = `${orderCode} GOI ${plan.name.toUpperCase()}`;
-  const qrUrl = buildVietQRUrl(price, transferContent);
+  const qrUrl = buildVietQRUrl(finalPrice, transferContent);
 
   // Countdown 15 phút
   useEffect(() => {
@@ -104,10 +107,10 @@ export const CheckoutPage = ({ theme, plan, onBack, onPaymentSuccess }: Checkout
     setLoading(true);
     try {
       const paymentMethod = method === 'vietqr' ? 'VietQR' : 'VNPay Demo';
-      const res = await PaymentApi.demoConfirm(orderCode, plan.name, price, paymentMethod);
+      const res = await PaymentApi.demoConfirm(orderCode, plan.name, finalPrice, paymentMethod, plan.billingPeriod);
 
       if (res.success && res.data) {
-        onPaymentSuccess(res.data.orderId || orderCode, plan.name, price);
+        onPaymentSuccess(res.data.orderId || orderCode, plan.name, finalPrice);
       } else {
         // Log lỗi cụ thể ra console để debug
         console.error('[Payment] demo-confirm failed:', res.message, res);
@@ -175,7 +178,7 @@ export const CheckoutPage = ({ theme, plan, onBack, onPaymentSuccess }: Checkout
         <div className={cn('border-t mt-4 pt-4 flex justify-between items-center', theme === 'dark' ? 'border-slate-700' : 'border-slate-100')}>
           <span className={cn('font-bold', theme === 'dark' ? 'text-slate-200' : 'text-slate-700')}>Tổng thanh toán</span>
           <span className="text-2xl font-black text-blue-500">
-            {price.toLocaleString('vi-VN')}
+            {finalPrice.toLocaleString('vi-VN')}
             <span className="text-sm font-normal text-slate-400 ml-1">VND</span>
           </span>
         </div>
@@ -277,8 +280,8 @@ export const CheckoutPage = ({ theme, plan, onBack, onPaymentSuccess }: Checkout
               <InfoRow label="Số tài khoản" value={VIETQR_BANK.accountNo} theme={theme}
                 onCopy={() => copyText(VIETQR_BANK.accountNo, 'acc')} copied={copied === 'acc'} />
               <InfoRow label="Chủ tài khoản" value={VIETQR_BANK.accountName} theme={theme} />
-              <InfoRow label="Số tiền" value={`${price.toLocaleString('vi-VN')} VND`} theme={theme}
-                onCopy={() => copyText(String(price), 'amt')} copied={copied === 'amt'} highlight />
+              <InfoRow label="Số tiền" value={`${finalPrice.toLocaleString('vi-VN')} VND`} theme={theme}
+                onCopy={() => copyText(String(finalPrice), 'amt')} copied={copied === 'amt'} highlight />
               <InfoRow label="Nội dung CK" value={transferContent} theme={theme}
                 onCopy={() => copyText(transferContent, 'desc')} copied={copied === 'desc'} highlight />
             </div>
