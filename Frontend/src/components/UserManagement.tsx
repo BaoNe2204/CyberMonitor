@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Users, UserPlus, Search, Shield, Trash2, Edit2, Lock, Unlock, Key, Mail, AlertCircle, CheckCircle } from 'lucide-react';
+import { Users, UserPlus, Search, Shield, Trash2, Edit2, Lock, Unlock, Key, Mail, AlertCircle, CheckCircle, CreditCard } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Theme } from '../types';
 import { UsersApi, type User } from '../services/api';
+import { ChangeSubscriptionModal } from './ChangeSubscriptionModal';
 
 interface UserManagementProps {
   theme: Theme;
@@ -18,6 +19,7 @@ export const UserManagement = ({ theme }: UserManagementProps) => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [changingSubscriptionUser, setChangingSubscriptionUser] = useState<User | null>(null);
   
   // Form states
   const [formData, setFormData] = useState({
@@ -281,6 +283,7 @@ export const UserManagement = ({ theme }: UserManagementProps) => {
               <tr className={cn("text-[11px] uppercase tracking-wider font-semibold", theme === 'dark' ? "bg-slate-950/90 text-slate-400" : "bg-slate-50 text-slate-600")}>
                 <th className="px-6 py-4">Người dùng</th>
                 <th className="px-6 py-4">Vai trò</th>
+                <th className="px-6 py-4">Gói</th>
                 <th className="px-6 py-4">Trạng thái</th>
                 <th className="px-6 py-4">Ngày tạo</th>
                 <th className="px-6 py-4 text-right">Thao tác</th>
@@ -341,6 +344,14 @@ export const UserManagement = ({ theme }: UserManagementProps) => {
                         "text-[11px] font-bold px-2.5 py-1 rounded-md inline-block",
                         "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
                       )}>
+                        {user.tenantName || 'Free'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={cn(
+                        "text-[11px] font-bold px-2.5 py-1 rounded-md inline-block",
+                        "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                      )}>
                         Hoạt động
                       </span>
                     </td>
@@ -349,6 +360,16 @@ export const UserManagement = ({ theme }: UserManagementProps) => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
+                        <button 
+                          onClick={() => setChangingSubscriptionUser(user)}
+                          className={cn(
+                            "p-2 rounded-lg transition-all",
+                            theme === 'dark' ? "hover:bg-slate-800 text-slate-400 hover:text-emerald-400" : "hover:bg-slate-100 text-slate-600 hover:text-emerald-600"
+                          )}
+                          title="Thay đổi gói"
+                        >
+                          <CreditCard size={16} />
+                        </button>
                         <button 
                           onClick={() => handleEditUser(user)}
                           className={cn(
@@ -519,6 +540,24 @@ export const UserManagement = ({ theme }: UserManagementProps) => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Change Subscription Modal */}
+      {changingSubscriptionUser && (
+        <ChangeSubscriptionModal
+          theme={theme}
+          user={{
+            id: changingSubscriptionUser.id,
+            fullName: changingSubscriptionUser.fullName,
+            email: changingSubscriptionUser.email,
+            tenantId: changingSubscriptionUser.tenantId,
+          }}
+          onClose={() => setChangingSubscriptionUser(null)}
+          onSuccess={() => {
+            loadUsers();
+            setChangingSubscriptionUser(null);
+          }}
+        />
       )}
     </div>
   );

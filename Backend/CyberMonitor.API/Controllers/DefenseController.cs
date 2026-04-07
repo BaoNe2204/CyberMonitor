@@ -75,7 +75,11 @@ public class DefenseController : ControllerBase
 
         // Check if already blocked — FILTER BY TENANT to prevent cross-tenant IDOR
         var existing = await _db.BlockedIPs
-            .FirstOrDefaultAsync(b => b.IpAddress == request.Ip && b.IsActive && b.TenantId == effectiveTenantId);
+            .FirstOrDefaultAsync(b =>
+                b.IpAddress == request.Ip &&
+                b.IsActive &&
+                b.TenantId == effectiveTenantId &&
+                (request.ServerId.HasValue ? b.ServerId == request.ServerId : b.ServerId == null));
 
         if (existing != null)
         {
@@ -102,7 +106,8 @@ public class DefenseController : ControllerBase
                 Severity = request.Severity ?? "Medium",
                 DurationMinutes = request.BlockDurationMinutes,
                 BlockId = existing.Id,
-                IssuedAt = DateTime.UtcNow
+                IssuedAt = DateTime.UtcNow,
+                IsTenantWide = !request.ServerId.HasValue
             };
 
             if (request.ServerId.HasValue)
@@ -141,6 +146,7 @@ public class DefenseController : ControllerBase
             Id = Guid.NewGuid(),
             IpAddress = request.Ip,
             TenantId = effectiveTenantId,
+            ServerId = request.ServerId,   // null = tenant-wide; set = server-specific
             AttackType = request.AttackType ?? "Unknown",
             Severity = request.Severity ?? "Medium",
             Reason = request.Reason ?? "AI Detection",
@@ -186,7 +192,7 @@ public class DefenseController : ControllerBase
                 // Ticket + AuditLog — nếu lỗi FK thì kệ, SignalR vẫn phải chạy
                 try
                 {
-                    var ticketNumber = $"TK-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..4].ToUpper()}";
+                    var ticketNumber = $"TK-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
                     var ticket = new Ticket
                     {
                         Id = Guid.NewGuid(),
@@ -235,7 +241,8 @@ public class DefenseController : ControllerBase
                 Severity = request.Severity ?? "Medium",
                 DurationMinutes = request.BlockDurationMinutes,
                 BlockId = blockedIP.Id,
-                IssuedAt = DateTime.UtcNow
+                IssuedAt = DateTime.UtcNow,
+                IsTenantWide = false
             };
 
             await _agentHub.Clients.Group(request.ServerId.Value.ToString())
@@ -268,7 +275,8 @@ public class DefenseController : ControllerBase
                     Severity = request.Severity ?? "Medium",
                     DurationMinutes = request.BlockDurationMinutes,
                     BlockId = blockedIP.Id,
-                    IssuedAt = DateTime.UtcNow
+                    IssuedAt = DateTime.UtcNow,
+                    IsTenantWide = true   // ← Agent dùng cờ này để apply locally
                 };
 
                 foreach (var serverId in tenantServers)
@@ -292,7 +300,8 @@ public class DefenseController : ControllerBase
             Severity = request.Severity ?? "Medium",
             DurationMinutes = request.BlockDurationMinutes,
             BlockId = blockedIP.Id,
-            IssuedAt = DateTime.UtcNow
+            IssuedAt = DateTime.UtcNow,
+            IsTenantWide = !request.ServerId.HasValue
         };
         await _alertHub.Clients.Group(effectiveTenantId.ToString()).ReceiveBlockCommand(dashboardCmd);
 
@@ -321,13 +330,27 @@ public class DefenseController : ControllerBase
         var tenantId = GetTenantId();
         var userId = GetUserId();
 
+        // Tìm IP bị block — filter theo ServerId nếu được chỉ định
         var blocked = await _db.BlockedIPs
-            .FirstOrDefaultAsync(b => b.IpAddress == request.Ip && b.IsActive 
-                && (!tenantId.HasValue || b.TenantId == tenantId.Value));
+            .FirstOrDefaultAsync(b =>
+                b.IpAddress == request.Ip &&
+                b.IsActive &&
+                b.TenantId == (tenantId.HasValue ? tenantId.Value : b.TenantId) &&
+                (request.ServerId.HasValue ? b.ServerId == request.ServerId : true));
 
         if (blocked == null)
         {
-            return NotFound(new ApiResponse<object>(false, $"IP {request.Ip} is not currently blocked.", null));
+            // Thử tìm block tenant-wide nếu không có server cụ thể
+            if (!request.ServerId.HasValue)
+            {
+                blocked = await _db.BlockedIPs
+                    .FirstOrDefaultAsync(b =>
+                        b.IpAddress == request.Ip &&
+                        b.IsActive &&
+                        (tenantId.HasValue ? b.TenantId == tenantId.Value : true));
+            }
+            if (blocked == null)
+                return NotFound(new ApiResponse<object>(false, $"IP {request.Ip} is not currently blocked.", null));
         }
 
         blocked.IsActive = false;
@@ -345,7 +368,7 @@ public class DefenseController : ControllerBase
                 Action = "IP_UNBLOCKED",
                 EntityType = "BlockedIP",
                 EntityId = blocked.Id.ToString(),
-                Details = $"IP {request.Ip} unblocked"
+                Details = $"IP {request.Ip} unblocked (ServerId={request.ServerId})"
             });
         }
 
@@ -362,14 +385,16 @@ public class DefenseController : ControllerBase
                 request.ServerId, request.Ip);
         }
 
-        _logger.LogInformation("[UNBLOCK] IP {Ip} unblocked by {By}", request.Ip, blocked.UnblockedBy);
+        _logger.LogInformation("[UNBLOCK] IP {Ip} unblocked by {By} (ServerId={ServerId})",
+            request.Ip, blocked.UnblockedBy, request.ServerId);
 
         return Ok(new ApiResponse<object>(true, $"IP {request.Ip} has been unblocked.", new
         {
             ip = request.Ip,
             action = "unblocked",
             unblockedAt = blocked.UnblockedAt,
-            unblockedBy = blocked.UnblockedBy
+            unblockedBy = blocked.UnblockedBy,
+            serverId = request.ServerId
         }));
     }
 

@@ -28,6 +28,8 @@ public class BlockCommandDto
     public int? DurationMinutes { get; set; }
     public Guid BlockId { get; set; }
     public DateTime IssuedAt { get; set; } = DateTime.UtcNow;
+    /// <summary>True = tenant-wide block (no ServerId), agent should apply locally.</summary>
+    public bool IsTenantWide { get; set; } = false;
 }
 
 public class AgentHub : Microsoft.AspNetCore.SignalR.Hub<IAgentHub>

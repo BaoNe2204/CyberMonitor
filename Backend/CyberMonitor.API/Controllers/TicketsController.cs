@@ -119,7 +119,7 @@ public class TicketsController : ControllerBase
         var tenantId = GetTenantId();
         var userId = GetUserId();
 
-        var ticketNumber = $"TK-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..4].ToUpper()}";
+        var ticketNumber = $"TK-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
 
         var ticket = new Ticket
         {

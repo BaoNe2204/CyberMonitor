@@ -30,7 +30,9 @@ import {
   PaymentApi,
   DefenseApi,
   NotificationsApi,
+  WhitelistApi,
   type BlockedIP,
+  type WhitelistEntry,
   createSignalRConnection,
   type SignalRCallbacks,
   getStoredUser,
@@ -56,8 +58,10 @@ import { UserManagement } from './components/UserManagement';
 import { PricingManagement } from './components/PricingManagement';
 import { SystemLogs } from './components/SystemLogs';
 import { ApiGuide } from './components/ApiGuide';
+import { AgentSetupGuide } from './components/AgentSetupGuide';
 import { ApiManagement } from './components/ApiManagement';
 import { Defense } from './components/Defense';
+import { Whitelist } from './components/Whitelist';
 import { CheckoutPage } from './components/CheckoutPage';
 import { PaymentResultPage, type DemoPaymentResult } from './components/PaymentResultPage';
 import { MySubscription } from './components/MySubscription';
@@ -119,6 +123,8 @@ export default function App() {
   const [mitreData, setMitreData] = useState<any[]>([]);
   // Blocked IPs (Defense)
   const [blockedIPs, setBlockedIPs] = useState<BlockedIP[]>([]);
+  // Whitelists
+  const [whitelists, setWhitelists] = useState<WhitelistEntry[]>([]);
   // Tickets (real-time)
   const [tickets, setTickets] = useState<any[]>([]);
   // Loading states
@@ -354,6 +360,14 @@ export default function App() {
     }
   }, []);
 
+  // --- Fetch Whitelists ---
+  const fetchWhitelists = useCallback(async () => {
+    const page = await WhitelistApi.getWhitelists(1, 200);
+    if (page?.items) {
+      setWhitelists(page.items);
+    }
+  }, []);
+
   // --- Fetch Tickets ---
   const fetchTickets = useCallback(async () => {
     const res = await TicketsApi.getAll(1, 30);
@@ -455,6 +469,13 @@ export default function App() {
           if (blockedRes.success && blockedRes.data) {
             setBlockedIPs(blockedRes.data.items);
           }
+
+          // Whitelists
+          WhitelistApi.getWhitelists(1, 200).then((wlPage) => {
+            if (wlPage?.items) {
+              setWhitelists(wlPage.items);
+            }
+          });
           updateProgress(20);
         }
 
@@ -721,6 +742,33 @@ export default function App() {
       return false;
     },
     [fetchBlockedIPs]
+  );
+
+  // --- Whitelist Handlers ---
+  const handleAddWhitelist = useCallback(
+    async (ipAddress: string, description?: string, serverId?: string | null): Promise<boolean> => {
+      const res = await WhitelistApi.addWhitelist(ipAddress, description, serverId);
+      if (res.success) {
+        await fetchWhitelists();
+        return true;
+      }
+      alert(res.message || 'Thêm Whitelist thất bại.');
+      return false;
+    },
+    [fetchWhitelists]
+  );
+
+  const handleRemoveWhitelist = useCallback(
+    async (id: string, ip: string): Promise<boolean> => {
+      const res = await WhitelistApi.removeWhitelist(id);
+      if (res.success) {
+        setWhitelists(prev => prev.filter(w => w.id !== id));
+        return true;
+      }
+      alert(res.message || 'Xóa Whitelist thất bại.');
+      return false;
+    },
+    []
   );
 
   const handleViewServerKey = useCallback(async (serverId: string, serverName: string) => {
@@ -1134,6 +1182,76 @@ export default function App() {
                   </div>
                 )}
 
+                {activeTab === 'whitelist' && (
+                  <div className="space-y-4">
+                    {/* Server Selector */}
+                    <div className={cn(
+                      "flex items-center justify-between p-4 rounded-lg border",
+                      theme === 'dark' ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    )}>
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "p-2 rounded-lg",
+                          theme === 'dark' ? 'bg-emerald-600/20' : 'bg-emerald-100'
+                        )}>
+                          <Server size={20} className="text-emerald-500" />
+                        </div>
+                        <div>
+                          <h3 className={cn("text-sm font-semibold", theme === 'dark' ? 'text-slate-300' : 'text-slate-700')}>
+                            Lọc theo máy chủ
+                          </h3>
+                          <p className={cn("text-xs mt-0.5", theme === 'dark' ? 'text-slate-500' : 'text-slate-400')}>
+                            {servers.length === 0 ? 'Chưa có máy chủ nào' :
+                             servers.length === 1 ? `1 máy chủ: ${servers[0]?.name}` :
+                             `${servers.length} máy chủ - Chọn để xem whitelist riêng`}
+                          </p>
+                        </div>
+                      </div>
+                      {servers.length > 0 && (
+                        <ServerSelector
+                          theme={theme}
+                          servers={servers}
+                          selectedServerId={selectedServerId}
+                          onSelectServer={setSelectedServerId}
+                          showAllOption={true}
+                        />
+                      )}
+                    </div>
+
+                    {/* Filter indicator */}
+                    {selectedServerId && (
+                      <div className={cn(
+                        "flex items-center gap-2 px-3 py-2 rounded-lg text-sm",
+                        theme === 'dark' ? 'bg-emerald-600/10 text-emerald-400 border border-emerald-500/30' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                      )}>
+                        <Filter size={14} />
+                        <span>Đang lọc: <strong>{servers.find(s => s.id === selectedServerId)?.name}</strong></span>
+                        <button
+                          onClick={() => setSelectedServerId(null)}
+                          className={cn(
+                            "ml-auto p-1 rounded hover:bg-emerald-600/20 transition-colors",
+                            theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'
+                          )}
+                          title="Xóa bộ lọc"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    )}
+
+                    <Whitelist
+                      theme={theme}
+                      t={t}
+                      whitelists={whitelists}
+                      onRefresh={fetchWhitelists}
+                      onAdd={handleAddWhitelist}
+                      onRemove={handleRemoveWhitelist}
+                      servers={servers}
+                      selectedServerId={selectedServerId}
+                    />
+                  </div>
+                )}
+
                 {activeTab === 'reports' && (
                   <Reports
                     theme={theme}
@@ -1173,7 +1291,7 @@ export default function App() {
                 )}
 
                 {activeTab === 'apiGuide' && (
-                  <ApiGuide theme={theme} t={t} guide={apiGuide} />
+                  <AgentSetupGuide theme={theme} t={t} />
                 )}
 
                 {activeTab === 'settings' && (

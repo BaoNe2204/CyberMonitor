@@ -349,6 +349,58 @@ public class UsersController : ControllerBase
         return Ok(new ApiResponse<UserDto>(true, "Cập nhật cài đặt bảo mật thành công!", MapUserDto(user)));
     }
 
+    /// <summary>SuperAdmin: Thay đổi subscription plan của user</summary>
+    [HttpPut("{id:guid}/subscription")]
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<ActionResult<ApiResponse<object>>> UpdateUserSubscription(
+        Guid id,
+        [FromBody] UpdateSubscriptionRequest request)
+    {
+        var user = await _db.Users.Include(u => u.Tenant).FirstOrDefaultAsync(u => u.Id == id);
+        if (user == null)
+            return NotFound(new ApiResponse<object>(false, "User không tìm thấy.", null));
+
+        var tenant = user.Tenant;
+        if (tenant == null)
+            return NotFound(new ApiResponse<object>(false, "Tenant không tìm thấy.", null));
+
+        // Validate plan exists
+        var plan = await _db.PricingPlans.FirstOrDefaultAsync(p => p.Id == request.PlanId);
+        if (plan == null)
+            return NotFound(new ApiResponse<object>(false, "Gói không tồn tại.", null));
+
+        // Create new subscription
+        var startDate = request.StartDate ?? DateTime.UtcNow;
+        var endDate = request.EndDate ?? startDate.AddMonths(request.DurationMonths ?? 1);
+
+        var subscription = new Subscription
+        {
+            TenantId = tenant.Id,
+            PlanName = plan.Name,
+            PlanPrice = plan.Price,
+            MaxServers = plan.Servers,
+            StartDate = startDate,
+            EndDate = endDate,
+            Status = "Active",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _db.Subscriptions.Add(subscription);
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("SuperAdmin updated subscription for user {UserId} to plan {PlanName}", id, plan.Name);
+
+        return Ok(new ApiResponse<object>(true, $"Đã cập nhật gói {plan.Name} cho người dùng.", new
+        {
+            userId = id,
+            tenantId = tenant.Id,
+            planId = plan.Id,
+            planName = plan.Name,
+            startDate = subscription.StartDate,
+            endDate = subscription.EndDate
+        }));
+    }
+
     private Guid GetUserId() =>
         Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? Guid.Empty.ToString());
 

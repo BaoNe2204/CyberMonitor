@@ -69,6 +69,36 @@ public class SubscriptionsController : ControllerBase
         )));
     }
 
+    /// <summary>SuperAdmin: subscription mới nhất của một tenant (đổi gói / hiển thị gói hiện tại)</summary>
+    [HttpGet("for-tenant/{tenantId:guid}")]
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<ActionResult<ApiResponse<SubscriptionDto>>> GetSubscriptionForTenant(Guid tenantId)
+    {
+        var subscription = await _db.Subscriptions
+            .AsNoTracking()
+            .Where(s => s.TenantId == tenantId)
+            .OrderByDescending(s => s.EndDate)
+            .FirstOrDefaultAsync();
+
+        if (subscription == null)
+            return NotFound(new ApiResponse<SubscriptionDto>(false, "Tenant chưa có subscription.", null));
+
+        var usedServers = await _db.Servers.CountAsync(s => s.TenantId == tenantId);
+
+        return Ok(new ApiResponse<SubscriptionDto>(true, "OK", new SubscriptionDto(
+            subscription.Id,
+            subscription.TenantId,
+            subscription.PlanName,
+            subscription.PlanPrice,
+            subscription.MaxServers,
+            usedServers,
+            subscription.Status,
+            subscription.StartDate,
+            subscription.EndDate,
+            Math.Max(0, (subscription.EndDate - DateTime.UtcNow).Days)
+        )));
+    }
+
     /// <summary>Lấy lịch sử subscription</summary>
     [HttpGet("history")]
     public async Task<ActionResult<ApiResponse<List<SubscriptionDto>>>> GetSubscriptionHistory()

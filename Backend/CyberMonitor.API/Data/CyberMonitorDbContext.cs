@@ -25,6 +25,7 @@ public class CyberMonitorDbContext : DbContext
     public DbSet<ServerTelegramRecipient> ServerTelegramRecipients => Set<ServerTelegramRecipient>();
     public DbSet<AlertDigestQueue> AlertDigestQueue => Set<AlertDigestQueue>();
     public DbSet<PricingPlan> PricingPlans => Set<PricingPlan>();
+    public DbSet<Whitelist> Whitelists => Set<Whitelist>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -278,5 +279,29 @@ public class CyberMonitorDbContext : DbContext
                 CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
         });
+
+        // Whitelist
+        modelBuilder.Entity<Whitelist>(e =>
+        {
+            e.HasIndex(w => w.TenantId).HasDatabaseName("IX_Whitelists_TenantId");
+            e.HasIndex(w => w.IpAddress).HasDatabaseName("IX_Whitelists_IpAddress");
+            e.HasIndex(w => w.ServerId).HasDatabaseName("IX_Whitelists_ServerId");
+            // Composite index để check trùng IP theo tenant + server
+            e.HasIndex(w => new { w.TenantId, w.ServerId, w.IpAddress })
+                .IsUnique()
+                .HasDatabaseName("IX_Whitelists_TenantId_ServerId_IpAddress");
+        });
+        // --- Cấu hình Precision cho Decimal (Fix Warning 30000) ---
+            modelBuilder.Entity<BlockedIP>()
+                .Property(b => b.AnomalyScore)
+                .HasColumnType("decimal(5,4)"); // Lưu tối đa 0.9999
+
+            modelBuilder.Entity<Alert>()
+                .Property(a => a.AnomalyScore)
+                .HasColumnType("decimal(5,4)");
+
+            modelBuilder.Entity<TrafficLog>()
+                .Property(t => t.AnomalyScore)
+                .HasColumnType("decimal(5,4)");
     }
 }

@@ -1,15 +1,16 @@
 import React from 'react';
-import { 
-  Shield, 
-  LayoutDashboard, 
-  Server, 
-  ShieldAlert, 
-  Bot, 
-  FileText, 
+import {
+  Shield,
+  ShieldCheck,
+  LayoutDashboard,
+  Server,
+  ShieldAlert,
+  Bot,
+  FileText,
   CreditCard,
   Receipt,
-  Settings, 
-  LogOut, 
+  Settings,
+  LogOut,
   XCircle,
   User,
   Users,
@@ -104,6 +105,7 @@ export const Sidebar = ({
           <SidebarItem icon={ShieldAlert} label={t.incidents} active={activeTab === 'incidents'} onClick={() => { setActiveTab('incidents'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
           <SidebarItem icon={Bot} label={t.ai} active={activeTab === 'ai'} onClick={() => { setActiveTab('ai'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
           <SidebarItem icon={Shield} label="Defense" active={activeTab === 'defense'} onClick={() => { setActiveTab('defense'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+          <SidebarItem icon={ShieldCheck} label="Whitelist" active={activeTab === 'whitelist'} onClick={() => { setActiveTab('whitelist'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
           <SidebarItem icon={FileText} label={t.reports} active={activeTab === 'reports'} onClick={() => { setActiveTab('reports'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
           <SidebarItem icon={CreditCard} label={t.billing} active={activeTab === 'billing'} onClick={() => { setActiveTab('billing'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
           <SidebarItem icon={Receipt} label={t.mySubscription} active={activeTab === 'my-subscription'} onClick={() => { setActiveTab('my-subscription'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />

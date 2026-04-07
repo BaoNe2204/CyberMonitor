@@ -1543,9 +1543,12 @@ class AIEngineV3Service:
     def _fetch_logs(self) -> list[dict[str, Any]]:
         since = datetime.now(timezone.utc) - timedelta(minutes=self.lookback)
         try:
+            # /api/logs/ai-fetch bypasses TenantId filter — reads all logs across workspaces
+            # Use /api/logs if you want tenant-scoped reads
+            from_str = since.strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             resp = self.session.get(
-                f"{self.backend_url}/api/logs",
-                params={"fromDate": since.isoformat(), "pageSize": PAGE_SIZE},
+                f"{self.backend_url}/api/logs/ai-fetch",
+                params={"fromDate": from_str, "pageSize": PAGE_SIZE},
                 timeout=20,
             )
             if resp.status_code != 200:

@@ -833,6 +833,11 @@ export const SubscriptionsApi = {
     return request<Subscription>('/api/subscriptions');
   },
 
+  /** SuperAdmin: subscription hiện tại của tenant (chọn đúng gói trong modal đổi gói) */
+  getForTenant: async (tenantId: string): Promise<ApiResponse<Subscription>> => {
+    return request<Subscription>(`/api/subscriptions/for-tenant/${tenantId}`);
+  },
+
   getHistory: async () => {
     return request<Subscription[]>('/api/subscriptions/history');
   },
@@ -961,6 +966,22 @@ export const PricingPlansApi = {
 // PAYMENT API
 // ============================================================================
 
+export interface PaymentHistoryEntry {
+  id: string;
+  orderId: string;
+  planName: string;
+  amount: number;
+  currency: string;
+  status: string;
+  paymentMethod: string | null;
+  transactionNo: string | null;
+  responseCode: string | null;
+  createdAt: string;
+  paidAt: string | null;
+  source: 'order' | 'subscription';
+  durationDays: number | null;
+}
+
 export const PaymentApi = {
   createUrl: async (tenantId: string, planName: string, amount: number) => {
     return request<{ orderId: string; paymentUrl: string }>('/api/payment/create-url', {
@@ -993,9 +1014,12 @@ export const PaymentApi = {
     return request<{ transactionId?: string; orderId?: string; planName?: string; amount?: number }>(`/api/payments/vnpay-return${queryString}`);
   },
 
-  getHistory: async () => {
-    return request<any[]>('/api/payment/history');
+  getHistory: async (): Promise<ApiResponse<PaymentHistoryEntry[]>> => {
+    return request<PaymentHistoryEntry[]>('/api/payment/history');
   },
+
+  /** @deprecated Dùng PricingPlansApi.getAll — giữ để tương thích */
+  getPlans: () => PricingPlansApi.getAll() as Promise<ApiResponse<PricingPlan[]>>,
 };
 
 // ============================================================================
@@ -1107,7 +1131,41 @@ export const UsersApi = {
   toggleStatus: async (id: string, isActive: boolean): Promise<ApiResponse<User>> => {
     return request<User>(`/api/users/${id}`, { isActive }, { method: 'PUT' });
   },
+
+  updateSubscription: async (id: string, data: {
+    planId: string;
+    startDate?: string;
+    endDate?: string;
+    durationMonths?: number;
+  }): Promise<ApiResponse<any>> => {
+    return request(`/api/users/${id}/subscription`, data, { method: 'PUT' });
+  },
 };
+
+// ============================================================================
+// AUDIT LOGS API
+// ============================================================================
+
+export interface AuditLogEntry {
+  id: number;
+  tenantId: string | null;
+  userId: string | null;
+  userName: string | null;
+  action: string;
+  entityType: string | null;
+  entityId: string | null;
+  ipAddress: string | null;
+  timestamp: string;
+  details: string | null;
+}
+
+export interface AuditLogPage {
+  items: AuditLogEntry[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
 
 // ============================================================================
 // AUDIT LOGS API
@@ -1120,14 +1178,15 @@ export const AuditLogsApi = {
     userId?: string;
     fromDate?: string;
     toDate?: string;
-  }) => {
+  }): Promise<AuditLogPage | null> => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (filters?.action) params.append('action', filters.action);
     if (filters?.entityType) params.append('entityType', filters.entityType);
     if (filters?.userId) params.append('userId', filters.userId);
     if (filters?.fromDate) params.append('fromDate', filters.fromDate);
     if (filters?.toDate) params.append('toDate', filters.toDate);
-    return request(`/api/audit-logs?${params}`);
+    const res = await request<AuditLogPage>(`/api/audit-logs?${params}`);
+    return res.success ? res.data : null;
   },
 
   getStats: async (days = 30) => {
@@ -1425,6 +1484,27 @@ export const DefenseApi = {
 };
 
 // ============================================================================
+// DOWNLOAD API (Agent)
+// ============================================================================
+
+export interface AgentStatus {
+  exists: boolean;
+  sizeBytes?: number;
+  sizeMB?: number;
+  lastModified?: string;
+  version?: string;
+  message?: string;
+  instructions?: string[];
+}
+
+export const DownloadApi = {
+  getAgentStatus: async (): Promise<AgentStatus> => {
+    const res = await request<AgentStatus>('/api/download/agent-status');
+    return res.success ? (res.data ?? { exists: false, message: 'Không xác định' }) : { exists: false, message: res.message };
+  },
+};
+
+// ============================================================================
 // NOTIFICATIONS API
 // ============================================================================
 
@@ -1474,5 +1554,59 @@ export const NotificationsApi = {
   // DELETE /api/notifications/clear-read
   clearRead: async (): Promise<void> => {
     await request('/api/notifications/clear-read', undefined, { method: 'DELETE' });
+  },
+};
+
+// ============================================================================
+// WHITELIST API
+// ============================================================================
+
+export interface WhitelistEntry {
+  id: string;
+  tenantId: string | null;
+  serverId: string | null;
+  ipAddress: string;
+  description: string | null;
+  serverName: string | null;
+  createdAt: string;
+}
+
+export interface WhitelistPage {
+  items: WhitelistEntry[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export const WhitelistApi = {
+  // GET /api/whitelists
+  getWhitelists: async (
+    page = 1,
+    pageSize = 50,
+    search?: string,
+    serverId?: string | null
+  ): Promise<WhitelistPage | null> => {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    if (search) params.set('search', search);
+    if (serverId) params.set('serverId', serverId);
+    const res = await request<WhitelistPage>(`/api/whitelists?${params}`);
+    return res.success ? res.data : null;
+  },
+
+  // POST /api/whitelists
+  addWhitelist: async (ipAddress: string, description?: string, serverId?: string | null) => {
+    return request<WhitelistEntry>('/api/whitelists', { ipAddress, description, serverId }, { method: 'POST' });
+  },
+
+  // DELETE /api/whitelists/{id}
+  removeWhitelist: async (id: string) => {
+    return request(`/api/whitelists/${id}`, undefined, { method: 'DELETE' });
+  },
+
+  // GET /api/whitelists/check/{ip}
+  checkWhitelist: async (ip: string, serverId?: string | null) => {
+    const params = serverId ? `?serverId=${serverId}` : '';
+    return request<{ ip: string; isWhitelisted: boolean }>(`/api/whitelists/check/${encodeURIComponent(ip)}${params}`);
   },
 };
