@@ -6,7 +6,8 @@ import {
   ShieldAlert, 
   Bot, 
   FileText, 
-  CreditCard, 
+  CreditCard,
+  Receipt,
   Settings, 
   LogOut, 
   XCircle,
@@ -105,6 +106,7 @@ export const Sidebar = ({
           <SidebarItem icon={Shield} label="Defense" active={activeTab === 'defense'} onClick={() => { setActiveTab('defense'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
           <SidebarItem icon={FileText} label={t.reports} active={activeTab === 'reports'} onClick={() => { setActiveTab('reports'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
           <SidebarItem icon={CreditCard} label={t.billing} active={activeTab === 'billing'} onClick={() => { setActiveTab('billing'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+          <SidebarItem icon={Receipt} label={t.mySubscription} active={activeTab === 'my-subscription'} onClick={() => { setActiveTab('my-subscription'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
           <SidebarItem icon={Book} label={t.apiGuide} active={activeTab === 'apiGuide'} onClick={() => { setActiveTab('apiGuide'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
           
           {isSuperAdmin && (
