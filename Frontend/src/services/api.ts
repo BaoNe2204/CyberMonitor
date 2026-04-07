@@ -979,9 +979,18 @@ export const PaymentApi = {
     }, { method: 'POST' });
   },
 
+  /** Xác nhận thanh toán demo — lưu vào DB không qua VNPay */
+  demoConfirm: async (orderId: string, planName: string, amount: number, paymentMethod: string) => {
+    return request<{ orderId: string; transactionId?: string; planName: string; amount: number }>(
+      '/api/payment/demo-confirm',
+      { orderId, planName, amount, paymentMethod },
+      { method: 'POST' }
+    );
+  },
+
   /** Xác minh kết quả VNPay callback (dùng cho PaymentResultPage) */
   vnpayReturn: async (queryString: string) => {
-    return request<{ transactionId?: string; orderId?: string }>(`/api/payments/vnpay-return${queryString}`);
+    return request<{ transactionId?: string; orderId?: string; planName?: string; amount?: number }>(`/api/payments/vnpay-return${queryString}`);
   },
 
   getHistory: async () => {
