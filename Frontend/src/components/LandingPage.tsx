@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   Shield, 
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Theme, Language } from '../types';
+import { PricingPlansApi } from '../services/api';
 
 interface LandingPageProps {
   theme: Theme;
@@ -27,10 +28,40 @@ interface LandingPageProps {
 }
 
 export const LandingPage = ({ theme, language, setLanguage, setShowAuth, setAuthMode, t, plans }: LandingPageProps) => {
-  const displayPlans = plans.length > 0 ? plans : [
-    { name: t.planStarter, price: '0', features: [t.activeAgents, t.liveAlerts, t.ai], popular: false },
-    { name: t.planPro, price: '2.500.000', features: [t.unlimitedAgents, t.customReports, t.aiSupport], popular: true },
-    { name: t.planEnterprise, price: 'Custom', features: [t.dedicatedManager, t.mitreMapping, t.predictiveAnalysis], popular: false }
+  const [fetchedPlans, setFetchedPlans] = useState<any[]>([]);
+
+  // Fetch plans từ API khi load landing page (không cần đăng nhập)
+  useEffect(() => {
+    PricingPlansApi.getAll().then(res => {
+      if (res.success && res.data && res.data.length > 0) {
+        setFetchedPlans(res.data.filter((p: any) => p.isActive !== false));
+      }
+    }).catch(() => {}); // silent fail — dùng fallback
+  }, []);
+
+  // Ưu tiên: plans từ App (đã đăng nhập) → plans fetch từ API → fallback hardcode
+  const sourcePlans = plans.length > 0 ? plans : fetchedPlans;
+
+  // Helper: parse price về số
+  const parseNum = (v: any): number => {
+    if (typeof v === 'number') return v;
+    if (!v) return 0;
+    return parseInt(String(v).replace(/\D/g, ''), 10) || 0;
+  };
+
+  const displayPlans = sourcePlans.length > 0 ? sourcePlans.map((p: any) => ({
+    name: p.name,
+    priceNum: parseNum(p.price ?? p.planPrice ?? 0),
+    features: Array.isArray(p.features)
+      ? (typeof p.features[0] === 'string' ? p.features : p.features.map((f: any) => f.label ?? f))
+      : [t.activeAgents, t.liveAlerts, t.ai],
+    popular: p.isPopular ?? p.popular ?? false,
+    billingPeriod: p.billingPeriod ?? 'monthly',
+    isEnterprise: p.isEnterprise ?? false,
+  })) : [
+    { name: t.planStarter,    priceNum: 0,        features: [t.activeAgents, t.liveAlerts, t.ai],                       popular: false, billingPeriod: 'monthly', isEnterprise: false },
+    { name: t.planPro,        priceNum: 2500000,   features: [t.unlimitedAgents, t.customReports, t.aiSupport],          popular: true,  billingPeriod: 'monthly', isEnterprise: false },
+    { name: t.planEnterprise, priceNum: 0,         features: [t.dedicatedManager, t.mitreMapping, t.predictiveAnalysis], popular: false, billingPeriod: 'monthly', isEnterprise: true  },
   ];
 
   return (
@@ -270,8 +301,20 @@ export const LandingPage = ({ theme, language, setLanguage, setShowAuth, setAuth
                 {plan.popular && <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-900 text-xs font-black px-4 py-1 rounded-full uppercase tracking-widest">Most Popular</span>}
                 <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
                 <div className="flex items-baseline gap-1 mb-8">
-                  <span className="text-4xl font-black">{plan.price}</span>
-                  {plan.price !== '0' && plan.price !== 'Custom' && <span className="text-sm opacity-70">{t.vnd}{t.perMonth}</span>}
+                  {plan.isEnterprise ? (
+                    <span className="text-4xl font-black">Custom</span>
+                  ) : plan.priceNum === 0 ? (
+                    <span className="text-4xl font-black">Miễn phí</span>
+                  ) : (
+                    <>
+                      <span className="text-4xl font-black">
+                        {plan.priceNum.toLocaleString('vi-VN')}
+                      </span>
+                      <span className="text-sm opacity-70 ml-1">
+                        {t.vnd}/{plan.billingPeriod === 'yearly' ? 'năm' : 'tháng'}
+                      </span>
+                    </>
+                  )}
                 </div>
                 <ul className="space-y-4 mb-10 flex-1">
                   {plan.features.map((feat: string, j: number) => (
