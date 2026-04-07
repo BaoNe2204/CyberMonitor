@@ -98,19 +98,11 @@ export const Billing = ({ theme, t, plans, setPlans, currentPlanName, onSelectPl
     setLoading(true);
 
     try {
-      // Mock payment URL - in real app, call payment API
-      const paymentUrl = `https://vnpay.example.com/pay?plan=${plan.id}&amount=${plan.price}`;
-      
-      // Show confirmation
-      if (confirm(`Bạn muốn đăng ký gói "${plan.name}" với giá ${parsePrice(plan.price).toLocaleString()} VND/${billingCycle}?`)) {
-        // Open payment in new tab (mock)
-        // window.open(paymentUrl, '_blank');
-        
-        if (onSelectPlan) {
-          onSelectPlan(plan);
-        } else {
-          alert(`Đang chuyển đến trang thanh toán cho gói "${plan.name}"...`);
-        }
+      if (onSelectPlan) {
+        // Truyền plan với billingPeriod đã được override theo lựa chọn của user
+        onSelectPlan({ ...plan, billingPeriod: billingCycle });
+      } else {
+        alert(`Đang chuyển đến trang thanh toán cho gói "${plan.name}"...`);
       }
     } catch (error) {
       console.error('Payment error:', error);
