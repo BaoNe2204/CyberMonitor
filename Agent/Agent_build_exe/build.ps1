@@ -1,6 +1,7 @@
 # CyberMonitor Agent v3 - Build Script (PowerShell)
 # Tao .exe standalone tu main.py + agent_core.py
-# Chi can chay:  powershell -ExecutionPolicy Bypass -File build.ps1
+# Chi can chay: powershell -ExecutionPolicy Bypass -File build.ps1
+# MOI: phai chay tu thu muc Agent_build_exe, KHONG phai tu System32
 
 param(
     [switch]$Clean
@@ -9,13 +10,22 @@ param(
 $ErrorActionPreference = "Continue"
 $BuildDir = $PSScriptRoot
 
+# Neu chay tu System32 (PowerShell admin), tu dong doi sang thu muc build
+$_pwd = $PWD.Path
+$_root = $env:SystemRoot
+if (($_pwd -like "*System32*") -or ($_root -like "*Windows")) {
+    Write-Host "[INFO] Phat hien chay tu System32 - tu dong chuyen thu muc..." -ForegroundColor Yellow
+    Set-Location $BuildDir
+    Write-Host "[INFO] Da doi sang: $(Get-Location)" -ForegroundColor Gray
+}
+
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "  CyberMonitor Agent v3 - Build Script" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# ── 1. Check Python ──────────────────────────────────────────
+# ── 1. Check Python ────────────────────────────────────────────────────────────
 Write-Host "[1/6] Checking Python..." -ForegroundColor Green
 try {
     $pyVer = python --version 2>&1
@@ -29,7 +39,7 @@ try {
     exit 1
 }
 
-# ── 2. Stop running agent ───────────────────────────────────
+# ── 2. Stop running agent ──────────────────────────────────────────────────────
 Write-Host "[2/6] Stopping running agent..." -ForegroundColor Green
 $running = Get-Process -Name "CyberMonitorAgent" -ErrorAction SilentlyContinue
 if ($running) {
@@ -41,14 +51,14 @@ if ($running) {
     Write-Host "  No running agent." -ForegroundColor Gray
 }
 
-# ── 3. Install dependencies ────────────────────────────────
+# ── 3. Install dependencies ────────────────────────────────────────────────────
 Write-Host "[3/6] Installing dependencies..." -ForegroundColor Green
 python -m pip install --upgrade pyinstaller requests psutil pystray pillow signalrcore 2>&1 | Out-Null
 if ($LASTEXITCODE -ne 0) {
     Write-Host "  [!] Some deps failed - continuing anyway" -ForegroundColor Yellow
 }
 
-# ── 4. Clean ──────────────────────────────────────────────
+# ── 4. Clean ──────────────────────────────────────────────────────────────────
 if ($Clean -or (Test-Path "$BuildDir\dist")) {
     Write-Host "[4/6] Cleaning previous builds..." -ForegroundColor Green
     if (Test-Path "$BuildDir\dist") { Remove-Item -Recurse -Force "$BuildDir\dist" }
@@ -57,24 +67,32 @@ if ($Clean -or (Test-Path "$BuildDir\dist")) {
     Write-Host "  Done." -ForegroundColor Gray
 }
 
-# ── 5. Build ──────────────────────────────────────────────
+# ── 5. Build ─────────────────────────────────────────────────────────────────
 Write-Host "[5/6] Building CyberMonitorAgent.exe..." -ForegroundColor Green
-Push-Location $BuildDir
-try {
-    python -m PyInstaller CyberMonitorAgent.spec --clean --noconfirm 2>&1 | Where-Object {
-        # Progress dots
-        $_
-    }
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "  [ERROR] Build failed (exit $LASTEXITCODE)" -ForegroundColor Red
-        Pop-Location
-        exit 1
-    }
-} finally {
-    Pop-Location
+# LUON LUON doi working directory truoc khi chay pyinstaller
+Set-Location $BuildDir
+Write-Host "  Working dir: $(Get-Location)" -ForegroundColor Gray
+
+$specFile = "$BuildDir\CyberMonitorAgent.spec"
+if (-not (Test-Path $specFile)) {
+    Write-Host "  [ERROR] Khong tim thay CyberMonitorAgent.spec" -ForegroundColor Red
+    exit 1
 }
 
-# ── 6. Verify ──────────────────────────────────────────────
+python -m PyInstaller CyberMonitorAgent.spec --clean --noconfirm 2>&1 | ForEach-Object {
+    if ($_ -match "error|warning") {
+        Write-Host "  $_" -ForegroundColor Yellow
+    }
+}
+if ($LASTEXITCODE -ne 0) {
+    Write-Host ""
+    Write-Host "  [ERROR] Build failed (exit $LASTEXITCODE)" -ForegroundColor Red
+    Write-Host "  Nguyen nhan: PyInstaller loi. Kiem tra loi o tren." -ForegroundColor Yellow
+    Set-Location $BuildDir
+    exit 1
+}
+
+# ── 6. Verify ─────────────────────────────────────────────────────────────────
 Write-Host "[6/6] Verifying build..." -ForegroundColor Green
 $exePath = "$BuildDir\dist\CyberMonitorAgent.exe"
 if (Test-Path $exePath) {
@@ -95,8 +113,9 @@ if (Test-Path $exePath) {
     Write-Host "    - Luu config API Key o APPDATA" -ForegroundColor Gray
     Write-Host ""
     Write-Host "  Cach su dung:" -ForegroundColor Yellow
-    Write-Host "    .\$exePath" -ForegroundColor Gray
-    Write-Host "    .\$exePath -k YOUR_API_KEY -u http://localhost:5000" -ForegroundColor Gray
+    Write-Host "    cd $BuildDir\dist" -ForegroundColor Gray
+    Write-Host "    .\CyberMonitorAgent.exe" -ForegroundColor Gray
+    Write-Host "    .\CyberMonitorAgent.exe -k YOUR_API_KEY -u http://localhost:5000" -ForegroundColor Gray
     Write-Host ""
 } else {
     Write-Host "  [ERROR] File not found: $exePath" -ForegroundColor Red

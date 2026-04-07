@@ -68,6 +68,9 @@ import { MySubscription } from './components/MySubscription';
 import { ServerSelector } from './components/ServerSelector';
 import ServerAlertEmailsModal from './components/ServerAlertEmailsModal';
 import ServerTelegramRecipientsModal from './components/ServerTelegramRecipientsModal';
+import { TicketManagement } from './components/TicketManagement';
+import { NotificationCenter } from './components/NotificationCenter';
+import { ServerSettings } from './components/ServerSettings';
 
 export default function App() {
   // --- Web Worker for heavy data processing ---
@@ -1248,6 +1251,7 @@ export default function App() {
                       onRemove={handleRemoveWhitelist}
                       servers={servers}
                       selectedServerId={selectedServerId}
+                      userRole={user?.role}
                     />
                   </div>
                 )}
@@ -1294,6 +1298,14 @@ export default function App() {
                   <AgentSetupGuide theme={theme} t={t} />
                 )}
 
+                {activeTab === 'tickets' && (
+                  <TicketManagement theme={theme} userRole={user?.role} />
+                )}
+
+                {activeTab === 'notifications' && (
+                  <NotificationCenter theme={theme} />
+                )}
+
                 {activeTab === 'settings' && (
                   <Settings
                     theme={theme}
@@ -1319,6 +1331,7 @@ export default function App() {
                   <UserManagement
                     theme={theme}
                     t={t}
+                    userRole={user?.role}
                   />
                 )}
 
@@ -1342,6 +1355,10 @@ export default function App() {
 
                 {activeTab === 'systemLogs' && (
                   <SystemLogs theme={theme} t={t} />
+                )}
+
+                {activeTab === 'serverSettings' && (
+                  <ServerSettings theme={theme} />
                 )}
               </motion.div>
             </AnimatePresence>

@@ -222,6 +222,10 @@ public class ServersController : ControllerBase
         var tenantId = GetTenantId();
         var role = GetUserRole();
 
+        // Staff không được sửa server
+        if (role == "Staff")
+            return Forbid();
+
         var server = await _db.Servers.FindAsync(id);
         if (server == null)
             return NotFound(new ApiResponse<ServerDto>(false, "Server không tìm thấy.", null));

@@ -15,7 +15,9 @@ import {
   User,
   Users,
   Book,
-  Terminal
+  Terminal,
+  Bell,
+  Ticket
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Theme } from '../types';
@@ -75,6 +77,8 @@ export const Sidebar = ({
   /** Backend trả SuperAdmin (PascalCase); tránh so sánh sai chữ hoa khiến menu quản trị biến mất */
   const isSuperAdmin =
     typeof userRole === 'string' && userRole.toLowerCase() === 'superadmin';
+  const isStaff =
+    typeof userRole === 'string' && userRole.toLowerCase() === 'staff';
   return (
     <aside className={cn(
       "transition-all duration-300 fixed inset-y-0 left-0 z-50 h-dvh overflow-y-auto overflow-x-hidden border-r lg:sticky lg:top-0 lg:h-dvh",
@@ -107,17 +111,36 @@ export const Sidebar = ({
           <SidebarItem icon={Shield} label="Defense" active={activeTab === 'defense'} onClick={() => { setActiveTab('defense'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
           <SidebarItem icon={ShieldCheck} label="Whitelist" active={activeTab === 'whitelist'} onClick={() => { setActiveTab('whitelist'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
           <SidebarItem icon={FileText} label={t.reports} active={activeTab === 'reports'} onClick={() => { setActiveTab('reports'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
-          <SidebarItem icon={CreditCard} label={t.billing} active={activeTab === 'billing'} onClick={() => { setActiveTab('billing'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
-          <SidebarItem icon={Receipt} label={t.mySubscription} active={activeTab === 'my-subscription'} onClick={() => { setActiveTab('my-subscription'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+          {!isStaff && (
+            <>
+              <SidebarItem icon={CreditCard} label={t.billing} active={activeTab === 'billing'} onClick={() => { setActiveTab('billing'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+              <SidebarItem icon={Receipt} label={t.mySubscription} active={activeTab === 'my-subscription'} onClick={() => { setActiveTab('my-subscription'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+            </>
+          )}
           <SidebarItem icon={Book} label={t.apiGuide} active={activeTab === 'apiGuide'} onClick={() => { setActiveTab('apiGuide'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+          {(isSuperAdmin || userRole === 'Admin' || isStaff) && (
+            <SidebarItem icon={Ticket} label={t.tickets || 'Tickets'} active={activeTab === 'tickets'} onClick={() => { setActiveTab('tickets'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+          )}
+          <SidebarItem icon={Bell} label={t.notifications || 'Notifications'} active={activeTab === 'notifications'} onClick={() => { setActiveTab('notifications'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
           
-          {isSuperAdmin && (
+          {(isSuperAdmin || userRole === 'Admin') && (
             <div className="pt-4 mt-4 space-y-1 border-t border-slate-800/50">
               <p className={cn("px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest", !isSidebarOpen && !isMobileMenuOpen && "hidden")}>Management</p>
-              <SidebarItem icon={Users} label={t.userManagement} active={activeTab === 'userManagement'} onClick={() => { setActiveTab('userManagement'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
-              <SidebarItem icon={CreditCard} label={t.pricingManagement} active={activeTab === 'pricingManagement'} onClick={() => { setActiveTab('pricingManagement'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
-              <SidebarItem icon={Terminal} label={t.apiManagement} active={activeTab === 'apiManagement'} onClick={() => { setActiveTab('apiManagement'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
-              <SidebarItem icon={FileText} label={t.systemLogs} active={activeTab === 'systemLogs'} onClick={() => { setActiveTab('systemLogs'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+              {isSuperAdmin && (
+                <>
+                  <SidebarItem icon={Users} label={t.userManagement} active={activeTab === 'userManagement'} onClick={() => { setActiveTab('userManagement'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+                  <SidebarItem icon={CreditCard} label={t.pricingManagement} active={activeTab === 'pricingManagement'} onClick={() => { setActiveTab('pricingManagement'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+                  <SidebarItem icon={Terminal} label={t.apiManagement} active={activeTab === 'apiManagement'} onClick={() => { setActiveTab('apiManagement'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+                  <SidebarItem icon={FileText} label={t.systemLogs} active={activeTab === 'systemLogs'} onClick={() => { setActiveTab('systemLogs'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+                  <SidebarItem icon={Server} label={t.serverSettings || 'Server Settings'} active={activeTab === 'serverSettings'} onClick={() => { setActiveTab('serverSettings'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+                </>
+              )}
+              {userRole === 'Admin' && (
+                <>
+                  <SidebarItem icon={Users} label={t.userManagement} active={activeTab === 'userManagement'} onClick={() => { setActiveTab('userManagement'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+                  <SidebarItem icon={FileText} label={t.systemLogs} active={activeTab === 'systemLogs'} onClick={() => { setActiveTab('systemLogs'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+                </>
+              )}
             </div>
           )}
         </nav>
@@ -151,7 +174,9 @@ export const Sidebar = ({
                 <p className="text-xs text-slate-500 truncate">
                   {isSuperAdmin
                     ? 'Super Admin'
-                    : user?.tenantName || user?.tenantId
+                    : isStaff
+                      ? 'Nhân viên'
+                      : user?.tenantName || user?.tenantId
                       ? [user?.tenantName || 'Workspace', user?.tenantId ? `${String(user.tenantId).slice(0, 8)}…` : null]
                           .filter(Boolean)
                           .join(' · ')

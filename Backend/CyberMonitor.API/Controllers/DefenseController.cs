@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace CyberMonitor.API.Controllers;
 
@@ -47,7 +48,6 @@ public class DefenseController : ControllerBase
         Guid effectiveTenantId;
         if (request.ServerId.HasValue)
         {
-            // AI Engine / Agent chỉ truyền ServerId → tra TenantId từ Server
             var server = await _db.Servers.FindAsync(request.ServerId.Value);
             if (server == null)
                 return NotFound(new ApiResponse<object>(false, $"Server {request.ServerId} not found.", null));
@@ -55,219 +55,186 @@ public class DefenseController : ControllerBase
         }
         else
         {
-            // Dùng TenantId từ API Key auth (middleware đặt vào context.Items)
             var tenantFromAuth = GetTenantId();
             if (!tenantFromAuth.HasValue)
                 return BadRequest(new ApiResponse<object>(false, "TenantId không xác định được. Cần truyền ServerId hoặc dùng API Key có TenantId.", null));
             effectiveTenantId = tenantFromAuth.Value;
         }
 
-        // Rate limit: max 10 blocks/minute per tenant
+        // Rate limit: max 10 blocks/minute per tenant (không cần serializable — chỉ đếm)
         var oneMinuteAgo = DateTime.UtcNow.AddMinutes(-1);
         var recentBlocks = await _db.BlockedIPs
             .Where(b => b.TenantId == effectiveTenantId && b.BlockedAt > oneMinuteAgo)
             .CountAsync();
 
         if (recentBlocks >= 10)
-        {
             return BadRequest(new ApiResponse<object>(false, "Rate limit exceeded. Max 10 blocks per minute.", null));
+
+        // Retry loop: xử lý race condition khi nhiều request chặn cùng 1 IP một lúc
+        const int maxRetries = 3;
+        for (int attempt = 0; attempt < maxRetries; attempt++)
+        {
+            try
+            {
+                return await TryBlockIP(request, effectiveTenantId);
+            }
+            catch (DbUpdateException) when (attempt < maxRetries - 1)
+            {
+                // Unique constraint vi phạm → có request khác đã insert cùng IP → retry để lấy bản ghi đó
+                _logger.LogWarning("[BLOCK] Concurrent insert detected for {Ip}, retrying (attempt {N})",
+                    request.Ip, attempt + 2);
+                _db.ChangeTracker.Clear();
+            }
+            catch (DbUpdateConcurrencyException) when (attempt < maxRetries - 1)
+            {
+                _logger.LogWarning("[BLOCK] Concurrency conflict for {Ip}, retrying (attempt {N})",
+                    request.Ip, attempt + 2);
+                _db.ChangeTracker.Clear();
+            }
         }
 
-        // Check if already blocked — FILTER BY TENANT to prevent cross-tenant IDOR
-        var existing = await _db.BlockedIPs
-            .FirstOrDefaultAsync(b =>
-                b.IpAddress == request.Ip &&
-                b.IsActive &&
-                b.TenantId == effectiveTenantId &&
-                (request.ServerId.HasValue ? b.ServerId == request.ServerId : b.ServerId == null));
+        return StatusCode(503, new ApiResponse<object>(false,
+            "Không thể chặn IP do xung đột truy cập. Vui lòng thử lại.", null));
+    }
 
-        if (existing != null)
+    /// <summary>Thực hiện chặn IP trong transaction serializable để tránh race condition.</summary>
+    private async Task<ActionResult<ApiResponse<object>>> TryBlockIP(BlockIPRequest request, Guid effectiveTenantId)
+    {
+        return await _db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
-            existing.AttackType = request.AttackType ?? existing.AttackType;
-            existing.Severity = request.Severity ?? existing.Severity;
-            existing.Reason = request.Reason ?? existing.Reason;
-            existing.BlockedAt = DateTime.UtcNow;
-            existing.BlockedBy = request.BlockedBy ?? existing.BlockedBy;
-            existing.IsActive = true;
-            existing.ExpiresAt = request.BlockDurationMinutes.HasValue
-                ? DateTime.UtcNow.AddMinutes(request.BlockDurationMinutes.Value)
-                : existing.ExpiresAt;
-            if (request.Score.HasValue)
-                existing.AnomalyScore = request.Score;
-            _db.BlockedIPs.Update(existing);
-            await _db.SaveChangesAsync();
-
-            // Push SignalR để Agent + Dashboard cập nhật
-            var blockCmd = new BlockCommandDto
+            await using var tx = await _db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+            try
             {
-                Ip = request.Ip,
-                Reason = request.Reason ?? "AI Detection",
-                AttackType = request.AttackType ?? "Unknown",
-                Severity = request.Severity ?? "Medium",
-                DurationMinutes = request.BlockDurationMinutes,
-                BlockId = existing.Id,
-                IssuedAt = DateTime.UtcNow,
-                IsTenantWide = !request.ServerId.HasValue
-            };
+                // Check xem đã bị block chưa (trong transaction)
+                var existing = await _db.BlockedIPs
+                    .FirstOrDefaultAsync(b =>
+                        b.IpAddress == request.Ip &&
+                        b.IsActive &&
+                        b.TenantId == effectiveTenantId &&
+                        (request.ServerId.HasValue ? b.ServerId == request.ServerId : b.ServerId == null));
 
-            if (request.ServerId.HasValue)
-            {
-                await _agentHub.Clients.Group(request.ServerId.Value.ToString()).ReceiveBlockCommand(blockCmd);
-            }
-            else
-            {
-                var tenantServers = await _db.Servers
-                    .Where(s => s.TenantId == effectiveTenantId)
-                    .Select(s => s.Id)
-                    .ToListAsync();
-                foreach (var sid in tenantServers)
-                    await _agentHub.Clients.Group(sid.ToString()).ReceiveBlockCommand(blockCmd);
-            }
+                if (existing != null)
+                {
+                    existing.AttackType = request.AttackType ?? existing.AttackType;
+                    existing.Severity = request.Severity ?? existing.Severity;
+                    existing.Reason = request.Reason ?? existing.Reason;
+                    existing.BlockedAt = DateTime.UtcNow;
+                    existing.BlockedBy = request.BlockedBy ?? existing.BlockedBy;
+                    existing.IsActive = true;
+                    existing.ExpiresAt = request.BlockDurationMinutes.HasValue
+                        ? DateTime.UtcNow.AddMinutes(request.BlockDurationMinutes.Value)
+                        : existing.ExpiresAt;
+                    if (request.Score.HasValue)
+                        existing.AnomalyScore = request.Score;
 
-            await _alertHub.Clients.Group(effectiveTenantId.ToString()).ReceiveBlockCommand(blockCmd);
+                    await _db.SaveChangesAsync();
+                    await tx.CommitAsync();
 
-            _logger.LogWarning("[BLOCK] Updated: {Ip} by {By} | {Attack}",
-                request.Ip, request.BlockedBy, request.AttackType);
+                    // Push SignalR (sau commit, lỗi SignalR không làm rollback DB)
+                    var blockCmd = new BlockCommandDto
+                    {
+                        Ip = request.Ip,
+                        Reason = request.Reason ?? "AI Detection",
+                        AttackType = request.AttackType ?? "Unknown",
+                        Severity = request.Severity ?? "Medium",
+                        DurationMinutes = request.BlockDurationMinutes,
+                        BlockId = existing.Id,
+                        IssuedAt = DateTime.UtcNow,
+                        IsTenantWide = !request.ServerId.HasValue
+                    };
+                    await PushBlockCommand(request.ServerId, effectiveTenantId, blockCmd);
 
-            return Ok(new ApiResponse<object>(true, $"IP {request.Ip} block updated.", new
-            {
-                ip = request.Ip,
-                action = "updated",
-                blockedAt = existing.BlockedAt,
-                expiresAt = existing.ExpiresAt,
-                blockId = existing.Id,
-                anomalyScore = existing.AnomalyScore
-            }));
-        }
+                    _logger.LogWarning("[BLOCK] Updated: {Ip} by {By} | {Attack}",
+                        request.Ip, request.BlockedBy, request.AttackType);
 
-        // Create new block record
-        var blockedIP = new BlockedIP
-        {
-            Id = Guid.NewGuid(),
-            IpAddress = request.Ip,
-            TenantId = effectiveTenantId,
-            ServerId = request.ServerId,   // null = tenant-wide; set = server-specific
-            AttackType = request.AttackType ?? "Unknown",
-            Severity = request.Severity ?? "Medium",
-            Reason = request.Reason ?? "AI Detection",
-            BlockedBy = request.BlockedBy ?? "AI-Engine",
-            BlockedAt = DateTime.UtcNow,
-            ExpiresAt = request.BlockDurationMinutes.HasValue
-                ? DateTime.UtcNow.AddMinutes(request.BlockDurationMinutes.Value)
-                : null,
-            IsActive = true,
-            AnomalyScore = request.Score
-        };
+                    return Ok(new ApiResponse<object>(true, $"IP {request.Ip} block updated.", new
+                    {
+                        ip = request.Ip,
+                        action = "updated",
+                        blockedAt = existing.BlockedAt,
+                        expiresAt = existing.ExpiresAt,
+                        blockId = existing.Id,
+                        anomalyScore = existing.AnomalyScore
+                    }));
+                }
 
-        _db.BlockedIPs.Add(blockedIP);
-
-        // Auto-create Alert + Ticket + AuditLog — wrap to avoid blocking SignalR on FK errors
-        if (!string.IsNullOrEmpty(request.AttackType))
-        {
-            var existingAlert = await _db.Alerts
-                .FirstOrDefaultAsync(a =>
-                    a.SourceIp == request.Ip &&
-                    a.CreatedAt > DateTime.UtcNow.AddHours(-1) &&
-                    a.AlertType == request.AttackType);
-
-            if (existingAlert == null)
-            {
-                var alert = new Alert
+                // Insert record mới
+                var blockedIP = new BlockedIP
                 {
                     Id = Guid.NewGuid(),
+                    IpAddress = request.Ip,
                     TenantId = effectiveTenantId,
-                    ServerId = null,
-                    Title = $"[Auto-Blocked] {request.AttackType} from {request.Ip}",
-                    Description = request.Reason ?? $"IP {request.Ip} automatically blocked.",
+                    ServerId = request.ServerId,
+                    AttackType = request.AttackType ?? "Unknown",
                     Severity = request.Severity ?? "Medium",
-                    AlertType = request.AttackType,
-                    SourceIp = request.Ip,
-                    TargetAsset = request.TargetAsset,
-                    Status = "Acknowledged",
-                    AnomalyScore = request.Score,
-                    CreatedAt = DateTime.UtcNow
+                    Reason = request.Reason ?? "AI Detection",
+                    BlockedBy = request.BlockedBy ?? "AI-Engine",
+                    BlockedAt = DateTime.UtcNow,
+                    ExpiresAt = request.BlockDurationMinutes.HasValue
+                        ? DateTime.UtcNow.AddMinutes(request.BlockDurationMinutes.Value)
+                        : null,
+                    IsActive = true,
+                    AnomalyScore = request.Score
                 };
-                _db.Alerts.Add(alert);
 
-                // Ticket + AuditLog — nếu lỗi FK thì kệ, SignalR vẫn phải chạy
-                try
+                _db.BlockedIPs.Add(blockedIP);
+
+                if (!string.IsNullOrEmpty(request.AttackType))
                 {
-                    var ticketNumber = $"TK-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
-                    var ticket = new Ticket
+                    var alert = new Alert
                     {
                         Id = Guid.NewGuid(),
                         TenantId = effectiveTenantId,
-                        AlertId = alert.Id,
-                        TicketNumber = ticketNumber,
-                        Title = $"Incident: {request.AttackType} - {request.Ip}",
-                        Description = $"Auto-generated by AI Engine.\n\nReason: {request.Reason}",
-                        Priority = request.Severity ?? "Medium",
-                        Status = "OPEN",
-                        Category = "Security Incident",
-                        CreatedBy = null  // System ticket — no real user
+                        ServerId = null,
+                        Title = $"[Auto-Blocked] {request.AttackType} from {request.Ip}",
+                        Description = request.Reason ?? $"IP {request.Ip} automatically blocked.",
+                        Severity = request.Severity ?? "Medium",
+                        AlertType = request.AttackType,
+                        SourceIp = request.Ip,
+                        TargetAsset = request.TargetAsset,
+                        Status = "Acknowledged",
+                        AnomalyScore = request.Score,
+                        CreatedAt = DateTime.UtcNow
                     };
-                    _db.Tickets.Add(ticket);
+                    _db.Alerts.Add(alert);
 
-                    _db.AuditLogs.Add(new AuditLog
+                    try
                     {
-                        TenantId = effectiveTenantId,
-                        Action = "AUTO_BLOCKED",
-                        EntityType = "BlockedIP",
-                        EntityId = blockedIP.Id.ToString(),
-                        Details = $"Auto-blocked {request.Ip} - {request.AttackType}"
-                    });
+                        var ticket = new Ticket
+                        {
+                            Id = Guid.NewGuid(),
+                            TenantId = effectiveTenantId,
+                            AlertId = alert.Id,
+                            TicketNumber = $"TK-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}",
+                            Title = $"Incident: {request.AttackType} - {request.Ip}",
+                            Description = $"Auto-generated by AI Engine.\n\nReason: {request.Reason}",
+                            Priority = request.Severity ?? "Medium",
+                            Status = "OPEN",
+                            Category = "Security Incident",
+                            CreatedBy = null
+                        };
+                        _db.Tickets.Add(ticket);
+
+                        _db.AuditLogs.Add(new AuditLog
+                        {
+                            TenantId = effectiveTenantId,
+                            Action = "AUTO_BLOCKED",
+                            EntityType = "BlockedIP",
+                            EntityId = blockedIP.Id.ToString(),
+                            Details = $"Auto-blocked {request.Ip} - {request.AttackType}"
+                        });
+                    }
+                    catch (Exception ticketEx)
+                    {
+                        _logger.LogError(ticketEx, "[BLOCK] Ticket/AuditLog failed — continuing");
+                    }
                 }
-                catch (Exception ticketEx)
-                {
-                    _logger.LogError(ticketEx, "[BLOCK] Ticket/AuditLog failed — continuing to SignalR push");
-                }
-            }
-        }
 
-        await _db.SaveChangesAsync();
+                await _db.SaveChangesAsync();
+                await tx.CommitAsync();
 
-        // ========================================================================
-        // BƯỚC 3: PUSH lệnh qua SignalR → Agent nhận + thực thi block
-        // ========================================================================
-        // Nếu có ServerId: push đến Agent cụ thể
-        // Nếu không có (AI Engine): push đến TẤT CẢ server trong tenant để block trên mọi máy
-        if (request.ServerId.HasValue)
-        {
-            var blockCmd = new BlockCommandDto
-            {
-                Ip = request.Ip,
-                Reason = request.Reason ?? "AI Detection",
-                AttackType = request.AttackType ?? "Unknown",
-                Severity = request.Severity ?? "Medium",
-                DurationMinutes = request.BlockDurationMinutes,
-                BlockId = blockedIP.Id,
-                IssuedAt = DateTime.UtcNow,
-                IsTenantWide = false
-            };
-
-            await _agentHub.Clients.Group(request.ServerId.Value.ToString())
-                .ReceiveBlockCommand(blockCmd);
-
-            _logger.LogWarning(
-                "[AGENT-PUSH] Block command sent to Server {ServerId}: IP={Ip} by {By}",
-                request.ServerId, request.Ip, request.BlockedBy);
-        }
-        else
-        {
-            // AI Engine không gửi ServerId → push đến TẤT CẢ server trong tenant
-            var tenantServers = await _db.Servers
-                .Where(s => s.TenantId == effectiveTenantId)
-                .Select(s => s.Id)
-                .ToListAsync();
-
-            if (tenantServers.Count == 0)
-            {
-                _logger.LogWarning("[AGENT-PUSH] No servers found for tenant {TenantId} — block is local-only",
-                    effectiveTenantId);
-            }
-            else
-            {
-                var blockCmd = new BlockCommandDto
+                // Push SignalR (sau commit)
+                var newBlockCmd = new BlockCommandDto
                 {
                     Ip = request.Ip,
                     Reason = request.Reason ?? "AI Detection",
@@ -276,49 +243,56 @@ public class DefenseController : ControllerBase
                     DurationMinutes = request.BlockDurationMinutes,
                     BlockId = blockedIP.Id,
                     IssuedAt = DateTime.UtcNow,
-                    IsTenantWide = true   // ← Agent dùng cờ này để apply locally
+                    IsTenantWide = !request.ServerId.HasValue
                 };
+                try { await PushBlockCommand(request.ServerId, effectiveTenantId, newBlockCmd); }
+                catch (Exception sigEx) { _logger.LogError(sigEx, "[BLOCK] SignalR push failed — DB committed"); }
 
-                foreach (var serverId in tenantServers)
+                _logger.LogWarning("[BLOCK] New block: {Ip} by {By} | {Attack} | {Severity} | {BlockId}",
+                    request.Ip, request.BlockedBy, request.AttackType, request.Severity, blockedIP.Id);
+
+                return Ok(new ApiResponse<object>(true, $"IP {request.Ip} has been blocked.", new
                 {
-                    await _agentHub.Clients.Group(serverId.ToString())
-                        .ReceiveBlockCommand(blockCmd);
-                }
-
-                _logger.LogWarning(
-                    "[AGENT-PUSH] Block command broadcast to {Count} servers for tenant {TenantId}: IP={Ip}",
-                    tenantServers.Count, effectiveTenantId, request.Ip);
+                    ip = request.Ip,
+                    action = "blocked",
+                    blockedAt = blockedIP.BlockedAt,
+                    expiresAt = blockedIP.ExpiresAt,
+                    blockId = blockedIP.Id,
+                    attackType = blockedIP.AttackType,
+                    severity = blockedIP.Severity,
+                    anomalyScore = blockedIP.AnomalyScore
+                }));
             }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
+        });
+    }
+
+    /// <summary>Push block command qua SignalR đến Agent Hub và Dashboard.</summary>
+    private async Task PushBlockCommand(Guid? serverId, Guid tenantId, BlockCommandDto blockCmd)
+    {
+        if (serverId.HasValue)
+        {
+            await _agentHub.Clients.Group(serverId.Value.ToString())
+                .ReceiveBlockCommand(blockCmd);
+        }
+        else
+        {
+            var tenantServers = await _db.Servers
+                .Where(s => s.TenantId == tenantId)
+                .Select(s => s.Id)
+                .ToListAsync();
+
+            foreach (var sid in tenantServers)
+                await _agentHub.Clients.Group(sid.ToString())
+                    .ReceiveBlockCommand(blockCmd);
         }
 
-        // Push đến Frontend Dashboard qua AlertHub
-        var dashboardCmd = new BlockCommandDto
-        {
-            Ip = request.Ip,
-            Reason = request.Reason ?? "AI Detection",
-            AttackType = request.AttackType ?? "Unknown",
-            Severity = request.Severity ?? "Medium",
-            DurationMinutes = request.BlockDurationMinutes,
-            BlockId = blockedIP.Id,
-            IssuedAt = DateTime.UtcNow,
-            IsTenantWide = !request.ServerId.HasValue
-        };
-        await _alertHub.Clients.Group(effectiveTenantId.ToString()).ReceiveBlockCommand(dashboardCmd);
-
-        _logger.LogWarning("[BLOCK] New block: {Ip} by {By} | {Attack} | {Severity} | {BlockId}",
-            request.Ip, request.BlockedBy, request.AttackType, request.Severity, blockedIP.Id);
-
-        return Ok(new ApiResponse<object>(true, $"IP {request.Ip} has been blocked.", new
-        {
-            ip = request.Ip,
-            action = "blocked",
-            blockedAt = blockedIP.BlockedAt,
-            expiresAt = blockedIP.ExpiresAt,
-            blockId = blockedIP.Id,
-            attackType = blockedIP.AttackType,
-            severity = blockedIP.Severity,
-            anomalyScore = blockedIP.AnomalyScore
-        }));
+        await _alertHub.Clients.Group(tenantId.ToString())
+            .ReceiveBlockCommand(blockCmd);
     }
 
     // ============================================================================
@@ -353,11 +327,8 @@ public class DefenseController : ControllerBase
                 return NotFound(new ApiResponse<object>(false, $"IP {request.Ip} is not currently blocked.", null));
         }
 
-        blocked.IsActive = false;
-        blocked.UnblockedAt = DateTime.UtcNow;
-        blocked.UnblockedBy = request.UnblockedBy ?? GetUserRole();
-
-        _db.BlockedIPs.Update(blocked);
+        // Xóa IP khỏi database thay vì chỉ đánh dấu inactive
+        _db.BlockedIPs.Remove(blocked);
 
         if (tenantId.HasValue)
         {
@@ -368,7 +339,7 @@ public class DefenseController : ControllerBase
                 Action = "IP_UNBLOCKED",
                 EntityType = "BlockedIP",
                 EntityId = blocked.Id.ToString(),
-                Details = $"IP {request.Ip} unblocked (ServerId={request.ServerId})"
+                Details = $"IP {request.Ip} unblocked and removed from database (ServerId={request.ServerId})"
             });
         }
 
@@ -385,15 +356,13 @@ public class DefenseController : ControllerBase
                 request.ServerId, request.Ip);
         }
 
-        _logger.LogInformation("[UNBLOCK] IP {Ip} unblocked by {By} (ServerId={ServerId})",
-            request.Ip, blocked.UnblockedBy, request.ServerId);
+        _logger.LogInformation("[UNBLOCK] IP {Ip} unblocked and removed from database (ServerId={ServerId})",
+            request.Ip, request.ServerId);
 
-        return Ok(new ApiResponse<object>(true, $"IP {request.Ip} has been unblocked.", new
+        return Ok(new ApiResponse<object>(true, $"IP {request.Ip} has been unblocked and removed.", new
         {
             ip = request.Ip,
-            action = "unblocked",
-            unblockedAt = blocked.UnblockedAt,
-            unblockedBy = blocked.UnblockedBy,
+            action = "unblocked_and_removed",
             serverId = request.ServerId
         }));
     }
@@ -512,21 +481,21 @@ public class DefenseController : ControllerBase
     // POST /api/defense/manual-block (Admin only)
     // ============================================================================
     [HttpPost("manual-block")]
-    [Authorize(Roles = "SuperAdmin,Admin")]
+    [Authorize(Roles = "SuperAdmin,Admin,Staff")]
     public async Task<ActionResult<ApiResponse<object>>> ManualBlock([FromBody] ManualBlockRequest request)
     {
         var tenantId = GetTenantId();
-        var role = GetUserRole();
         var userId = GetUserId();
+        var role = GetUserRole();
 
         // SuperAdmin có thể block mà không cần tenantId (global block)
-        // Admin phải có tenantId
-        if (role == "Admin" && !tenantId.HasValue)
+        // Admin và Staff phải có tenantId
+        if ((role == "Admin" || role == "Staff") && !tenantId.HasValue)
         {
-            return BadRequest(new ApiResponse<object>(false, "Admin requires TenantId.", null));
+            return BadRequest(new ApiResponse<object>(false, "TenantId is required.", null));
         }
 
-        // Nếu là SuperAdmin và không có tenantId, tạo một global block (tenantId = null hoặc dùng tenant đầu tiên)
+        // Nếu là SuperAdmin và không có tenantId, tạo một global block
         Guid effectiveTenantId;
         if (!tenantId.HasValue && role == "SuperAdmin")
         {

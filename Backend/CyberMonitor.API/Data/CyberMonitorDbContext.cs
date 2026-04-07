@@ -217,6 +217,11 @@ public class CyberMonitorDbContext : DbContext
             e.Property(b => b.BlockedAt).HasDefaultValueSql("GETUTCDATE()");
             e.HasIndex(b => new { b.TenantId, b.IsActive }).HasDatabaseName("IX_BlockedIPs_TenantId_Active");
             e.HasIndex(b => b.IpAddress).HasDatabaseName("IX_BlockedIPs_IpAddress");
+            // Unique index: chỉ 1 active block duy nhất cho mỗi (TenantId + ServerId + IpAddress)
+            e.HasIndex(b => new { b.TenantId, b.ServerId, b.IpAddress })
+                .HasDatabaseName("IX_BlockedIPs_Tenant_Server_Ip")
+                .IsUnique()
+                .HasFilter("IsActive = 1");
             e.HasOne(b => b.Tenant)
                 .WithMany()
                 .HasForeignKey(b => b.TenantId)

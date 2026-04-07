@@ -294,7 +294,8 @@ export interface User {
   tenantName: string | null;
   email: string;
   fullName: string;
-  role: 'SuperAdmin' | 'Admin' | 'User';
+  role: 'SuperAdmin' | 'Admin' | 'Staff' | 'User';
+  isActive?: boolean;
   lastLoginAt: string | null;
   twoFactorEnabled: boolean;
   sessionTimeoutEnabled?: boolean;

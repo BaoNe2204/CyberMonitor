@@ -47,8 +47,9 @@ public class UsersController : ControllerBase
         {
             // SuperAdmin thấy all users
         }
-        else if (currentRole == "Admin")
+        else if (currentRole == "Admin" || currentRole == "Staff")
         {
+            // Admin và Staff chỉ thấy user cùng tenant
             query = query.Where(u => u.TenantId == tenantId);
         }
         else
@@ -90,7 +91,7 @@ public class UsersController : ControllerBase
         if (user == null)
             return NotFound(new ApiResponse<UserDto>(false, "User không tìm thấy.", null));
 
-        if (currentRole == "Admin" && user.TenantId != tenantId)
+        if ((currentRole == "Admin" || currentRole == "Staff") && user.TenantId != tenantId)
             return Forbid();
 
         return Ok(new ApiResponse<UserDto>(true, "OK", MapUserDto(user)));
@@ -103,10 +104,18 @@ public class UsersController : ControllerBase
         var currentRole = GetUserRole();
         var currentTenantId = GetTenantId();
 
-        if (currentRole != "SuperAdmin" && currentRole != "Admin")
+        if (currentRole != "SuperAdmin" && currentRole != "Admin" && currentRole != "Staff")
             return Forbid();
 
-        if (currentRole == "Admin" && request.TenantId != currentTenantId)
+        // Staff chỉ được tạo User
+        if (currentRole == "Staff" && request.Role != "User")
+            return BadRequest(new ApiResponse<UserDto>(false, "Staff chỉ được tạo tài khoản User.", null));
+
+        // Admin chỉ được tạo Staff hoặc User, không được tạo Admin/SuperAdmin khác
+        if (currentRole == "Admin" && (request.Role == "Admin" || request.Role == "SuperAdmin"))
+            return BadRequest(new ApiResponse<UserDto>(false, "Admin chỉ được tạo Staff hoặc User.", null));
+
+        if ((currentRole == "Admin" || currentRole == "Staff") && request.TenantId != null && request.TenantId != currentTenantId)
             return Forbid();
 
         if (await _db.Users.AnyAsync(u => u.Email == request.Email))
@@ -123,6 +132,10 @@ public class UsersController : ControllerBase
             FullName = request.FullName,
             Role = request.Role
         };
+
+        // Admin/Staff tự động gán tenantId của mình nếu không chỉ định
+        if (user.TenantId == null && (currentRole == "Admin" || currentRole == "Staff"))
+            user.TenantId = currentTenantId;
 
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
@@ -185,15 +198,23 @@ public class UsersController : ControllerBase
 
         if (currentRole == "Admin" && user.TenantId != currentTenantId)
             return Forbid();
+        if (currentRole == "Staff" && (user.TenantId != currentTenantId || user.Role == "Admin" || user.Role == "SuperAdmin" || user.Role == "Staff"))
+            return Forbid();
         if (currentRole == "User")
             return Forbid();
+
+        // Staff chỉ được cập nhật User
+        if (currentRole == "Staff" && request.Role != null && request.Role != "User")
+            return BadRequest(new ApiResponse<UserDto>(false, "Staff chỉ được cập nhật tài khoản User.", null));
+
+        // Admin không được nâng Staff lên Admin/SuperAdmin
+        if (currentRole == "Admin" && request.Role is "Admin" or "SuperAdmin")
+            return BadRequest(new ApiResponse<UserDto>(false, "Admin không được nâng quyền người khác lên Admin.", null));
 
         if (!string.IsNullOrEmpty(request.FullName))
             user.FullName = request.FullName;
         if (!string.IsNullOrEmpty(request.Role))
         {
-            if (currentRole == "Admin" && request.Role == "SuperAdmin")
-                return Forbid();
             user.Role = request.Role;
         }
         if (request.IsActive.HasValue)
@@ -228,6 +249,8 @@ public class UsersController : ControllerBase
 
         if (currentRole == "Admin" && user.TenantId != currentTenantId)
             return Forbid();
+        if (currentRole == "Staff" && (user.TenantId != currentTenantId || user.Role != "User"))
+            return Forbid();
         if (currentRole == "User")
             return Forbid();
 
@@ -257,7 +280,7 @@ public class UsersController : ControllerBase
         var currentRole = GetUserRole();
         var currentTenantId = GetTenantId();
 
-        if (currentRole != "SuperAdmin" && currentRole != "Admin")
+        if (currentRole != "SuperAdmin" && currentRole != "Admin" && currentRole != "Staff")
             return Forbid();
 
         var user = await _db.Users.FindAsync(id);
@@ -265,6 +288,8 @@ public class UsersController : ControllerBase
             return NotFound(new ApiResponse<object>(false, "User không tìm thấy.", null));
 
         if (currentRole == "Admin" && user.TenantId != currentTenantId)
+            return Forbid();
+        if (currentRole == "Staff" && (user.TenantId != currentTenantId || user.Role != "User"))
             return Forbid();
 
         if (string.IsNullOrEmpty(request.NewPassword) || request.NewPassword.Length < 6)

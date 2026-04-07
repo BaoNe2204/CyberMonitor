@@ -35,6 +35,7 @@ interface WhitelistProps {
   onRemove: (id: string, ip: string) => Promise<boolean>;
   servers?: Array<{ id: string; name: string }>;
   selectedServerId?: string | null;
+  userRole?: string;
 }
 
 const formatTimeAgo = (dateStr: string | null) => {
@@ -57,7 +58,9 @@ export const Whitelist = ({
   onRemove,
   servers = [],
   selectedServerId,
+  userRole,
 }: WhitelistProps) => {
+  const isStaff = userRole === 'Staff';
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [addIP, setAddIP] = useState('');
@@ -174,10 +177,10 @@ export const Whitelist = ({
           <button
             onClick={() => {
               setShowAddModal(true);
-              // Mặc định server đang chọn
               setAddServerId(selectedServerId || null);
             }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-emerald-600 hover:bg-emerald-700 text-white transition-all"
+            title="Thêm IP"
           >
             <Plus size={16} />
             Add IP
@@ -341,8 +344,8 @@ export const Whitelist = ({
                         ) : (
                           <Trash2 size={12} />
                         )}
-                        Xóa
-                      </button>
+                          Xóa
+                        </button>
                     </td>
                   </tr>
                 ))}

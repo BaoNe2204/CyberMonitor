@@ -83,6 +83,8 @@ Middlewares/ApiKeyAuthMiddleware.cs
 Migrations/
  20260407191458_AddServerIdToWhitelists.cs
  20260407191458_AddServerIdToWhitelists.Designer.cs
+ 20260407223648_AddUniqueIndex_BlockedIPs.cs
+ 20260407223648_AddUniqueIndex_BlockedIPs.Designer.cs
  CyberMonitorDbContextModelSnapshot.cs
 Models/
  DTOs.cs

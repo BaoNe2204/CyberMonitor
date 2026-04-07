@@ -62,6 +62,7 @@ CREATE TABLE Users (
 );
 CREATE UNIQUE INDEX IX_Users_Email ON Users(Email);
 CREATE INDEX IX_Users_TenantId ON Users(TenantId);
+ALTER TABLE Users ADD CONSTRAINT CK_Users_Role CHECK (Role IN ('SuperAdmin', 'Admin', 'Staff', 'User'));
 
 -- 3. SUBSCRIPTIONS (Goi cuoc)
 CREATE TABLE Subscriptions (

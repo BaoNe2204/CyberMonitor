@@ -292,7 +292,7 @@ namespace CyberMonitor.API.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal?>("AnomalyScore")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(5,4)");
 
                     b.Property<string>("AttackType")
                         .IsRequired()
@@ -355,6 +355,11 @@ namespace CyberMonitor.API.Migrations
 
                     b.HasIndex("TenantId", "IsActive")
                         .HasDatabaseName("IX_BlockedIPs_TenantId_Active");
+
+                    b.HasIndex("TenantId", "ServerId", "IpAddress")
+                        .IsUnique()
+                        .HasDatabaseName("IX_BlockedIPs_Tenant_Server_Ip")
+                        .HasFilter("IsActive = 1");
 
                     b.ToTable("BlockedIPs");
                 });

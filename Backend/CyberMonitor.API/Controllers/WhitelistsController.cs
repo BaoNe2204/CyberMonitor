@@ -37,10 +37,14 @@ public class WhitelistsController : ControllerBase
             .Include(w => w.Server)
             .AsQueryable();
 
-        if (role == "Admin")
+        if (role == "Admin" || role == "Staff")
         {
             if (!tenantId.HasValue) return Forbid();
             query = query.Where(w => w.TenantId == tenantId);
+        }
+        else if (role != "SuperAdmin")
+        {
+            return Forbid();
         }
 
         // Filter by ServerId — nếu có, lấy whitelist của server đó hoặc tenant-wide

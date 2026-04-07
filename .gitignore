@@ -6,7 +6,7 @@
 # Frontend
 Frontend/node_modules/
 Frontend/dist/
-
+.vscode/
 # .NET
 **/bin/
 **/obj/
@@ -23,3 +23,4 @@ README.md
 test_fake_traffic.py
 test_attack_simulation.py
 build
+__pycache__/

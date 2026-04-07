@@ -87,6 +87,8 @@ export const Defense = ({
   const [unblocking, setUnblocking] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
+  const isStaff = userRole === 'Staff';
+
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 4000);
@@ -209,10 +211,10 @@ export const Defense = ({
           <button
             onClick={() => {
               setShowBlockModal(true);
-              // Set initial server based on current selection
               setBlockServerId(selectedServerId || null);
             }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-red-600 hover:bg-red-700 text-white transition-all"
+            title="Manual Block"
           >
             <Plus size={16} />
             Manual Block

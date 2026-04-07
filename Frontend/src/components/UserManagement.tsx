@@ -8,11 +8,16 @@ import { ChangeSubscriptionModal } from './ChangeSubscriptionModal';
 interface UserManagementProps {
   theme: Theme;
   t: any;
+  userRole?: string;
 }
 
 type ModalType = 'add' | 'edit' | 'password' | null;
 
-export const UserManagement = ({ theme }: UserManagementProps) => {
+export const UserManagement = ({ theme, userRole }: UserManagementProps) => {
+  const currentRole = userRole;
+  const isAdmin = currentRole === 'Admin';
+  const isStaff = currentRole === 'Staff';
+  const isSuperAdmin = currentRole === 'SuperAdmin';
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalType, setModalType] = useState<ModalType>(null);
@@ -180,8 +185,8 @@ export const UserManagement = ({ theme }: UserManagementProps) => {
   };
 
   const handleToggleStatus = async (user: User) => {
-    const newStatus = user.role === 'User' ? false : true; // Simplified - backend uses isActive
-    const action = newStatus ? 'mở khóa' : 'khóa';
+    const newStatus = user.isActive !== false; // true=lock, false=unlock
+    const action = newStatus ? 'khóa' : 'mở khóa';
 
     if (!confirm(`Bạn có chắc muốn ${action} tài khoản "${user.fullName}"?`)) return;
 
@@ -216,11 +221,16 @@ export const UserManagement = ({ theme }: UserManagementProps) => {
     }
   };
 
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = users.filter(user =>
     user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.role.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Staff chỉ thấy User
+  const displayedUsers = isStaff
+    ? filteredUsers.filter(u => u.role === 'User')
+    : filteredUsers;
 
   return (
     <div className="space-y-6">
@@ -272,7 +282,7 @@ export const UserManagement = ({ theme }: UserManagementProps) => {
             />
           </div>
           <div className="text-sm text-slate-500">
-            {filteredUsers.length} / {users.length} người dùng
+            {displayedUsers.length} / {users.length} người dùng
           </div>
         </div>
 
@@ -299,7 +309,7 @@ export const UserManagement = ({ theme }: UserManagementProps) => {
                     </div>
                   </td>
                 </tr>
-              ) : filteredUsers.length === 0 ? (
+              ) : displayedUsers.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
                     <Users size={48} className="mx-auto mb-4 opacity-50" />
@@ -307,7 +317,7 @@ export const UserManagement = ({ theme }: UserManagementProps) => {
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((user) => (
+                displayedUsers.map((user) => (
                   <tr key={user.id} className={cn("transition-all duration-200 group", theme === 'dark' ? "hover:bg-slate-800/40" : "hover:bg-slate-50")}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -315,6 +325,7 @@ export const UserManagement = ({ theme }: UserManagementProps) => {
                           "w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm",
                           user.role === 'SuperAdmin' ? "bg-purple-600/20 text-purple-500" :
                           user.role === 'Admin' ? "bg-blue-600/20 text-blue-500" :
+                          user.role === 'Staff' ? "bg-amber-600/20 text-amber-500" :
                           "bg-slate-600/20 text-slate-500"
                         )}>
                           {user.fullName?.charAt(0)?.toUpperCase() || 'U'}
@@ -333,6 +344,7 @@ export const UserManagement = ({ theme }: UserManagementProps) => {
                         "text-[11px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5 w-fit",
                         user.role === 'SuperAdmin' ? "bg-purple-500/10 text-purple-400 border border-purple-500/30" :
                         user.role === 'Admin' ? "bg-blue-500/10 text-blue-400 border border-blue-500/30" :
+                        user.role === 'Staff' ? "bg-amber-500/10 text-amber-400 border border-amber-500/30" :
                         "bg-slate-500/10 text-slate-400 border border-slate-500/30"
                       )}>
                         {user.role === 'SuperAdmin' && <Shield size={12} />}
@@ -350,9 +362,11 @@ export const UserManagement = ({ theme }: UserManagementProps) => {
                     <td className="px-6 py-4">
                       <span className={cn(
                         "text-[11px] font-bold px-2.5 py-1 rounded-md inline-block",
-                        "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                        user.isActive !== false
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                          : "bg-rose-500/10 text-rose-400 border border-rose-500/30"
                       )}>
-                        Hoạt động
+                        {user.isActive !== false ? 'Hoạt động' : 'Bị khóa'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-xs text-slate-500">
@@ -360,6 +374,7 @@ export const UserManagement = ({ theme }: UserManagementProps) => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
+                        {!isStaff && (
                         <button 
                           onClick={() => setChangingSubscriptionUser(user)}
                           className={cn(
@@ -370,6 +385,7 @@ export const UserManagement = ({ theme }: UserManagementProps) => {
                         >
                           <CreditCard size={16} />
                         </button>
+                        )}
                         <button 
                           onClick={() => handleEditUser(user)}
                           className={cn(
@@ -474,9 +490,23 @@ export const UserManagement = ({ theme }: UserManagementProps) => {
                         theme === 'dark' ? "bg-slate-950 border-slate-800 text-white" : "bg-slate-50 border-slate-200 text-slate-900"
                       )}
                     >
-                      <option value="User">User - Người dùng thường</option>
-                      <option value="Admin">Admin - Quản trị viên</option>
-                      <option value="SuperAdmin">Super Admin - Quản trị tối cao</option>
+                      {currentRole === 'SuperAdmin' && (
+                        <>
+                          <option value="User">User - Người dùng thường</option>
+                          <option value="Staff">Staff - Nhân viên</option>
+                          <option value="Admin">Admin - Quản trị viên</option>
+                          <option value="SuperAdmin">Super Admin - Quản trị tối cao</option>
+                        </>
+                      )}
+                      {currentRole === 'Admin' && (
+                        <>
+                          <option value="User">User - Người dùng thường</option>
+                          <option value="Staff">Staff - Nhân viên</option>
+                        </>
+                      )}
+                      {currentRole === 'Staff' && (
+                        <option value="User">User - Người dùng thường</option>
+                      )}
                     </select>
                   </div>
                 </>

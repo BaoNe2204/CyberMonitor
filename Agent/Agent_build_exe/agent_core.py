@@ -26,6 +26,25 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import requests
+import sys
+
+# ──────────────────────────────────────────────
+#  Logging — file + console output
+#  Log file: %LOCALAPPDATA%\CyberMonitor\logs\agent.log
+# ──────────────────────────────────────────────
+LOG_DIR = os.path.join(os.environ.get("LOCALAPPDATA", "."), "CyberMonitor", "logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+
+_file_handler = logging.FileHandler(os.path.join(LOG_DIR, "agent.log"), encoding="utf-8")
+_file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s - %(message)s"))
+_console_handler = logging.StreamHandler(sys.stdout)
+_console_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+
+_root = logging.getLogger()
+_root.setLevel(logging.INFO)
+_root.addHandler(_file_handler)
+_root.addHandler(_console_handler)
+logger = logging.getLogger("AgentCore")
 
 # ──────────────────────────────────────────────
 #  Constants
