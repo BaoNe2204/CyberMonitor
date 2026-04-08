@@ -28,34 +28,29 @@ public class EmailService : IEmailService
         _logger = logger;
     }
 
-    // private SmtpClient BuildSmtpClient()
-    // {
-    //     var host = "smtp.gmail.com";
-    //     var port = 587;
-        
-    //     var user = "cybermonitor.nttu@gmail.com"; 
-    //     var pass = "jukjvhlhanvlkhlg";            
-    //     var client = new SmtpClient(host, port);
-    //     client.UseDefaultCredentials = false; 
-    //     client.Credentials = new NetworkCredential(user, pass);
-    //     client.EnableSsl = true;
-
-    //     return client;
-    // }
     private SmtpClient BuildSmtpClient()
+{
+    var section = _configuration.GetSection("EmailConfig");
+    
+    var host = section["SmtpHost"] ?? "smtp.gmail.com";
+    var port = int.Parse(section["SmtpPort"] ?? "587");
+    var user = section["SmtpUser"];
+    var pass = section["SmtpPass"];
+
+    if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass))
     {
-        var host = _configuration["ConnectionStrings:EmailConfig:SmtpHost"] ?? "smtp.gmail.com";
-        var port = int.Parse(_configuration["ConnectionStrings:EmailConfig:SmtpPort"] ?? "587");
-        var user = _configuration["ConnectionStrings:EmailConfig:SmtpUser"] ?? "";
-        var pass = _configuration["ConnectionStrings:EmailConfig:SmtpPass"] ?? "";
-
-        var client = new SmtpClient(host, port);
-        client.UseDefaultCredentials = false;
-        client.Credentials = new NetworkCredential(user, pass);
-        client.EnableSsl = true;
-
-        return client;
+        _logger.LogCritical("SMTP Configuration is MISSING! Check appsettings.json path ConnectionStrings:EmailConfig");
     }
+
+    var client = new SmtpClient(host, port)
+    {
+        UseDefaultCredentials = false,
+        Credentials = new NetworkCredential(user, pass),
+        EnableSsl = true
+    };
+
+    return client;
+}
 
     private string GetFromEmail() => _configuration["ConnectionStrings:EmailConfig:FromEmail"] ?? "noreply@cybermonitor.vn";
     private string GetFromName() => _configuration["ConnectionStrings:EmailConfig:FromName"] ?? "CyberMonitor SOC";

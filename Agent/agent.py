@@ -254,23 +254,33 @@ except Exception:
         def block(self, ip: str, reason: str, attack_type: str, severity: str) -> bool:
             with self._lock:
                 if ip in self._blocked_ips:
+                    logger.info("[BLOCK] %s — da bi chan roi (bo qua)", ip)
                     return True
-            local_success = self._block_local(ip, reason)
-            self._report_block_to_backend(ip, attack_type, severity, reason, local_success)
-            if local_success:
+            logger.info("[BLOCK] Dang chan %s — %s | %s | %s", ip, attack_type, severity, reason[:40])
+            local_ok = self._block_local(ip, reason)
+            if local_ok:
                 with self._lock:
                     self._blocked_ips.add(ip)
-            return local_success
+                logger.info("[BLOCK] %s — DA CHAN thanh cong (local firewall)", ip)
+            else:
+                logger.warning("[BLOCK] %s — THAT BAI (local firewall bi loi)", ip)
+            self._report_block_to_backend(ip, attack_type, severity, reason, local_ok)
+            return local_ok
 
         def unblock(self, ip: str) -> bool:
             with self._lock:
                 if ip not in self._blocked_ips:
+                    logger.info("[UNBLOCK] %s — khong co trong danh sach bi chan (bo qua)", ip)
                     return True
-            success = self._unblock_local(ip)
-            if success:
+            logger.info("[UNBLOCK] Dang mo chan %s", ip)
+            ok = self._unblock_local(ip)
+            if ok:
                 with self._lock:
                     self._blocked_ips.discard(ip)
-            return success
+                logger.info("[UNBLOCK] %s — DA MO CHAN thanh cong", ip)
+            else:
+                logger.warning("[UNBLOCK] %s — THAT BAI (khong the mo chan local)", ip)
+            return ok
 
         def _block_local(self, ip: str, reason: str) -> bool:
             if self._platform == "Windows":
@@ -364,12 +374,27 @@ except Exception:
             cmd = args[0] if args and isinstance(args[0], dict) else {}
             ip = cmd.get("ip") or (args[0] if args else None)
             if ip:
-                self.blocker.block(str(ip), str(cmd.get("reason", "Backend command")), str(cmd.get("attackType", "Unknown")), str(cmd.get("severity", "Medium")))
+                # Tenant-wide block command: apply locally regardless of serverId
+                # isTenantWide = true means this agent should block locally (tenant-wide scope)
+                is_tenant_wide = cmd.get("isTenantWide", False)
+                if is_tenant_wide:
+                    logger.warning("[Hub] Nhan lenh block tenant-wide tu backend: %s", ip)
+                else:
+                    logger.warning("[Hub] Nhan lenh block tu backend: %s", ip)
+                ok = self.blocker.block(
+                    str(ip),
+                    str(cmd.get("reason", "Backend command")),
+                    str(cmd.get("attackType", "Unknown")),
+                    str(cmd.get("severity", "Medium")),
+                )
+                logger.info("[Hub] Ket qua block %s: %s", ip, "THANH CONG" if ok else "THAT BAI")
 
         def _on_unblock_command(self, args: list[Any]) -> None:
             ip = args[0] if args and isinstance(args[0], str) else (args[0].get("ip") if args and isinstance(args[0], dict) else None)
             if ip:
-                self.blocker.unblock(str(ip))
+                logger.info("[Hub] Unblock command tu backend: %s", ip)
+                ok = self.blocker.unblock(str(ip))
+                logger.info("[Hub] Ket qua unblock %s: %s", ip, "THANH CONG" if ok else "THAT BAI")
 
     def clamp_int(value: int, minimum: int = 0) -> int:
         return value if value >= minimum else minimum

@@ -222,6 +222,10 @@ public class ServersController : ControllerBase
         var tenantId = GetTenantId();
         var role = GetUserRole();
 
+        // Staff không được sửa server
+        if (role == "Staff")
+            return Forbid();
+
         var server = await _db.Servers.FindAsync(id);
         if (server == null)
             return NotFound(new ApiResponse<ServerDto>(false, "Server không tìm thấy.", null));
@@ -261,9 +265,15 @@ public class ServersController : ControllerBase
         var alertIds = alerts.Select(a => a.Id).ToList();
         var tickets = await _db.Tickets.Where(t => t.AlertId.HasValue && alertIds.Contains(t.AlertId.Value)).ToListAsync();
         var apiKeys = await _db.ApiKeys.Where(k => k.ServerId == id).ToListAsync();
+        var trafficLogs = await _db.TrafficLogs.Where(t => t.ServerId == id).ToListAsync();
+        var blockedIPs = await _db.BlockedIPs.Where(b => b.ServerId == id).ToListAsync();
+        var serverAlertEmails = await _db.ServerAlertEmails.Where(e => e.ServerId == id).ToListAsync();
         _db.Tickets.RemoveRange(tickets);
         _db.Alerts.RemoveRange(alerts);
         _db.ApiKeys.RemoveRange(apiKeys);
+        _db.TrafficLogs.RemoveRange(trafficLogs);
+        _db.BlockedIPs.RemoveRange(blockedIPs);
+        _db.ServerAlertEmails.RemoveRange(serverAlertEmails);
         _db.Servers.Remove(server);
         await _db.SaveChangesAsync();
 

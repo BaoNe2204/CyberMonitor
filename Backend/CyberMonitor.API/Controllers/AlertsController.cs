@@ -55,6 +55,16 @@ public class AlertsController : ControllerBase
             return BadRequest(new ApiResponse<object>(false, "TenantId is required.", null));
         }
 
+        // 1. Kiểm tra IP có trong Whitelist không
+        var isWhitelisted = await _db.Whitelists
+            .AnyAsync(w => w.IpAddress == request.SourceIp && w.TenantId == tenantId);
+
+        if (isWhitelisted)
+        {
+            _logger.LogInformation("[WHITELIST] IP {Ip} nam trong Whitelist — bo qua alert.", request.SourceIp);
+            return Ok(new ApiResponse<object>(true, "Whitelisted IP — alert ignored.", new { ip = request.SourceIp }));
+        }
+
         try
         {
             var alert = new Alert
@@ -241,7 +251,7 @@ public class AlertsController : ControllerBase
 
     private async Task<Ticket> CreateAutoTicket(Alert alert)
     {
-        var ticketNumber = $"TK-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..4].ToUpper()}";
+        var ticketNumber = $"TK-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
 
         // Lấy user admin đầu tiên của tenant để gán CreatedBy (tránh FK violation)
         var adminUserId = await _db.Users

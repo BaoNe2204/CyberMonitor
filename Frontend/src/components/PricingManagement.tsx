@@ -180,7 +180,7 @@ export const PricingManagement = ({ theme, t, plans, setPlans }: PricingManageme
       // Fetch subscription
       const subRes = await SubscriptionsApi.get();
       if (subRes.success && subRes.data) {
-        setCurrentSubscription(subRes.data);
+        setCurrentSubscription(subRes.data as any);
       }
       
       // Mock payment history

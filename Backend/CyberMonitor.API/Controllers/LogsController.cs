@@ -122,6 +122,66 @@ public class LogsController : ControllerBase
         }));
     }
 
+    /// <summary>AI Engine đọc logs KHÔNG giới hạn TenantId (đọc tất cả logs mọi workspace)</summary>
+    /// <remarks>Dùng khi AI Engine cần phân tích logs từ nhiều Agent thuộc workspace khác nhau</remarks>
+    [HttpGet("ai-fetch")]
+    [AllowAnonymous]
+    public async Task<ActionResult<ApiResponse<PagedResult<TrafficLog>>>> AiFetchLogs(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 3000,
+        [FromQuery] Guid? serverId = null,
+        [FromQuery] DateTime? fromDate = null,
+        [FromQuery] DateTime? toDate = null,
+        [FromQuery] bool? isAnomaly = null)
+    {
+        Guid? tenantId = HttpContext.Items["TenantId"] as Guid?;
+        string role = GetUserOrApiKeyRole();
+
+        // Kiểm tra API key hợp lệ (middleware đã xác thực rồi, nhưng vẫn check vì [AllowAnonymous])
+        if (HttpContext.Items["ApiKeyId"] == null && User.Identity?.IsAuthenticated != true)
+            return Unauthorized(new ApiResponse<object>(false, "Cần xác thực bằng X-API-Key hoặc JWT.", null));
+
+        IQueryable<TrafficLog> query = _db.TrafficLogs;
+
+        // SuperAdmin/API key AI: không filter TenantId → đọc toàn bộ logs
+        // Nếu muốn giới hạn 1 tenant: truyền ?tenantId=xxx vào query
+        if (role != "SuperAdmin")
+        {
+            // API key AI: bỏ qua TenantId → đọc all logs (bypass workspace isolation)
+            // User JWT thường: vẫn filter theo TenantId
+            if (HttpContext.Items["ApiKeyId"] == null && tenantId.HasValue)
+                query = query.Where(t => t.TenantId == tenantId.Value);
+        }
+
+        if (serverId.HasValue)
+            query = query.Where(t => t.ServerId == serverId.Value);
+
+        if (fromDate.HasValue)
+            query = query.Where(t => t.Timestamp >= fromDate.Value);
+
+        if (toDate.HasValue)
+            query = query.Where(t => t.Timestamp <= toDate.Value);
+
+        if (isAnomaly.HasValue)
+            query = query.Where(t => t.IsAnomaly == isAnomaly.Value);
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(t => t.Timestamp)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Include(t => t.Server)
+            .ToListAsync();
+
+        _logger.LogInformation(
+            "[AI-FETCH] role={Role} tenantId={TenantId} items={Items} totalCount={Total} page={Page}",
+            role, tenantId, items.Count, totalCount, page);
+
+        return Ok(new ApiResponse<PagedResult<TrafficLog>>(true, "OK", new PagedResult<TrafficLog>(
+            items, totalCount, page, pageSize, (int)Math.Ceiling(totalCount / (double)pageSize)
+        )));
+    }
+
     /// <summary>Lấy traffic logs (dashboard, analytics, AI Engine)</summary>
     [HttpGet]
     [AllowAnonymous] // Chấp nhận cả JWT Bearer (user) lẫn X-API-Key (AI Engine/Agent)

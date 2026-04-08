@@ -292,7 +292,7 @@ namespace CyberMonitor.API.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal?>("AnomalyScore")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(5,4)");
 
                     b.Property<string>("AttackType")
                         .IsRequired()
@@ -355,6 +355,11 @@ namespace CyberMonitor.API.Migrations
 
                     b.HasIndex("TenantId", "IsActive")
                         .HasDatabaseName("IX_BlockedIPs_TenantId_Active");
+
+                    b.HasIndex("TenantId", "ServerId", "IpAddress")
+                        .IsUnique()
+                        .HasDatabaseName("IX_BlockedIPs_Tenant_Server_Ip")
+                        .HasFilter("IsActive = 1");
 
                     b.ToTable("BlockedIPs");
                 });
@@ -1107,6 +1112,49 @@ namespace CyberMonitor.API.Migrations
                         });
                 });
 
+            modelBuilder.Entity("CyberMonitor.API.Models.Whitelist", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("IpAddress")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid?>("ServerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IpAddress")
+                        .HasDatabaseName("IX_Whitelists_IpAddress");
+
+                    b.HasIndex("ServerId")
+                        .HasDatabaseName("IX_Whitelists_ServerId");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_Whitelists_TenantId");
+
+                    b.HasIndex("TenantId", "ServerId", "IpAddress")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Whitelists_TenantId_ServerId_IpAddress")
+                        .HasFilter("[TenantId] IS NOT NULL AND [ServerId] IS NOT NULL");
+
+                    b.ToTable("Whitelists");
+                });
+
             modelBuilder.Entity("CyberMonitor.API.Models.Alert", b =>
                 {
                     b.HasOne("CyberMonitor.API.Models.User", "AcknowledgedByUser")
@@ -1363,6 +1411,21 @@ namespace CyberMonitor.API.Migrations
                         .WithMany("Users")
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("CyberMonitor.API.Models.Whitelist", b =>
+                {
+                    b.HasOne("CyberMonitor.API.Models.Server", "Server")
+                        .WithMany()
+                        .HasForeignKey("ServerId");
+
+                    b.HasOne("CyberMonitor.API.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId");
+
+                    b.Navigation("Server");
 
                     b.Navigation("Tenant");
                 });

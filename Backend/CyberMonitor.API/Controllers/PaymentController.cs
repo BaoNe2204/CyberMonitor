@@ -315,15 +315,15 @@ public class PaymentController : ControllerBase
         var tenantId = GetTenantId();
         var role     = GetUserRole();
 
-        var query = _db.PaymentOrders.AsQueryable();
+        if (role == "User" && !tenantId.HasValue)
+            return Forbid();
 
-        if (role != "SuperAdmin")
-        {
-            if (!tenantId.HasValue) return Forbid();
-            query = query.Where(o => o.TenantId == tenantId.Value);
-        }
+        // 1) Payment Orders (VNPay, chuyển khoản...)
+        IQueryable<PaymentOrder> orderQuery = _db.PaymentOrders.AsQueryable();
+        if (role != "SuperAdmin" && tenantId.HasValue)
+            orderQuery = orderQuery.Where(o => o.TenantId == tenantId.Value);
 
-        var orders = await query
+        var orders = await orderQuery
             .OrderByDescending(o => o.CreatedAt)
             .Select(o => new PaymentHistoryDto(
                 o.Id.ToString(),
@@ -336,11 +336,52 @@ public class PaymentController : ControllerBase
                 o.VnpayTransactionNo,
                 o.VnpayResponseCode,
                 o.CreatedAt,
-                o.PaidAt
+                o.PaidAt,
+                "order",
+                null
             ))
             .ToListAsync();
 
-        return Ok(new ApiResponse<List<PaymentHistoryDto>>(true, "OK", orders));
+        // 2) Subscriptions (khởi tạo, trial, đổi gói — miễn phí hoặc không qua PaymentOrder)
+        IQueryable<Subscription> subQuery = _db.Subscriptions.AsQueryable();
+        if (role != "SuperAdmin" && tenantId.HasValue)
+            subQuery = subQuery.Where(s => s.TenantId == tenantId.Value);
+
+        var subs = await subQuery
+            .OrderByDescending(s => s.StartDate)
+            .Select(s => new
+            {
+                s.Id,
+                s.PlanName,
+                s.PlanPrice,
+                s.Status,
+                s.StartDate,
+                s.EndDate,
+            })
+            .ToListAsync();
+
+        var subDtos = subs.Select(s => new PaymentHistoryDto(
+            s.Id.ToString(),
+            "SUB-" + s.Id.ToString("N")[..8].ToUpperInvariant(),
+            s.PlanName,
+            s.PlanPrice,
+            "VND",
+            s.Status,
+            "N/A",
+            null,
+            null,
+            s.StartDate,
+            s.EndDate,
+            "subscription",
+            (int)(s.EndDate - s.StartDate).TotalDays
+        )).ToList();
+
+        // 3) Merge + sort by date desc
+        var combined = orders.Concat(subDtos)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToList();
+
+        return Ok(new ApiResponse<List<PaymentHistoryDto>>(true, "OK", combined));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -367,7 +408,7 @@ public class PaymentController : ControllerBase
             order.Id.ToString(), order.OrderId, order.PlanName, order.Amount,
             order.Currency, order.Status, order.PaymentMethod,
             order.VnpayTransactionNo, order.VnpayResponseCode,
-            order.CreatedAt, order.PaidAt)));
+            order.CreatedAt, order.PaidAt, "order", null)));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -508,5 +549,9 @@ public record PaymentHistoryDto(
     string? TransactionNo,
     string? ResponseCode,
     DateTime CreatedAt,
-    DateTime? PaidAt
+    DateTime? PaidAt,
+    /// <summary>"order" = from PaymentOrder, "subscription" = from Subscription</summary>
+    string Source,
+    /// <summary>Only for subscriptions: duration in days</summary>
+    int? DurationDays
 );

@@ -1,24 +1,60 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'motion/react';
 import { 
-  Shield, 
-  Activity, 
-  Bot, 
-  Zap, 
-  ShieldCheck, 
-  Cloud, 
-  Network, 
-  Lock, 
-  User, 
-  Server, 
-  Check,
-  ChevronLeft,
-  ChevronRight,
+  Shield, Activity, Bot, Zap, ShieldCheck, Cloud,
+  Network, Lock, User, Server, Check,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Theme, Language } from '../types';
 import { PricingPlansApi } from '../services/api';
 import { PricingCarousel } from './PricingCarousel';
+import { PricingMarquee } from './PricingMarquee';
+
+// ── Floating particle ────────────────────────────────────────────────────────
+const Particle = ({ dark }: { dark: boolean; [key: string]: any }) => {
+  const size  = Math.random() * 3 + 2;
+  const left  = Math.random() * 100;
+  const delay = Math.random() * 10;
+  const dur   = Math.random() * 12 + 10;
+  return (
+    <span className="absolute rounded-full pointer-events-none" style={{
+      width: size, height: size,
+      left: `${left}%`, bottom: '-8px',
+      background: dark ? 'rgba(99,102,241,0.55)' : 'rgba(59,130,246,0.4)',
+      animation: `lpFloat ${dur}s ${delay}s infinite linear`,
+    }} />
+  );
+};
+
+// ── Animated counter ─────────────────────────────────────────────────────────
+const Counter = ({ target, suffix = '' }: { target: number; suffix?: string }) => {
+  const [val, setVal] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      obs.disconnect();
+      let v = 0;
+      const step = target / 60;
+      const t = setInterval(() => {
+        v += step;
+        if (v >= target) { setVal(target); clearInterval(t); }
+        else setVal(Math.floor(v));
+      }, 22);
+    }, { threshold: 0.5 });
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, [target]);
+  return <span ref={ref}>{val.toLocaleString()}{suffix}</span>;
+};
+
+// ── Glowing dot ──────────────────────────────────────────────────────────────
+const GlowDot = ({ color = 'bg-blue-500' }: { color?: string }) => (
+  <span className="relative flex h-3 w-3">
+    <span className={cn('animate-ping absolute inline-flex h-full w-full rounded-full opacity-75', color)} />
+    <span className={cn('relative inline-flex rounded-full h-3 w-3', color)} />
+  </span>
+);
 
 interface LandingPageProps {
   theme: Theme;
@@ -68,7 +104,123 @@ export const LandingPage = ({ theme, language, setLanguage, setShowAuth, setAuth
   ];
 
   return (
-    <div className={cn("min-h-screen transition-colors duration-300", theme === 'dark' ? "bg-[#020617] text-slate-200" : "bg-slate-50 text-slate-800")}>
+    <div className={cn("min-h-screen transition-colors duration-300 relative", theme === 'dark' ? "bg-[#020617] text-slate-200" : "bg-slate-50 text-slate-800")}>
+      {/* Global keyframes + background effects */}
+      <style>{`
+        @keyframes lpFloat {
+          0%   { transform: translateY(0); opacity: 0; }
+          10%  { opacity: 1; }
+          90%  { opacity: 0.5; }
+          100% { transform: translateY(-100vh); opacity: 0; }
+        }
+        @keyframes lpGradientShift {
+          0%, 100% { background-position: 0% 50%; }
+          50%      { background-position: 100% 50%; }
+        }
+        @keyframes lpPulseRing {
+          0%   { transform: scale(1);   opacity: 0.5; }
+          100% { transform: scale(2.8); opacity: 0; }
+        }
+        @keyframes lpOrb1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33%      { transform: translate(60px, -40px) scale(1.1); }
+          66%      { transform: translate(-40px, 30px) scale(0.95); }
+        }
+        @keyframes lpOrb2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33%      { transform: translate(-50px, 50px) scale(1.05); }
+          66%      { transform: translate(40px, -30px) scale(1.1); }
+        }
+        @keyframes lpOrb3 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50%      { transform: translate(30px, 40px) scale(1.08); }
+        }
+        @keyframes lpGridFade {
+          0%, 100% { opacity: 0.03; }
+          50%      { opacity: 0.07; }
+        }
+        @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+        .lp-gradient-text {
+          background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 40%, #34d399 70%, #60a5fa 100%);
+          background-size: 300% 300%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          color: transparent;
+          animation: lpGradientShift 5s ease infinite;
+        }
+        .lp-card-hover {
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .lp-card-hover:hover {
+          transform: translateY(-6px);
+          box-shadow: 0 20px 40px rgba(59,130,246,0.15);
+        }
+        /* Dot grid pattern */
+        .lp-dot-grid {
+          background-image: radial-gradient(circle, rgba(99,102,241,0.15) 1px, transparent 1px);
+          background-size: 32px 32px;
+          animation: lpGridFade 8s ease-in-out infinite;
+        }
+        /* Noise texture overlay */
+        .lp-noise::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+          pointer-events: none;
+          opacity: 0.4;
+        }
+      `}</style>
+
+      {/* ── Fixed background layer — orbs + grid ── */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
+        {/* Dot grid */}
+        <div className="absolute inset-0 lp-dot-grid opacity-40" />
+
+        {/* Aurora orb 1 — top left */}
+        <div className="absolute rounded-full"
+          style={{
+            width: 600, height: 600,
+            top: '-10%', left: '-10%',
+            background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)',
+            animation: 'lpOrb1 18s ease-in-out infinite',
+            filter: 'blur(40px)',
+          }} />
+
+        {/* Aurora orb 2 — top right */}
+        <div className="absolute rounded-full"
+          style={{
+            width: 500, height: 500,
+            top: '5%', right: '-8%',
+            background: 'radial-gradient(circle, rgba(59,130,246,0.10) 0%, transparent 70%)',
+            animation: 'lpOrb2 22s ease-in-out infinite',
+            filter: 'blur(50px)',
+          }} />
+
+        {/* Aurora orb 3 — center */}
+        <div className="absolute rounded-full"
+          style={{
+            width: 700, height: 400,
+            top: '40%', left: '25%',
+            background: 'radial-gradient(ellipse, rgba(52,211,153,0.06) 0%, transparent 70%)',
+            animation: 'lpOrb3 25s ease-in-out infinite',
+            filter: 'blur(60px)',
+          }} />
+
+        {/* Aurora orb 4 — bottom */}
+        <div className="absolute rounded-full"
+          style={{
+            width: 500, height: 500,
+            bottom: '10%', right: '15%',
+            background: 'radial-gradient(circle, rgba(167,139,250,0.08) 0%, transparent 70%)',
+            animation: 'lpOrb1 20s ease-in-out infinite reverse',
+            filter: 'blur(45px)',
+          }} />
+
+        {/* Horizontal glow line — removed */}
+      </div>
       {/* Landing Navbar */}
       <nav className={cn("fixed top-0 w-full z-50 backdrop-blur-md border-b transition-colors", theme === 'dark' ? "bg-[#020617]/80 border-slate-800" : "bg-white/80 border-slate-200")}>
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -96,46 +248,81 @@ export const LandingPage = ({ theme, language, setLanguage, setShowAuth, setAuth
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-40 pb-20 px-6">
-        <div className="max-w-7xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <h1 className={cn("text-5xl lg:text-7xl font-bold tracking-tight mb-6", theme === 'dark' ? "text-white" : "text-slate-900")}>
+      <section className="pt-40 pb-20 px-6 relative z-10 overflow-hidden">
+        {/* Particles */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {Array.from({ length: 20 }).map((_, i) => <Particle key={i} dark={theme === 'dark'} />)}
+        </div>
+
+        {/* Background glow blobs */}
+        <div className="absolute top-20 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-40 right-1/4 w-80 h-80 bg-purple-600/10 rounded-full blur-[100px] pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto text-center relative z-10">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+            {/* Live badge */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-sm font-semibold mb-8"
+            >
+              <GlowDot color="bg-green-400" />
+              SOC Platform đang hoạt động · 99.99% uptime
+            </motion.div>
+
+            <h1 className="text-5xl lg:text-7xl font-bold tracking-tight mb-6 lp-gradient-text">
               {t.landingTitle}
             </h1>
-            <p className="text-xl text-slate-500 max-w-3xl mx-auto mb-10">
-              {t.landingSub}
-            </p>
+            <p className="text-xl text-slate-500 max-w-3xl mx-auto mb-10">{t.landingSub}</p>
+
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button 
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => setShowAuth(true)}
-                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white text-lg font-bold px-10 py-4 rounded-xl transition-all shadow-xl shadow-blue-600/20"
+                className="relative w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white text-lg font-bold px-10 py-4 rounded-xl transition-all shadow-xl shadow-blue-600/30 overflow-hidden group"
               >
-                {t.getStarted}
-              </button>
-              <button className={cn("w-full sm:w-auto border text-lg font-bold px-10 py-4 rounded-xl transition-all", theme === 'dark' ? "border-slate-800 hover:bg-slate-900" : "border-slate-200 hover:bg-slate-100")}>
+                <span className="relative z-10">{t.getStarted}</span>
+                {/* Shimmer */}
+                <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                className={cn("w-full sm:w-auto border text-lg font-bold px-10 py-4 rounded-xl transition-all", theme === 'dark' ? "border-slate-700 hover:bg-slate-900 hover:border-slate-600" : "border-slate-200 hover:bg-slate-100")}
+              >
                 {t.learnMore}
-              </button>
+              </motion.button>
             </div>
           </motion.div>
 
           {/* Dashboard Preview */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.8 }}
             className="mt-20 relative max-w-5xl mx-auto"
           >
+            {/* Pulse rings */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="absolute inset-0 rounded-full border border-blue-500/20"
+                  style={{ animation: `lpPulseRing 3s ${i * 0.8}s ease-out infinite` }} />
+              ))}
+            </div>
+
             <div className={cn("rounded-2xl border p-2 shadow-2xl overflow-hidden", theme === 'dark' ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200")}>
-              <img 
-                src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=1200&h=600" 
-                alt="Security Operations Center" 
-                className="rounded-xl w-full object-cover"
-                referrerPolicy="no-referrer"
-              />
+              {/* Scanline effect */}
+              <div className="relative overflow-hidden rounded-xl">
+                <img
+                  src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=1200&h=600"
+                  alt="Security Operations Center"
+                  className="rounded-xl w-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 pointer-events-none"
+                  style={{ background: 'linear-gradient(to bottom, transparent 40%, rgba(2,6,23,0.6))', borderRadius: 12 }} />
+              </div>
             </div>
             <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-blue-600/20 blur-[120px] rounded-full" />
           </motion.div>
@@ -143,19 +330,36 @@ export const LandingPage = ({ theme, language, setLanguage, setShowAuth, setAuth
       </section>
 
       {/* Trusted By Section */}
-      <section className="py-12 border-y border-slate-800/50 bg-slate-950/20">
+      <section className="py-12 border-y border-slate-800/30 overflow-hidden relative z-10">
         <div className="max-w-7xl mx-auto px-6">
           <p className="text-center text-sm font-bold text-slate-500 uppercase tracking-widest mb-8">{t.trustedBy}</p>
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all">
-            {['Microsoft', 'Amazon', 'Google', 'Netflix', 'Tesla'].map((brand) => (
-              <span key={brand} className="text-2xl font-black text-slate-400">{brand}</span>
-            ))}
+          {/* Marquee */}
+          <div className="relative flex overflow-hidden">
+            <div className="flex gap-16 animate-[marquee_20s_linear_infinite] whitespace-nowrap">
+              {['Microsoft', 'Amazon', 'Google', 'Netflix', 'Tesla', 'Cisco', 'IBM', 'Oracle'].map(b => (
+                <span key={b} className="text-2xl font-black text-slate-500 hover:text-blue-400 transition-colors cursor-default">{b}</span>
+              ))}
+            </div>
+            <div className="flex gap-16 animate-[marquee_20s_linear_infinite] whitespace-nowrap ml-16" aria-hidden>
+              {['Microsoft', 'Amazon', 'Google', 'Netflix', 'Tesla', 'Cisco', 'IBM', 'Oracle'].map(b => (
+                <span key={b} className="text-2xl font-black text-slate-500 hover:text-blue-400 transition-colors cursor-default">{b}</span>
+              ))}
+            </div>
+            {/* Fade edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-slate-950 to-transparent pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-slate-950 to-transparent pointer-events-none" />
           </div>
         </div>
+        <style>{`@keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }`}</style>
       </section>
 
       {/* Features Section */}
-      <section className={cn("py-20 px-6 transition-colors", theme === 'dark' ? "bg-slate-950/50" : "bg-slate-100/50")}>
+      <section className="py-20 px-6 relative z-10">
+        {/* Section glow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full"
+            style={{ background: 'radial-gradient(ellipse, rgba(59,130,246,0.06) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+        </div>
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
@@ -169,9 +373,11 @@ export const LandingPage = ({ theme, language, setLanguage, setShowAuth, setAuth
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className={cn("p-8 rounded-2xl border transition-all hover:scale-105", theme === 'dark' ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200 shadow-sm")}
+                className={cn("p-8 rounded-2xl border transition-all lp-card-hover", theme === 'dark' ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200 shadow-sm")}
               >
-                <feature.icon className={cn("mb-6", feature.color)} size={40} />
+                <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center mb-6", feature.color === 'text-blue-500' ? 'bg-blue-500/10' : feature.color === 'text-emerald-500' ? 'bg-emerald-500/10' : 'bg-amber-500/10')}>
+                  <feature.icon className={cn(feature.color)} size={28} />
+                </div>
                 <h3 className={cn("text-xl font-bold mb-4", theme === 'dark' ? "text-white" : "text-slate-900")}>{feature.title}</h3>
                 <p className="text-slate-500 leading-relaxed">{feature.desc}</p>
               </motion.div>
@@ -181,7 +387,16 @@ export const LandingPage = ({ theme, language, setLanguage, setShowAuth, setAuth
       </section>
 
       {/* Solutions Section */}
-      <section className={cn("py-24 px-6 transition-colors", theme === 'dark' ? "bg-slate-950" : "bg-white")}>
+      <section className="py-24 px-6 relative z-10">
+        {/* Diagonal glow line */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-px"
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.2), transparent)' }} />
+          <div className="absolute bottom-0 left-0 w-full h-px"
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(52,211,153,0.15), transparent)' }} />
+          <div className="absolute top-1/2 right-0 w-[400px] h-[400px] rounded-full -translate-y-1/2"
+            style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%)', filter: 'blur(50px)' }} />
+        </div>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className={cn("text-3xl lg:text-5xl font-bold mb-6", theme === 'dark' ? "text-white" : "text-slate-900")}>{t.solutionsTitle}</h2>
@@ -233,7 +448,7 @@ export const LandingPage = ({ theme, language, setLanguage, setShowAuth, setAuth
       </section>
 
       {/* How to Use Section */}
-      <section className="py-20 px-6">
+      <section className="py-20 px-6 relative z-10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className={cn("text-3xl lg:text-4xl font-bold mb-4", theme === 'dark' ? "text-white" : "text-slate-900")}>
@@ -280,34 +495,36 @@ export const LandingPage = ({ theme, language, setLanguage, setShowAuth, setAuth
         </div>
       </section>
 
-      {/* Pricing Section — Carousel */}
-      <PricingCarousel
-        plans={displayPlans}
-        theme={theme}
-        t={t}
-        onSelect={() => setShowAuth(true)}
-      />
+      {/* Pricing Section — Infinite marquee */}
+      <PricingMarquee plans={displayPlans} theme={theme} t={t} onSelect={() => setShowAuth(true)} />
 
       {/* Stats Section */}
-      <section className="py-20 px-6">
+      <section className="py-20 px-6 relative z-10">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
             {[
-              { label: t.statsRequests, value: '1.2B+' },
-              { label: t.statsThreats, value: '50M+' },
-              { label: t.statsUptime, value: '99.99%' }
+              { label: t.statsRequests, target: 1200, suffix: 'M+' },
+              { label: t.statsThreats,  target: 50,   suffix: 'M+' },
+              { label: t.statsUptime,   target: 9999, suffix: '%', display: '99.99%' },
             ].map((stat, i) => (
-              <div key={i}>
-                <h2 className={cn("text-4xl lg:text-5xl font-bold mb-2", theme === 'dark' ? "text-white" : "text-slate-900")}>{stat.value}</h2>
+              <motion.div key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.15 }}
+              >
+                <h2 className={cn("text-4xl lg:text-5xl font-bold mb-2 lp-gradient-text", theme === 'dark' ? "" : "")}>
+                  {stat.display ?? <Counter target={stat.target} suffix={stat.suffix} />}
+                </h2>
                 <p className="text-slate-500 font-medium">{stat.label}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className={cn("py-12 px-6 border-t transition-colors", theme === 'dark' ? "bg-slate-950 border-slate-800" : "bg-white border-slate-200")}>
+      <footer className={cn("py-12 px-6 border-t transition-colors relative z-10", theme === 'dark' ? "border-slate-800" : "border-slate-200")}>
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-3">
             <div className="bg-blue-600 p-2 rounded-lg">

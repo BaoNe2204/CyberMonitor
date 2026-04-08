@@ -207,7 +207,7 @@ export const Settings = ({
         <div className={cn("border p-6 rounded-xl space-y-4 transition-colors", theme === 'dark' ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200 shadow-sm")}>
           <div className="flex items-center gap-3 mb-2">
             <Bell className="text-amber-400" size={20} />
-            <h3 className={cn("font-bold", theme === 'dark' ? "text-white" : "text-slate-900")}>{t.notifications}</h3>
+            <h3 className={cn("font-bold", theme === 'dark' ? "text-white" : "text-slate-900")}>{t.notificationSettings}</h3>
           </div>
           <div className={cn(
             "rounded-2xl border p-4 space-y-5 transition-colors",

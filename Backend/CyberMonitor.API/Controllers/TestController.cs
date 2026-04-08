@@ -112,7 +112,7 @@ public class TestController : ControllerBase
                 .Select(u => (Guid?)u.Id)
                 .FirstOrDefaultAsync();
 
-            var ticketNumber = $"TK-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..4].ToUpper()}";
+            var ticketNumber = $"TK-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
             var ticket = new Ticket
             {
                 Id = Guid.NewGuid(),

@@ -1,37 +1,31 @@
--- ============================================
+-- ================================================================
 -- CyberMonitor - Reset Database
--- Chạy file này TRƯỚC TIÊN nếu muốn tạo lại DB từ đầu
--- ============================================
--- Cách dùng trong SSMS:
---   1. Mở file này trong SSMS
---   2. Execute (F5)
---   3. Sau đó chạy Schema.sql
---   4. Sau đó chạy SeedData.sql
--- ============================================
+-- XOA database cu va tao lai (nhanh, don gian)
+-- Chi chay file nay khi muon xoa database
+-- Sau do chay: FULL_SCHEMA.sql de tao lai
+-- ================================================================
 
 USE master;
 GO
 
--- Drop database nếu tồn tại
+PRINT 'Bat dau xoa database CyberMonitor...';
+GO
+
 IF EXISTS (SELECT name FROM sys.databases WHERE name = 'CyberMonitor')
 BEGIN
     ALTER DATABASE CyberMonitor SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
     DROP DATABASE CyberMonitor;
-    PRINT 'Database CyberMonitor đã được xóa thành công!';
+    PRINT 'Da xoa thanh cong database CyberMonitor!';
 END
 ELSE
 BEGIN
-    PRINT 'Database CyberMonitor không tồn tại, không cần xóa.';
+    PRINT 'Database CyberMonitor khong ton tai, khong can xoa.';
 END
 GO
 
--- Tạo lại database
-CREATE DATABASE CyberMonitor;
-GO
-
-USE CyberMonitor;
-GO
-
-PRINT 'Database CyberMonitor đã được tạo mới!';
-PRINT 'Tiếp theo chạy: Schema.sql, rồi SeedData.sql';
+PRINT '';
+PRINT '============================================================';
+PRINT ' Xoa database thanh cong!';
+PRINT ' Tiep theo chay: FULL_SCHEMA.sql de tao database moi';
+PRINT '============================================================';
 GO

@@ -37,9 +37,11 @@ public class ApiKeyAuthMiddleware
         var protectedRoutes = new[] {
             "/api/logs/ingest",
             "/api/logs",
+            "/api/logs/ai-fetch",
             "/api/logs/top-sources",
             "/api/defense/block-ip",
             "/api/alerts/trigger",
+            "/api/agent",
         };
 
         var needsApiKeyAuth = protectedRoutes.Any(r => path.StartsWith(r));

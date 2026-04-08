@@ -451,3 +451,38 @@ public record AddServerTelegramRecipientRequest(
     string ChatId,
     string? DisplayName
 );
+
+// ============ AGENT DTOs ============
+public record AgentWhoAmIResponse(Guid? ServerId, Guid? TenantId, string? ServerName);
+
+public record AgentRegisterRequest(
+    Guid ServerId,       // suggested/idempotent server ID (từ Agent, deterministic theo hostname)
+    string Hostname,     // required
+    string? IpAddress,
+    string? Os
+);
+
+// ============ WHITELIST DTOs ============
+public record WhitelistDto(
+    Guid Id,
+    Guid? TenantId,
+    Guid? ServerId,
+    string IpAddress,
+    string? Description,
+    string? ServerName,
+    DateTime CreatedAt
+);
+
+public record AddWhitelistRequest(
+    string IpAddress,
+    string? Description,
+    Guid? ServerId  // Nếu NULL thì là whitelist tenant-wide
+);
+
+// ============ SUBSCRIPTION DTOs ============
+public record UpdateSubscriptionRequest(
+    [Required] Guid PlanId,
+    DateTime? StartDate,
+    DateTime? EndDate,
+    int? DurationMonths
+);

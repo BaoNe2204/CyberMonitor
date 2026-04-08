@@ -696,3 +696,31 @@ public class PricingPlan
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
+
+public class Whitelist
+{
+    [Key]
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    public Guid? TenantId { get; set; }
+
+    /// <summary>
+    /// Server ID - nếu được chỉ định, whitelist chỉ áp dụng cho server này.
+    /// Nếu NULL, whitelist áp dụng cho tất cả server trong tenant.
+    /// </summary>
+    public Guid? ServerId { get; set; }
+
+    [Required, MaxLength(50)]
+    public string IpAddress { get; set; } = string.Empty;
+
+    [MaxLength(255)]
+    public string? Description { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [ForeignKey(nameof(TenantId))]
+    public Tenant? Tenant { get; set; }
+
+    [ForeignKey(nameof(ServerId))]
+    public Server? Server { get; set; }
+}

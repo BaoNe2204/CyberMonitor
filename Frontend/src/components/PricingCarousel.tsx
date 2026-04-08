@@ -100,7 +100,7 @@ export const PricingCarousel = ({ plans, theme, t, onSelect }: PricingCarouselPr
     getCard(current + 3),
   ];
 
-  const PlanCard = ({ plan }: { plan: PricingPlan }) => (
+  const renderCard = (plan: PricingPlan) => (
     <div className={cn(
       'p-7 rounded-3xl border relative flex flex-col h-full',
       plan.popular
@@ -187,13 +187,13 @@ export const PricingCarousel = ({ plans, theme, t, onSelect }: PricingCarouselPr
                     className="pricing-card-enter"
                     data-delay={i}
                   >
-                    <PlanCard plan={plan} />
+                    {renderCard(plan)}
                   </div>
                 ))}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {plans.map((plan, i) => <PlanCard key={i} plan={plan} />)}
+                {plans.map((plan, i) => <div key={i}>{renderCard(plan)}</div>)}
               </div>
             )}
           </div>
