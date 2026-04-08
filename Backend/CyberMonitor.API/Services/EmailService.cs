@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Mail;
 using CyberMonitor.API.Data;
@@ -22,10 +23,29 @@ public class EmailService : IEmailService
     private readonly IConfiguration _configuration;
     private readonly ILogger<EmailService> _logger;
 
+    /// <summary>Rate limit: 1 email per (tenant + alertType + sourceIp) every 5 minutes.</summary>
+    private static readonly ConcurrentDictionary<string, DateTime> _lastSent = new();
+    private static readonly TimeSpan _cooldown = TimeSpan.FromMinutes(5);
+
     public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
     {
         _configuration = configuration;
         _logger = logger;
+    }
+
+    private static string RateKey(Guid tenantId, string alertType, string? sourceIp) =>
+        $"{tenantId}|{alertType}|{sourceIp ?? "none"}";
+
+    private bool IsRateLimited(Guid tenantId, string alertType, string? sourceIp)
+    {
+        var key = RateKey(tenantId, alertType, sourceIp);
+        if (_lastSent.TryGetValue(key, out var last))
+        {
+            if (DateTime.UtcNow - last < _cooldown)
+                return true;
+        }
+        _lastSent[key] = DateTime.UtcNow;
+        return false;
     }
 
     private SmtpClient BuildSmtpClient()
@@ -57,6 +77,14 @@ public class EmailService : IEmailService
 
     public async Task SendAlertEmailAsync(Guid tenantId, string toEmail, Alert alert, Server? server)
     {
+        // Rate limit: max 1 email per 5 minutes per (tenant + alertType + sourceIp)
+        if (IsRateLimited(tenantId, alert.AlertType ?? "Unknown", alert.SourceIp))
+        {
+            _logger.LogDebug("[Email] Rate-limited alert {AlertType} from {SourceIp} for tenant {TenantId}",
+                alert.AlertType, alert.SourceIp, tenantId);
+            return;
+        }
+
         try
         {
             var severityColor = alert.Severity switch

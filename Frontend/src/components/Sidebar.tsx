@@ -17,7 +17,8 @@ import {
   Book,
   Terminal,
   Bell,
-  Ticket
+  Ticket,
+  MessageSquare,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Theme } from '../types';
@@ -122,6 +123,7 @@ export const Sidebar = ({
             <SidebarItem icon={Ticket} label={t.tickets || 'Tickets'} active={activeTab === 'tickets'} onClick={() => { setActiveTab('tickets'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
           )}
           <SidebarItem icon={Bell} label={t.notifications || 'Notifications'} active={activeTab === 'notifications'} onClick={() => { setActiveTab('notifications'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
+          <SidebarItem icon={MessageSquare} label={t.contact || 'Liên hệ'} active={activeTab === 'contact'} onClick={() => { setActiveTab('contact'); setIsMobileMenuOpen(false); }} theme={theme} isOpen={isSidebarOpen || isMobileMenuOpen} />
           
           {(isSuperAdmin || userRole === 'Admin') && (
             <div className="pt-4 mt-4 space-y-1 border-t border-slate-800/50">

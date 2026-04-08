@@ -131,40 +131,28 @@ public class TestController : ControllerBase
             db.Tickets.Add(ticket);
             await db.SaveChangesAsync();
 
-            var adminUsers = await db.Users
-                .Where(u => u.TenantId == tenantId && u.IsActive)
-                .ToListAsync();
-
+            // Email alert: CHỈ gửi đến ServerAlertEmails — KHÔNG gửi đến bảng Users
             int emailsSent = 0;
-            foreach (var user in adminUsers)
-            {
-                if (!user.EmailAlertsEnabled) continue;
-                try { await _emailService.SendAlertEmailAsync(tenantId, user.Email, alert, serverEntity); emailsSent++; }
-                catch (Exception ex) { Console.WriteLine($"[TestController] Email fail {user.Email}: {ex.Message}"); }
-            }
-
-            int serverEmailsSent = 0;
             if (request.ServerId.HasValue)
             {
                 var srvEmails = await db.ServerAlertEmails
                     .Where(e => e.ServerId == request.ServerId.Value && e.IsActive).ToListAsync();
                 foreach (var alertEmail in srvEmails)
                 {
-                    try { await _emailService.SendAlertEmailAsync(tenantId, alertEmail.Email, alert, serverEntity); serverEmailsSent++; }
+                    try { await _emailService.SendAlertEmailAsync(tenantId, alertEmail.Email, alert, serverEntity); emailsSent++; }
                     catch (Exception ex) { Console.WriteLine($"[TestController] Email fail {alertEmail.Email}: {ex.Message}"); }
                 }
             }
 
             var telegramChatsSent = await _telegramService.SendAlertAsync(tenantId, alert, serverEntity, ticket);
 
-            Console.WriteLine($"[TestController] Alert created (tenant={tenantId}). Emails: {emailsSent} admins + {serverEmailsSent} server. Telegram: {telegramChatsSent} chats. Ticket: {ticketNumber}");
+            Console.WriteLine($"[TestController] Alert created (tenant={tenantId}). Emails sent: {emailsSent}. Telegram: {telegramChatsSent} chats. Ticket: {ticketNumber}");
 
-            return Ok(new ApiResponse<object>(true, $"Alert tao thanh cong! Email gui den {emailsSent} admin(s) + {serverEmailsSent} server email(s). Telegram gui den {telegramChatsSent} chat(s). Ticket: {ticketNumber}", new {
+            return Ok(new ApiResponse<object>(true, $"Alert tao thanh cong! Email gui den {emailsSent} server email(s). Telegram gui den {telegramChatsSent} chat(s). Ticket: {ticketNumber}", new {
                 tenantId = tenantId,
                 alertId = alert.Id,
                 ticketNumber = ticketNumber,
                 emailsSent = emailsSent,
-                serverAlertEmailsSent = serverEmailsSent,
                 telegramChatsSent = telegramChatsSent
             }));
         }

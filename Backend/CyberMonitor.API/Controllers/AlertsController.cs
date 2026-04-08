@@ -290,13 +290,13 @@ public class AlertsController : ControllerBase
 
     private async Task SendAlertNotifications(Alert alert, Ticket ticket)
     {
+        // In-app notifications: gửi đến tất cả user trong tenant (SignalR + DB notification)
         var users = await _db.Users
             .Where(u => u.TenantId == alert.TenantId && u.IsActive)
             .ToListAsync();
 
         var server = await _db.Servers.FindAsync(alert.ServerId);
 
-        // Send to admin users
         foreach (var user in users)
         {
             // DB notification
@@ -309,12 +309,6 @@ public class AlertsController : ControllerBase
                 Type = alert.Severity == "Critical" ? "Alert" : "Warning",
                 Link = $"/dashboard/tickets/{ticket.Id}"
             });
-
-            // Email
-            if (user.EmailAlertsEnabled)
-            {
-                await _emailService.SendAlertEmailAsync(alert.TenantId, user.Email, alert, server);
-            }
 
             // SignalR real-time push
             var notifDto = new NotificationDto(
@@ -329,40 +323,23 @@ public class AlertsController : ControllerBase
             await _alertHub.Clients.Group(alert.TenantId.ToString()).NotificationReceived(notifDto);
         }
 
-        // Send to server-specific alert emails (if server is specified)
-        if (alert.ServerId.HasValue)
+        // Email alert: CHỈ gửi đến danh sách ServerAlertEmails (cấu hình riêng cho từng server)
+        // KHÔNG gửi email đến bảng Users
+        var serverAlertEmails = await _db.ServerAlertEmails
+            .Where(e => e.IsActive && e.ServerId == alert.ServerId)
+            .ToListAsync();
+
+        foreach (var alertEmail in serverAlertEmails)
         {
-            var serverAlertEmails = await _db.ServerAlertEmails
-                .Where(e => e.ServerId == alert.ServerId.Value && e.IsActive)
-                .ToListAsync();
-
-            foreach (var alertEmail in serverAlertEmails)
+            try
             {
-                try
-                {
-                    var ownerDisabled = await _db.Users.AnyAsync(u =>
-                        u.TenantId == alert.TenantId &&
-                        u.IsActive &&
-                        u.Email == alertEmail.Email &&
-                        !u.EmailAlertsEnabled);
-
-                    if (ownerDisabled)
-                    {
-                        _logger.LogInformation(
-                            "Skipped alert email {Email} for server {ServerId} because owner disabled email alerts",
-                            alertEmail.Email,
-                            alert.ServerId.Value);
-                        continue;
-                    }
-
-                    await _emailService.SendAlertEmailAsync(alert.TenantId, alertEmail.Email, alert, server);
-                    _logger.LogInformation("Alert email sent to {Email} for server {ServerId}", 
-                        alertEmail.Email, alert.ServerId.Value);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to send alert email to {Email}", alertEmail.Email);
-                }
+                await _emailService.SendAlertEmailAsync(alert.TenantId, alertEmail.Email, alert, server);
+                _logger.LogInformation("Alert email sent to {Email} for server {ServerId}",
+                    alertEmail.Email, alert.ServerId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send alert email to {Email}", alertEmail.Email);
             }
         }
 
