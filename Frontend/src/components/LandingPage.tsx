@@ -56,6 +56,56 @@ const GlowDot = ({ color = 'bg-blue-500' }: { color?: string }) => (
   </span>
 );
 
+// ── Falling stars ─────────────────────────────────────────────────────────────
+const STARS = Array.from({ length: 22 }, (_, i) => ({
+  id: i,
+  left:  `${Math.random() * 100}%`,
+  delay: `${Math.random() * 15}s`,
+  dur:   `${8 + Math.random() * 10}s`,   // 8-18s — chậm như lá rơi
+  size:  Math.random() * 10 + 8,          // 8-18px
+  sway:  Math.random() * 60 - 30,         // lắc ngang -30 đến +30px
+  rotate: Math.random() * 360,            // góc xoay ban đầu
+  opacity: 0.4 + Math.random() * 0.5,
+}));
+
+// SVG ngôi sao 5 cánh
+const StarSVG = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color} xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
+  </svg>
+);
+
+const STAR_COLORS = [
+  'rgba(148,163,184,0.7)',   // slate
+  'rgba(99,102,241,0.6)',    // indigo
+  'rgba(59,130,246,0.6)',    // blue
+  'rgba(52,211,153,0.5)',    // emerald
+  'rgba(167,139,250,0.6)',   // violet
+  'rgba(255,255,255,0.5)',   // white
+];
+
+const FallingStars = () => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    {STARS.map(s => (
+      <div
+        key={s.id}
+        style={{
+          position: 'absolute',
+          top: '-30px',
+          left: s.left,
+          opacity: 0,
+          animation: `starFall ${s.dur} ${s.delay} infinite ease-in-out`,
+          '--sway': `${s.sway}px`,
+        } as React.CSSProperties}
+      >
+        <div style={{ animation: `starSpin ${s.dur} ${s.delay} infinite linear`, display: 'inline-block' }}>
+          <StarSVG size={s.size} color={STAR_COLORS[s.id % STAR_COLORS.length]} />
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
 interface LandingPageProps {
   theme: Theme;
   language: Language;
@@ -120,6 +170,21 @@ export const LandingPage = ({ theme, language, setLanguage, setShowAuth, setAuth
         @keyframes lpPulseRing {
           0%   { transform: scale(1);   opacity: 0.5; }
           100% { transform: scale(2.8); opacity: 0; }
+        }
+        @keyframes lpMeteor {
+          0%   { transform: translateX(0) translateY(0) rotate(-45deg); opacity: 1; }
+          70%  { opacity: 1; }
+          100% { transform: translateX(600px) translateY(600px) rotate(-45deg); opacity: 0; }
+        }
+        @keyframes starFall {
+          0%   { transform: translateY(-30px) translateX(0);           opacity: 0; }
+          5%   { opacity: 1; }
+          90%  { opacity: 0.8; }
+          100% { transform: translateY(110vh) translateX(var(--sway)); opacity: 0; }
+        }
+        @keyframes starSpin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
         }
         @keyframes lpOrb1 {
           0%, 100% { transform: translate(0, 0) scale(1); }
@@ -331,6 +396,7 @@ export const LandingPage = ({ theme, language, setLanguage, setShowAuth, setAuth
 
       {/* Trusted By Section */}
       <section className="py-12 border-y border-slate-800/30 overflow-hidden relative z-10">
+        <FallingStars />
         <div className="max-w-7xl mx-auto px-6">
           <p className="text-center text-sm font-bold text-slate-500 uppercase tracking-widest mb-8">{t.trustedBy}</p>
           {/* Marquee */}
@@ -355,6 +421,7 @@ export const LandingPage = ({ theme, language, setLanguage, setShowAuth, setAuth
 
       {/* Features Section */}
       <section className="py-20 px-6 relative z-10">
+        <FallingStars />
         {/* Section glow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full"
@@ -388,6 +455,7 @@ export const LandingPage = ({ theme, language, setLanguage, setShowAuth, setAuth
 
       {/* Solutions Section */}
       <section className="py-24 px-6 relative z-10">
+        <FallingStars />
         {/* Diagonal glow line */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-px"
@@ -449,6 +517,7 @@ export const LandingPage = ({ theme, language, setLanguage, setShowAuth, setAuth
 
       {/* How to Use Section */}
       <section className="py-20 px-6 relative z-10">
+        <FallingStars />
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className={cn("text-3xl lg:text-4xl font-bold mb-4", theme === 'dark' ? "text-white" : "text-slate-900")}>
@@ -500,6 +569,7 @@ export const LandingPage = ({ theme, language, setLanguage, setShowAuth, setAuth
 
       {/* Stats Section */}
       <section className="py-20 px-6 relative z-10">
+        <FallingStars />
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
             {[
