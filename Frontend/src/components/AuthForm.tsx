@@ -4,6 +4,53 @@ import { Shield } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Theme, Language, AuthMode } from '../types';
 
+// ── Falling stars (reuse từ LandingPage) ─────────────────────────────────────
+const AUTH_STARS = Array.from({ length: 25 }, (_, i) => ({
+  id: i,
+  left:  `${(i * 4.1 + Math.sin(i) * 15 + 50) % 100}%`,
+  delay: `${(i * 0.7) % 14}s`,
+  dur:   `${9 + (i % 7) * 1.5}s`,
+  size:  6 + (i % 5) * 2.5,
+  sway:  (i % 2 === 0 ? 1 : -1) * (15 + (i % 4) * 10),
+  color: ['rgba(148,163,184,0.6)','rgba(99,102,241,0.55)','rgba(59,130,246,0.55)','rgba(52,211,153,0.45)','rgba(167,139,250,0.55)','rgba(255,255,255,0.45)'][i % 6],
+}));
+
+const StarSVG = ({ size, color }: { size: number; color: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
+  </svg>
+);
+
+const AuthFallingStars = () => (
+  <>
+    <style>{`
+      @keyframes authStarFall {
+        0%   { transform: translateY(-30px) translateX(0);           opacity: 0; }
+        8%   { opacity: 1; }
+        88%  { opacity: 0.7; }
+        100% { transform: translateY(105vh) translateX(var(--auth-sway)); opacity: 0; }
+      }
+      @keyframes authStarSpin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+      }
+    `}</style>
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+      {AUTH_STARS.map(s => (
+        <div key={s.id} style={{
+          position: 'absolute', top: '-30px', left: s.left, opacity: 0,
+          animation: `authStarFall ${s.dur} ${s.delay} infinite ease-in-out`,
+          ['--auth-sway' as any]: `${s.sway}px`,
+        }}>
+          <div style={{ animation: `authStarSpin ${s.dur} ${s.delay} infinite linear` }}>
+            <StarSVG size={s.size} color={s.color} />
+          </div>
+        </div>
+      ))}
+    </div>
+  </>
+);
+
 interface AuthFormProps {
   theme: Theme;
   language: Language;
@@ -69,8 +116,9 @@ export const AuthForm = ({
   };
 
   return (
-    <div className={cn("min-h-screen flex items-center justify-center p-4 transition-colors duration-300", theme === 'dark' ? "bg-[#020617]" : "bg-slate-50")}>
-      <div className="absolute top-8 right-8 flex items-center gap-4">
+    <div className={cn("min-h-screen flex items-center justify-center p-4 transition-colors duration-300 relative overflow-hidden", theme === 'dark' ? "bg-[#020617]" : "bg-slate-50")}>
+      <AuthFallingStars />
+      <div className="absolute top-8 right-8 flex items-center gap-4 z-10">
         <button
           onClick={() => setLanguage(language === 'en' ? 'vi' : 'en')}
           className={cn("px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors", theme === 'dark' ? "bg-slate-900 border-slate-800 text-slate-400 hover:text-white" : "bg-white border-slate-200 text-slate-600 hover:text-slate-900")}
@@ -88,7 +136,7 @@ export const AuthForm = ({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={cn("w-full max-w-md p-8 rounded-2xl border shadow-2xl backdrop-blur-sm", theme === 'dark' ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200")}
+        className={cn("w-full max-w-md p-8 rounded-2xl border shadow-2xl backdrop-blur-sm relative z-10", theme === 'dark' ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200")}
       >
         <div className="flex flex-col items-center mb-8">
           <div className="bg-blue-600 p-3 rounded-xl mb-4">
