@@ -65,6 +65,7 @@ import { Whitelist } from './components/Whitelist';
 import { CheckoutPage } from './components/CheckoutPage';
 import { PaymentResultPage, type DemoPaymentResult } from './components/PaymentResultPage';
 import { MySubscription } from './components/MySubscription';
+import { ContactPage } from './components/ContactPage';
 import { ServerSelector } from './components/ServerSelector';
 import ServerAlertEmailsModal from './components/ServerAlertEmailsModal';
 import ServerTelegramRecipientsModal from './components/ServerTelegramRecipientsModal';
@@ -1292,6 +1293,10 @@ export default function App() {
                     onUpgrade={() => { setCheckoutPlan(null); setActiveTab('billing'); }}
                     refreshKey={subscriptionRefreshKey}
                   />
+                )}
+
+                {activeTab === 'contact' && (
+                  <ContactPage theme={theme} userRole={user?.role} />
                 )}
 
                 {activeTab === 'apiGuide' && (

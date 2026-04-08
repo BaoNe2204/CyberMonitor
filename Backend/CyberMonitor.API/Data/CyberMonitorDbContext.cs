@@ -26,6 +26,7 @@ public class CyberMonitorDbContext : DbContext
     public DbSet<AlertDigestQueue> AlertDigestQueue => Set<AlertDigestQueue>();
     public DbSet<PricingPlan> PricingPlans => Set<PricingPlan>();
     public DbSet<Whitelist> Whitelists => Set<Whitelist>();
+    public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -291,10 +292,21 @@ public class CyberMonitorDbContext : DbContext
             e.HasIndex(w => w.TenantId).HasDatabaseName("IX_Whitelists_TenantId");
             e.HasIndex(w => w.IpAddress).HasDatabaseName("IX_Whitelists_IpAddress");
             e.HasIndex(w => w.ServerId).HasDatabaseName("IX_Whitelists_ServerId");
-            // Composite index để check trùng IP theo tenant + server
             e.HasIndex(w => new { w.TenantId, w.ServerId, w.IpAddress })
                 .IsUnique()
                 .HasDatabaseName("IX_Whitelists_TenantId_ServerId_IpAddress");
+        });
+
+        // ContactMessage
+        modelBuilder.Entity<ContactMessage>(e =>
+        {
+            e.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            e.HasIndex(c => c.Status).HasDatabaseName("IX_ContactMessages_Status");
+            e.HasIndex(c => c.CreatedAt).HasDatabaseName("IX_ContactMessages_CreatedAt");
+            e.HasOne(c => c.RepliedByUser)
+                .WithMany()
+                .HasForeignKey(c => c.RepliedBy)
+                .OnDelete(DeleteBehavior.SetNull);
         });
         // --- Cấu hình Precision cho Decimal (Fix Warning 30000) ---
             modelBuilder.Entity<BlockedIP>()

@@ -724,3 +724,40 @@ public class Whitelist
     [ForeignKey(nameof(ServerId))]
     public Server? Server { get; set; }
 }
+
+/// <summary>Tin nhắn liên hệ từ khách hàng gửi cho admin.</summary>
+public class ContactMessage
+{
+    [Key]
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    [Required, MaxLength(200)]
+    public string Name { get; set; } = string.Empty;
+
+    [Required, MaxLength(255), EmailAddress]
+    public string Email { get; set; } = string.Empty;
+
+    [MaxLength(500)]
+    public string? Subject { get; set; }
+
+    [Required]
+    public string Message { get; set; } = string.Empty;
+
+    /// <summary>unread | read | replied</summary>
+    [Required, MaxLength(20)]
+    public string Status { get; set; } = "unread";
+
+    public string? Reply { get; set; }
+
+    public Guid? RepliedBy { get; set; }
+
+    public DateTime? RepliedAt { get; set; }
+
+    [MaxLength(50)]
+    public string? IpAddress { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [ForeignKey(nameof(RepliedBy))]
+    public User? RepliedByUser { get; set; }
+}

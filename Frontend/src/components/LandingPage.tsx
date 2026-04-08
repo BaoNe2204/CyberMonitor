@@ -8,7 +8,6 @@ import { cn } from '../lib/utils';
 import { Theme, Language } from '../types';
 import { PricingPlansApi } from '../services/api';
 import { PricingCarousel } from './PricingCarousel';
-import { PricingMarquee } from './PricingMarquee';
 
 // ── Floating particle ────────────────────────────────────────────────────────
 const Particle = ({ dark }: { dark: boolean; [key: string]: any }) => {
@@ -152,6 +151,34 @@ export const LandingPage = ({ theme, language, setLanguage, setShowAuth, setAuth
     { name: t.planPro,        priceNum: 2500000,   features: [t.unlimitedAgents, t.customReports, t.aiSupport],          popular: true,  billingPeriod: 'monthly', isEnterprise: false },
     { name: t.planEnterprise, priceNum: 0,         features: [t.dedicatedManager, t.mitreMapping, t.predictiveAnalysis], popular: false, billingPeriod: 'monthly', isEnterprise: true  },
   ];
+
+  // Chọn tối đa 3 gói để hiển thị: rẻ nhất + đắt nhất + tầm trung (hoặc popular)
+  const landingPlans = (() => {
+    if (displayPlans.length <= 3) return displayPlans;
+
+    const sorted = [...displayPlans].sort((a, b) => a.priceNum - b.priceNum);
+    const cheapest  = sorted[0];                                    // rẻ nhất
+    const priciest  = sorted[sorted.length - 1];                    // đắt nhất
+
+    // Tầm trung: ưu tiên gói popular, nếu không thì lấy gói giữa
+    const middle = displayPlans.find(p => p.popular && p !== cheapest && p !== priciest)
+      ?? sorted[Math.floor(sorted.length / 2)];
+
+    // Đảm bảo không trùng
+    const three = [cheapest, middle, priciest].filter(
+      (p, i, arr) => arr.indexOf(p) === i
+    );
+
+    // Nếu vẫn < 3 (ví dụ chỉ có 2 gói khác nhau), bổ sung thêm
+    if (three.length < 3) {
+      for (const p of sorted) {
+        if (!three.includes(p)) three.push(p);
+        if (three.length === 3) break;
+      }
+    }
+
+    return three;
+  })();
 
   return (
     <div className={cn("min-h-screen transition-colors duration-300 relative", theme === 'dark' ? "bg-[#020617] text-slate-200" : "bg-slate-50 text-slate-800")}>
@@ -564,8 +591,75 @@ export const LandingPage = ({ theme, language, setLanguage, setShowAuth, setAuth
         </div>
       </section>
 
-      {/* Pricing Section — Infinite marquee */}
-      <PricingMarquee plans={displayPlans} theme={theme} t={t} onSelect={() => setShowAuth(true)} />
+      {/* Pricing Section — 3 gói tĩnh */}
+      <section className={cn('py-24 px-6 relative z-10', theme === 'dark' ? 'bg-slate-950/50' : 'bg-slate-100/50')}>
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className={cn('text-3xl lg:text-5xl font-bold mb-4', theme === 'dark' ? 'text-white' : 'text-slate-900')}>
+              {t.pricingTitle}
+            </h2>
+            <p className="text-xl text-slate-500 max-w-2xl mx-auto">{t.pricingSub}</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+            {landingPlans.map((plan, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                whileHover={{
+                  scale: plan.popular ? 1.08 : 1.05,
+                  y: -8,
+                  transition: { type: 'spring', stiffness: 300, damping: 20 },
+                }}
+                className={cn(
+                  'p-8 rounded-3xl border relative flex flex-col cursor-pointer',
+                  plan.popular
+                    ? 'bg-blue-600 border-blue-500 text-white shadow-2xl shadow-blue-600/20 scale-105 z-10'
+                    : theme === 'dark' ? 'bg-slate-900 border-slate-800 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10' : 'bg-white border-slate-200 shadow-sm hover:border-blue-300 hover:shadow-xl hover:shadow-blue-100'
+                )}
+              >
+                {plan.popular && (
+                  <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-900 text-xs font-black px-4 py-1 rounded-full uppercase tracking-widest whitespace-nowrap">
+                    ★ Phổ biến nhất
+                  </span>
+                )}
+                <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+                <div className="flex items-baseline gap-1 mb-8">
+                  {plan.isEnterprise ? (
+                    <span className="text-4xl font-black">Custom</span>
+                  ) : plan.priceNum === 0 ? (
+                    <span className="text-4xl font-black">Miễn phí</span>
+                  ) : (
+                    <>
+                      <span className="text-4xl font-black">{plan.priceNum.toLocaleString('vi-VN')}</span>
+                      <span className="text-sm opacity-70 ml-1">{t.vnd}/{plan.billingPeriod === 'yearly' ? 'năm' : 'tháng'}</span>
+                    </>
+                  )}
+                </div>
+                <ul className="space-y-3 mb-10 flex-1">
+                  {plan.features.map((feat: string, j: number) => (
+                    <li key={j} className="flex items-center gap-3 text-sm font-medium">
+                      <Check size={16} className={plan.popular ? 'text-white' : 'text-blue-500'} />
+                      {feat}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => setShowAuth(true)}
+                  className={cn(
+                    'w-full py-4 rounded-xl font-bold transition-all',
+                    plan.popular ? 'bg-white text-blue-600 hover:bg-slate-100' : 'bg-blue-600 text-white hover:bg-blue-500'
+                  )}
+                >
+                  {t.getStarted}
+                </button>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Stats Section */}
       <section className="py-20 px-6 relative z-10">
