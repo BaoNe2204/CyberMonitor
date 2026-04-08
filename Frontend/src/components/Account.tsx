@@ -1,15 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { User, Shield, Lock, Camera, Eye, EyeOff, Check, X } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { User, Shield, Lock, Camera, Eye, EyeOff, Check, X, Smartphone } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Theme } from '../types';
 import { AuthApi } from '../services/api';
+import { optimizeImage } from '../utils/imageUtils';
 
 interface AccountProps {
   theme: Theme;
   t: any;
+  show2FAModal: boolean;
+  setShow2FAModal: (show: boolean) => void;
+  is2FAEnabled: boolean;
+  setIs2FAEnabled: (v: boolean) => void;
+  user: any;
+  onUserUpdate: (user: any) => void;
 }
 
-export const Account = ({ theme }: AccountProps) => {
+export const Account = ({ theme, t, show2FAModal, setShow2FAModal, is2FAEnabled, setIs2FAEnabled, user, onUserUpdate }: AccountProps) => {
   const [userInfo, setUserInfo] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -30,10 +37,74 @@ export const Account = ({ theme }: AccountProps) => {
   const [securitySaving, setSecuritySaving] = useState(false);
   const [securityMessage, setSecurityMessage] = useState('');
   const [securityError, setSecurityError] = useState('');
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchUserInfo();
   }, []);
+
+  // Sync avatar preview from user data
+  useEffect(() => {
+    if (userInfo?.avatarUrl) {
+      setAvatarPreview(userInfo.avatarUrl);
+    }
+  }, [userInfo?.avatarUrl]);
+
+  // Sau khi App gọi getMe (bật/tắt 2FA), user.twoFactorEnabled đổi → refetch để toggle khớp DB
+  const prevTwoFactorRef = useRef(user?.twoFactorEnabled);
+  useEffect(() => {
+    if (user?.twoFactorEnabled === prevTwoFactorRef.current) return;
+    prevTwoFactorRef.current = user?.twoFactorEnabled;
+    void fetchUserInfo();
+  }, [user?.twoFactorEnabled]);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Vui lòng chọn file ảnh.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ảnh phải nhỏ hơn 5MB.');
+      return;
+    }
+    setAvatarUploading(true);
+    try {
+      const optimized = await optimizeImage(file, { maxWidth: 256, maxHeight: 256, maxSizeKB: 100 });
+      const res = await AuthApi.uploadAvatar(optimized.dataUrl);
+      if (res.success) {
+        const updatedUser = { ...userInfo, avatarUrl: optimized.dataUrl };
+        setUserInfo(updatedUser);
+        setAvatarPreview(optimized.dataUrl);
+        onUserUpdate?.(updatedUser);
+      } else {
+        alert(res.message || 'Upload avatar thất bại.');
+      }
+    } catch {
+      alert('Lỗi khi upload avatar.');
+    } finally {
+      setAvatarUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    setAvatarUploading(true);
+    try {
+      const res = await AuthApi.uploadAvatar(null);
+      if (res.success) {
+        const updatedUser = { ...userInfo, avatarUrl: null };
+        setUserInfo(updatedUser);
+        setAvatarPreview(null);
+        onUserUpdate?.(updatedUser);
+      }
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
 
   const fetchUserInfo = async () => {
     try {
@@ -113,6 +184,13 @@ export const Account = ({ theme }: AccountProps) => {
   ) => {
     if (!userInfo) return;
 
+    // 2FA: open setup modal instead of directly updating
+    if (field === 'twoFactorEnabled') {
+      setShow2FAModal(true);
+      return;
+    }
+
+    // Session timeout: update directly
     const updatedUser = { ...userInfo, [field]: value };
     setUserInfo(updatedUser);
     setSecuritySaving(true);
@@ -128,6 +206,7 @@ export const Account = ({ theme }: AccountProps) => {
 
       if (response.success && response.data) {
         setUserInfo(response.data);
+        onUserUpdate?.(response.data);
         setSecurityMessage('Đã cập nhật cài đặt bảo mật.');
         setTimeout(() => setSecurityMessage(''), 2500);
       } else {
@@ -168,16 +247,50 @@ export const Account = ({ theme }: AccountProps) => {
         )}>
           <div className="flex flex-col items-center text-center">
             <div className="relative group">
+              {/* Avatar circle */}
               <div className={cn(
-                "w-32 h-32 rounded-full flex items-center justify-center border-4",
+                "w-32 h-32 rounded-full flex items-center justify-center border-4 overflow-hidden",
                 theme === 'dark' ? "bg-slate-800 border-slate-700" : "bg-slate-100 border-white shadow-lg"
               )}>
-                <User size={64} className="text-slate-400" />
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <User size={64} className="text-slate-400" />
+                )}
+                {avatarUploading && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full">
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
               </div>
-              <button className="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full text-white shadow-lg hover:bg-blue-500 transition-colors">
+              {/* Camera button */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={avatarUploading}
+                className="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full text-white shadow-lg hover:bg-blue-500 transition-colors disabled:opacity-50"
+                title="Đổi avatar"
+              >
                 <Camera size={16} />
               </button>
+              {/* Remove button */}
+              {avatarPreview && !avatarUploading && (
+                <button
+                  onClick={handleRemoveAvatar}
+                  className="absolute -top-1 -left-1 bg-rose-600 p-1.5 rounded-full text-white shadow-lg hover:bg-rose-500 transition-colors"
+                  title="Xóa avatar"
+                >
+                  <X size={12} />
+                </button>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
             </div>
+            <p className="text-xs text-slate-500 mt-2">JPG/PNG/WebP, tối đa 5MB</p>
             <h3 className={cn("mt-4 text-xl font-bold", theme === 'dark' ? "text-white" : "text-slate-900")}>{userInfo?.fullName || 'Loading...'}</h3>
             <p className="text-slate-500 text-sm">{userInfo?.email || ''}</p>
             
@@ -469,7 +582,7 @@ export const Account = ({ theme }: AccountProps) => {
                   disabled={securitySaving}
                   className={cn(
                     "relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-60",
-                    userInfo?.twoFactorEnabled ?? false
+                    (!!userInfo?.twoFactorEnabled || is2FAEnabled)
                       ? "bg-blue-600"
                       : (theme === 'dark' ? "bg-slate-700" : "bg-slate-200")
                   )}
@@ -477,7 +590,7 @@ export const Account = ({ theme }: AccountProps) => {
                   <span
                     className={cn(
                       "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                      userInfo?.twoFactorEnabled ?? false ? "translate-x-6" : "translate-x-1"
+                      (!!userInfo?.twoFactorEnabled || is2FAEnabled) ? "translate-x-6" : "translate-x-1"
                     )}
                   />
                 </button>

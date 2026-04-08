@@ -1398,6 +1398,25 @@ class AutoBlockEngine:
 # ──────────────────────────────────────────────────────────────────────────────
 
 class AIEngineV3Service:
+    def _is_whitelisted(self, ip: str, server_id: str = None) -> bool:
+        try:
+            url = f"{self.backend_url}/api/whitelists/ai-check/{ip}"
+            params = {}
+            if server_id:
+                params["serverId"] = server_id
+            
+            resp = self.session.get(url, params=params, timeout=5)
+            
+            if resp.status_code == 200:
+                data = resp.json()
+                return data.get("data", {}).get("isWhitelisted", False)
+            else:
+                logger.warning("Whitelist check failed: %d", resp.status_code)
+                return False
+        except Exception as exc:
+            logger.warning("Whitelist check error for IP %s: %s", ip, exc)
+            return False
+
     def __init__(
         self,
         backend_url: str,
@@ -1563,6 +1582,12 @@ class AIEngineV3Service:
             return []
 
     def _trigger_alert(self, d: ThreatDecision) -> None:
+        if self._is_whitelisted(d.source_ip, d.server_id):
+            logger.info(
+                "[WHITELIST SKIP] IP %s is whitelisted (server: %s) - no alert sent",
+                d.source_ip, d.server_id or "any"
+            )
+            return 
         mitre = MITRE.get(d.attack_type, MITRE["UnknownAnomaly"])
         # Determine serverId: from threat decision, or fallback to engine-level
         server_id = d.server_id or self.server_id or None

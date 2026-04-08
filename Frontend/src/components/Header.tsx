@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { Theme, Notification, Language } from '../types';
 import { NotificationsApi } from '../services/api';
+import { formatDateTimeShortVi } from '../utils/dateUtils';
 
 interface HeaderProps {
   theme: Theme;
@@ -258,7 +259,7 @@ export const Header = ({
                                 "text-[10px] mt-1.5",
                                 theme === 'dark' ? "text-slate-600" : "text-slate-400"
                               )}>
-                                {new Date(n.createdAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
+                                {formatDateTimeShortVi(n.createdAt)}
                               </p>
                             </div>
                           </div>

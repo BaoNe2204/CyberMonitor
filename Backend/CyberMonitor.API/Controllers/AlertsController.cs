@@ -56,12 +56,16 @@ public class AlertsController : ControllerBase
         }
 
         // 1. Kiểm tra IP có trong Whitelist không
+        // Hỗ trợ cả tenant-wide (ServerId=null) lẫn server-specific (ServerId=có giá trị)
         var isWhitelisted = await _db.Whitelists
-            .AnyAsync(w => w.IpAddress == request.SourceIp && w.TenantId == tenantId);
+            .AnyAsync(w => w.IpAddress == request.SourceIp
+                && w.TenantId == tenantId
+                && (w.ServerId == null || w.ServerId == request.ServerId));
 
         if (isWhitelisted)
         {
-            _logger.LogInformation("[WHITELIST] IP {Ip} nam trong Whitelist — bo qua alert.", request.SourceIp);
+            _logger.LogInformation("[WHITELIST] IP {Ip} nam trong Whitelist (ServerId={ServerId}) — bo qua alert.",
+                request.SourceIp, request.ServerId);
             return Ok(new ApiResponse<object>(true, "Whitelisted IP — alert ignored.", new { ip = request.SourceIp }));
         }
 
@@ -86,6 +90,16 @@ public class AlertsController : ControllerBase
 
             _db.Alerts.Add(alert);
             await _db.SaveChangesAsync();
+
+            _db.AuditLogs.Add(new AuditLog
+            {
+                TenantId = tenantId,
+                UserId = null, // Alert triggered by external agent — no authenticated user
+                Action = "ALERT_TRIGGERED",
+                EntityType = "Alert",
+                EntityId = alert.Id.ToString(),
+                Details = $"Alert [{alert.Severity}] {alert.AlertType}: {alert.Title} from {alert.SourceIp ?? "unknown"}"
+            });
 
             if (request.ServerId.HasValue)
             {
@@ -218,6 +232,16 @@ public class AlertsController : ControllerBase
         if (request.Status == "Resolved")
             alert.ResolvedBy = request.UpdatedBy ?? userId;
 
+        _db.AuditLogs.Add(new AuditLog
+        {
+            TenantId = alert.TenantId,
+            UserId = userId,
+            Action = request.Status == "Acknowledged" ? "ALERT_ACKNOWLEDGED" : "ALERT_RESOLVED",
+            EntityType = "Alert",
+            EntityId = alert.Id.ToString(),
+            Details = $"Alert [{alert.Severity}] {alert.AlertType} status changed to {request.Status}"
+        });
+
         await _db.SaveChangesAsync();
 
         var dto = MapAlertDto(alert);
@@ -233,6 +257,7 @@ public class AlertsController : ControllerBase
     {
         var tenantId = GetTenantId();
         var role = GetUserRole();
+        var userId = GetUserId();
 
         var alert = await _db.Alerts.FindAsync(id);
         if (alert == null)
@@ -240,6 +265,18 @@ public class AlertsController : ControllerBase
 
         if (role != "SuperAdmin" && alert.TenantId != tenantId)
             return Forbid();
+
+        var alertInfo = $"[{alert.Severity}] {alert.AlertType}: {alert.Title}";
+
+        _db.AuditLogs.Add(new AuditLog
+        {
+            TenantId = alert.TenantId,
+            UserId = userId,
+            Action = "ALERT_DELETED",
+            EntityType = "Alert",
+            EntityId = alert.Id.ToString(),
+            Details = $"Alert {alertInfo} was deleted"
+        });
 
         _db.Alerts.Remove(alert);
         await _db.SaveChangesAsync();
@@ -269,7 +306,7 @@ public class AlertsController : ControllerBase
             Priority = alert.Severity,
             Status = "OPEN",
             Category = "Security",
-            CreatedBy = adminUserId ?? alert.TenantId  // fallback = tenantId (không có FK ở đây)
+            CreatedBy = adminUserId // null nếu không có admin nào trong tenant
         };
 
         _db.Tickets.Add(ticket);

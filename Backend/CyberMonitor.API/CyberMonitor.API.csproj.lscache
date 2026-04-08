@@ -60,6 +60,7 @@ Controllers/
  AlertsController.cs
  AuditLogsController.cs
  AuthController.cs
+ ContactController.cs
  DashboardController.cs
  DefenseController.cs
  DownloadController.cs
@@ -71,6 +72,7 @@ Controllers/
  ServersController.cs
  SubscriptionsController.cs
  TestController.cs
+ TestEmailController.cs
  TicketsController.cs
  UsersController.cs
  WhitelistsController.cs
@@ -79,12 +81,18 @@ Extensions/HttpContextExtensions.cs
 Hubs/
  AgentHub.cs
  AlertHub.cs
-Middlewares/ApiKeyAuthMiddleware.cs
+Middlewares/
+ ApiKeyAuthMiddleware.cs
+ TempTokenBlockerMiddleware.cs
 Migrations/
  20260407191458_AddServerIdToWhitelists.cs
  20260407191458_AddServerIdToWhitelists.Designer.cs
  20260407223648_AddUniqueIndex_BlockedIPs.cs
  20260407223648_AddUniqueIndex_BlockedIPs.Designer.cs
+ 20260408140809_AddAvatarUrlToUsers.cs
+ 20260408140809_AddAvatarUrlToUsers.Designer.cs
+ 20260408201807_AddIsActiveToWhitelist.cs
+ 20260408201807_AddIsActiveToWhitelist.Designer.cs
  CyberMonitorDbContextModelSnapshot.cs
 Models/
  DTOs.cs
@@ -100,7 +108,6 @@ Services/
  EmailService.cs
  JwtService.cs
  TelegramService.cs
- VnpayService.cs
 
 [metadataReferences]
 <NUGET>/
@@ -433,6 +440,7 @@ Services/
  microsoft.openapi/1.2.3/lib/netstandard2.0/Microsoft.OpenApi.dll
  microsoft.sqlserver.server/1.0.0/lib/netstandard2.0/Microsoft.SqlServer.Server.dll
  newtonsoft.json/11.0.2/lib/netstandard2.0/Newtonsoft.Json.dll
+ otp.net/1.4.1/lib/net8.0/Otp.NET.dll
  sixlabors.fonts/1.0.0/lib/netcoreapp3.1/SixLabors.Fonts.dll
  swashbuckle.aspnetcore.swagger/6.5.0/lib/net7.0/Swashbuckle.AspNetCore.Swagger.dll
  swashbuckle.aspnetcore.swaggergen/6.5.0/lib/net7.0/Swashbuckle.AspNetCore.SwaggerGen.dll

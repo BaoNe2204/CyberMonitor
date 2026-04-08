@@ -8,6 +8,7 @@ import { cn } from '../lib/utils';
 import { Theme } from '../types';
 import { TicketsApi, UsersApi, type Ticket, type TicketComment, type User } from '../services/api';
 import { getStoredUser } from '../services/api';
+import { formatDateTime, formatRelativeLongTruoc } from '../utils/dateUtils';
 
 const PAGE_SIZE = 15;
 
@@ -54,19 +55,6 @@ const PRIORITY_COLORS: Record<string, string> = {
   Medium: 'text-yellow-400 bg-yellow-500/10',
   Low: 'text-blue-400 bg-blue-500/10',
 };
-
-function formatDate(d: string) {
-  const date = new Date(d);
-  return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
-}
-
-function timeAgo(d: string) {
-  const diff = Date.now() - new Date(d).getTime();
-  if (diff < 60000) return 'Vừa xong';
-  if (diff < 3600000) return `${Math.floor(diff / 60000)} phút trước`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)} giờ trước`;
-  return `${Math.floor(diff / 86400000)} ngày trước`;
-}
 
 // ─── Detail Modal ──────────────────────────────────────────────────────────────
 
@@ -140,9 +128,9 @@ function TicketDetailModal({ theme, ticket, onClose, onRefresh }: DetailModalPro
               { label: 'Người tạo', value: ticket.createdByName ?? '—' },
               { label: 'Người xử lý', value: ticket.assignedToName ?? 'Chưa phân công' },
               { label: 'Danh mục', value: ticket.category ?? '—' },
-              { label: 'Hạn xử lý', value: ticket.dueDate ? formatDate(ticket.dueDate) : '—' },
-              { label: 'Tạo lúc', value: formatDate(ticket.createdAt) },
-              { label: 'Cập nhật', value: formatDate(ticket.updatedAt) },
+              { label: 'Hạn xử lý', value: ticket.dueDate ? formatDateTime(ticket.dueDate) : '—' },
+              { label: 'Tạo lúc', value: formatDateTime(ticket.createdAt) },
+              { label: 'Cập nhật', value: formatDateTime(ticket.updatedAt) },
             ].map((m, i) => (
               <div key={i}>
                 <p className="text-slate-500 mb-0.5">{m.label}</p>
@@ -181,7 +169,7 @@ function TicketDetailModal({ theme, ticket, onClose, onRefresh }: DetailModalPro
                       <span className={cn('text-xs font-bold', theme === 'dark' ? 'text-blue-400' : 'text-blue-600')}>{c.userName}</span>
                       <div className="flex items-center gap-2">
                         {c.isInternal && <span className="text-[10px] text-amber-400 font-bold">NỘI BỘ</span>}
-                        <span className="text-xs text-slate-500">{timeAgo(c.createdAt)}</span>
+                        <span className="text-xs text-slate-500">{formatRelativeLongTruoc(c.createdAt)}</span>
                       </div>
                     </div>
                     <p className={cn('leading-relaxed', theme === 'dark' ? 'text-slate-300' : 'text-slate-700')}>{c.content}</p>
@@ -231,20 +219,50 @@ function TicketDetailModal({ theme, ticket, onClose, onRefresh }: DetailModalPro
 interface CreateTicketModalProps {
   theme: Theme;
   currentUser: any;
-  tenantId: string;
+  tenantId?: string;  // Optional - SuperAdmin không có, Admin/User có
   onClose: () => void;
   onSuccess: () => void;
 }
 
 function CreateTicketModal({ theme, currentUser, tenantId, onClose, onSuccess }: CreateTicketModalProps) {
-  const [form, setForm] = useState({ title: '', description: '', priority: 'Medium', category: '' });
+  const [form, setForm] = useState({ title: '', description: '', priority: 'Medium', category: '', selectedTenantId: tenantId || '' });
   const [submitting, setSubmitting] = useState(false);
+  const [tenants, setTenants] = useState<any[]>([]);
+  const isSuperAdmin = currentUser?.role === 'SuperAdmin';
+
+  // SuperAdmin: Load danh sách tenants để chọn
+  useEffect(() => {
+    if (isSuperAdmin) {
+      // TODO: Gọi API lấy danh sách tenants
+      // Tạm thời để trống, SuperAdmin phải nhập tenantId thủ công
+    }
+  }, [isSuperAdmin]);
 
   const handleSubmit = async () => {
     if (!form.title.trim()) { alert('Vui lòng nhập tiêu đề'); return; }
+    
+    // SuperAdmin phải chọn tenant
+    if (isSuperAdmin && !form.selectedTenantId.trim()) {
+      alert('SuperAdmin phải chỉ định Tenant ID');
+      return;
+    }
+    
     setSubmitting(true);
     try {
-      const res = await TicketsApi.create({ tenantId, title: form.title, description: form.description, priority: form.priority, category: form.category || undefined, createdBy: currentUser.id });
+      const payload: any = { 
+        title: form.title, 
+        description: form.description, 
+        priority: form.priority, 
+        category: form.category || undefined, 
+        createdBy: currentUser.id 
+      };
+      
+      // Thêm tenantId (Admin/User từ JWT, SuperAdmin từ form)
+      if (form.selectedTenantId && form.selectedTenantId.trim()) {
+        payload.tenantId = form.selectedTenantId;
+      }
+      
+      const res = await TicketsApi.create(payload);
       if (res.success) { onSuccess(); onClose(); }
       else alert(res.message || 'Tạo ticket thất bại');
     } catch { alert('Lỗi tạo ticket'); }
@@ -259,6 +277,21 @@ function CreateTicketModal({ theme, currentUser, tenantId, onClose, onSuccess }:
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-800 text-slate-400"><X size={18} /></button>
         </div>
         <div className="space-y-4">
+          {/* SuperAdmin: Nhập Tenant ID */}
+          {isSuperAdmin && (
+            <div>
+              <label className="text-[11px] font-bold text-slate-500 uppercase mb-1.5 block">Tenant ID * (SuperAdmin)</label>
+              <input 
+                value={form.selectedTenantId} 
+                onChange={e => setForm({ ...form, selectedTenantId: e.target.value })} 
+                placeholder="Nhập Tenant ID (GUID)"
+                className={cn('w-full rounded-lg px-4 py-2.5 text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/50',
+                  theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900')} 
+              />
+              <p className="text-xs text-slate-500 mt-1">SuperAdmin phải chỉ định Tenant ID để tạo ticket</p>
+            </div>
+          )}
+          
           <div>
             <label className="text-[11px] font-bold text-slate-500 uppercase mb-1.5 block">Tiêu đề *</label>
             <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Mô tả ngắn gọn vấn đề"
@@ -452,7 +485,7 @@ export const TicketManagement = ({ theme, userRole }: TicketManagementProps) => 
                         ? <span className="text-xs font-semibold text-blue-400">{t.assignedToName}</span>
                         : <span className="text-xs text-slate-600">Chưa phân</span>}
                     </td>
-                    <td className="px-5 py-3.5 hidden xl:table-cell text-xs text-slate-500 whitespace-nowrap">{timeAgo(t.createdAt)}</td>
+                    <td className="px-5 py-3.5 hidden xl:table-cell text-xs text-slate-500 whitespace-nowrap">{formatRelativeLongTruoc(t.createdAt)}</td>
                     <td className="px-5 py-3.5 text-right">
                       <button onClick={e => { e.stopPropagation(); setDetailTicket(t); }}
                         className={cn('p-1.5 rounded-lg border text-xs font-medium transition-all',

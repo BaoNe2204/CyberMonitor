@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { cn } from '../lib/utils';
 import { Theme, Alert } from '../types';
+import { formatRelativeCompactTruoc, getApiTimeMs } from '../utils/dateUtils';
 
 interface IncidentsProps {
   theme: Theme;
@@ -10,17 +11,6 @@ interface IncidentsProps {
 }
 
 const severityOrder = { 'Critical': 0, 'High': 1, 'Medium': 2, 'Low': 3 };
-
-const formatTimeAgo = (dateStr: string | null | undefined) => {
-  if (!dateStr) return '—';
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
-  if (diff < 60) return `${diff}s trước`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}p trước`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h trước`;
-  return `${Math.floor(diff / 86400)}d trước`;
-};
 
 export const Incidents = ({ theme, t, recentAlerts, setSelectedDetail }: IncidentsProps) => {
   const [severityFilter, setSeverityFilter] = useState<string>('all');
@@ -33,7 +23,7 @@ export const Incidents = ({ theme, t, recentAlerts, setSelectedDetail }: Inciden
       const sA = severityOrder[a.severity || 'Low'] ?? 3;
       const sB = severityOrder[b.severity || 'Low'] ?? 3;
       if (sA !== sB) return sA - sB;
-      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      return getApiTimeMs(b.createdAt) - getApiTimeMs(a.createdAt);
     });
 
   const handleExport = () => {
@@ -154,7 +144,7 @@ export const Incidents = ({ theme, t, recentAlerts, setSelectedDetail }: Inciden
                         {alert.status || 'Open'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-xs text-slate-500">{formatTimeAgo(alert.createdAt)}</td>
+                    <td className="px-6 py-4 text-xs text-slate-500">{formatRelativeCompactTruoc(alert.createdAt)}</td>
                     <td className="px-6 py-4">
                       <button 
                         onClick={() => setSelectedDetail({ type: 'incident', data: alert })}

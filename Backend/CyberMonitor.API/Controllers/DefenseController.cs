@@ -5,6 +5,7 @@ using CyberMonitor.API.Extensions;
 using CyberMonitor.API.Hubs;
 using CyberMonitor.API.Models;
 using CyberMonitor.API.Models.DTOs;
+using CyberMonitor.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -22,17 +23,29 @@ public class DefenseController : ControllerBase
     private readonly IHubContext<AlertHub, IAlertHub> _alertHub;
     private readonly IHubContext<AgentHub, IAgentHub> _agentHub;
     private readonly ILogger<DefenseController> _logger;
+    private readonly IEmailService _emailService;
+    private readonly ITelegramService _telegramService;
+    private readonly IConfiguration _configuration;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     public DefenseController(
         CyberMonitorDbContext db,
         IHubContext<AlertHub, IAlertHub> alertHub,
         IHubContext<AgentHub, IAgentHub> agentHub,
-        ILogger<DefenseController> logger)
+        ILogger<DefenseController> logger,
+        IEmailService emailService,
+        ITelegramService telegramService,
+        IConfiguration configuration,
+        IServiceScopeFactory scopeFactory)
     {
         _db = db;
         _alertHub = alertHub;
         _agentHub = agentHub;
         _logger = logger;
+        _emailService = emailService;
+        _telegramService = telegramService;
+        _configuration = configuration;
+        _scopeFactory = scopeFactory;
     }
 
     // ============================================================================
@@ -69,6 +82,20 @@ public class DefenseController : ControllerBase
 
         if (recentBlocks >= 10)
             return BadRequest(new ApiResponse<object>(false, "Rate limit exceeded. Max 10 blocks per minute.", null));
+
+        // 2. Kiểm tra IP có trong Whitelist không — nếu có, bỏ qua block và notification
+        // Hỗ trợ cả tenant-wide (ServerId=null) lẫn server-specific (ServerId=có giá trị)
+        var isWhitelisted = await _db.Whitelists
+            .AnyAsync(w => w.IpAddress == request.Ip
+                && w.TenantId == effectiveTenantId
+                && (w.ServerId == null || w.ServerId == request.ServerId));
+
+        if (isWhitelisted)
+        {
+            _logger.LogInformation("[BLOCK] IP {Ip} nam trong Whitelist (ServerId={ServerId}) — bo qua block va notification.",
+                request.Ip, request.ServerId);
+            return Ok(new ApiResponse<object>(true, "Whitelisted IP — block ignored.", new { ip = request.Ip }));
+        }
 
         // Retry loop: xử lý race condition khi nhiều request chặn cùng 1 IP một lúc
         const int maxRetries = 3;
@@ -214,24 +241,51 @@ public class DefenseController : ControllerBase
                             CreatedBy = null
                         };
                         _db.Tickets.Add(ticket);
-
-                        _db.AuditLogs.Add(new AuditLog
-                        {
-                            TenantId = effectiveTenantId,
-                            Action = "AUTO_BLOCKED",
-                            EntityType = "BlockedIP",
-                            EntityId = blockedIP.Id.ToString(),
-                            Details = $"Auto-blocked {request.Ip} - {request.AttackType}"
-                        });
                     }
                     catch (Exception ticketEx)
                     {
-                        _logger.LogError(ticketEx, "[BLOCK] Ticket/AuditLog failed — continuing");
+                        _logger.LogError(ticketEx, "[BLOCK] Ticket creation failed — continuing");
                     }
+
+                    _db.AuditLogs.Add(new AuditLog
+                    {
+                        TenantId = effectiveTenantId,
+                        UserId = null,
+                        Action = "AUTO_BLOCKED",
+                        EntityType = "BlockedIP",
+                        EntityId = blockedIP.Id.ToString(),
+                        Details = $"Auto-blocked {request.Ip} - {request.AttackType}"
+                    });
                 }
 
                 await _db.SaveChangesAsync();
                 await tx.CommitAsync();
+
+                // === Gửi Email + Telegram + Notifications (sau commit — lỗi không ảnh hưởng transaction) ===
+                if (request.AttackType != null)
+                {
+                    var blockedIpForNotify = blockedIP;
+                    _ = Task.Run(async () =>
+                    {
+                        using var scope = _scopeFactory.CreateScope();
+                        var dbBg = scope.ServiceProvider.GetRequiredService<CyberMonitorDbContext>();
+                        try
+                        {
+                            var alertForNotify = await dbBg.Alerts
+                                .Where(a => a.TenantId == effectiveTenantId && a.SourceIp == request.Ip)
+                                .OrderByDescending(a => a.CreatedAt)
+                                .FirstOrDefaultAsync();
+                            if (alertForNotify == null) return;
+
+                            var ticketForNotify = await dbBg.Tickets
+                                .Where(t => t.AlertId == alertForNotify.Id)
+                                .FirstOrDefaultAsync();
+
+                            await SendBlockNotificationsAsync(alertForNotify, ticketForNotify, effectiveTenantId, dbBg, scope.ServiceProvider);
+                        }
+                        catch (Exception ex) { _logger.LogError(ex, "[BLOCK] Notification send failed after DB committed"); }
+                    });
+                }
 
                 // Push SignalR (sau commit)
                 var newBlockCmd = new BlockCommandDto
@@ -683,6 +737,138 @@ public class DefenseController : ControllerBase
 
     private string GetUserRole() =>
         User.FindFirstValue(ClaimTypes.Role) ?? "User";
+
+    /// <summary>Gửi Email + Telegram + In-app Notifications khi IP bị block (chạy sau transaction commit).</summary>
+    private async Task SendBlockNotificationsAsync(Alert alert, Ticket? ticket, Guid tenantId, CyberMonitorDbContext db, IServiceProvider sp)
+    {
+        var emailSvc = sp.GetRequiredService<IEmailService>();
+        var telegramSvc = sp.GetRequiredService<ITelegramService>();
+
+        // In-app notifications: gửi đến tất cả user trong tenant (SignalR + DB notification)
+        var users = await db.Users
+            .Where(u => u.TenantId == tenantId && u.IsActive)
+            .ToListAsync();
+
+        var server = alert.ServerId.HasValue ? await db.Servers.FindAsync(alert.ServerId.Value) : null;
+
+        foreach (var user in users)
+        {
+            try
+            {
+                db.Notifications.Add(new Notification
+                {
+                    TenantId = tenantId,
+                    UserId = user.Id,
+                    Title = $"[{alert.Severity}] {alert.AlertType}",
+                    Message = alert.Title,
+                    Type = alert.Severity == "Critical" ? "Alert" : "Warning",
+                    Link = ticket != null ? $"/dashboard/tickets/{ticket.Id}" : "/dashboard/alerts"
+                });
+                await db.SaveChangesAsync();
+
+                var notifDto = new NotificationDto(
+                    Guid.NewGuid(), tenantId, user.Id,
+                    $"[{alert.Severity}] {alert.AlertType}",
+                    alert.Title,
+                    alert.Severity == "Critical" ? "Alert" : "Warning",
+                    false,
+                    ticket != null ? $"/dashboard/tickets/{ticket.Id}" : "/dashboard/alerts",
+                    DateTime.UtcNow
+                );
+                await _alertHub.Clients.Group(tenantId.ToString()).NotificationReceived(notifDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[BLOCK] Notification for user {UserId} failed", user.Id);
+            }
+        }
+
+        // Email alert: gửi đến ServerAlertEmails (nếu có serverId)
+        if (alert.ServerId.HasValue)
+        {
+            var serverAlertEmails = await db.ServerAlertEmails
+                .Where(e => e.IsActive && e.ServerId == alert.ServerId)
+                .ToListAsync();
+
+            foreach (var alertEmail in serverAlertEmails)
+            {
+                try
+                {
+                    await emailSvc.SendAlertEmailAsync(tenantId, alertEmail.Email, alert, server);
+                    _logger.LogInformation("[BLOCK] Alert email sent to {Email}", alertEmail.Email);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "[BLOCK] Failed to send email to {Email}", alertEmail.Email);
+                }
+            }
+        }
+
+        // Telegram: gửi đến server recipients + user realtime recipients
+        await SendBlockTelegramAsync(alert, ticket, tenantId, db, sp);
+    }
+
+    private async Task SendBlockTelegramAsync(Alert alert, Ticket? ticket, Guid tenantId, CyberMonitorDbContext db, IServiceProvider sp)
+    {
+        if (!IsTelegramEnabled()) return;
+        var telegramSvc = sp.GetRequiredService<ITelegramService>();
+
+        var serverRecipients = new List<string>();
+        if (alert.ServerId.HasValue)
+        {
+            var rawChatIds = await db.ServerTelegramRecipients
+                .Where(r => r.ServerId == alert.ServerId.Value && r.IsActive)
+                .Select(r => r.ChatId)
+                .ToListAsync();
+
+            var disabledChats = await db.Users
+                .Where(u => u.TenantId == tenantId && u.IsActive && u.TelegramChatId != null && !u.TelegramAlertsEnabled)
+                .Select(u => u.TelegramChatId!)
+                .ToListAsync();
+
+            var disabledSet = new HashSet<string>(
+                disabledChats.Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.Trim()),
+                StringComparer.Ordinal);
+
+            serverRecipients = rawChatIds
+                .Where(c => !string.IsNullOrWhiteSpace(c) && !disabledSet.Contains(c.Trim()))
+                .Select(c => c.Trim())
+                .ToList();
+        }
+
+        var allUsers = await db.Users
+            .Where(u => u.TenantId == tenantId && u.IsActive && u.TelegramAlertsEnabled && !string.IsNullOrWhiteSpace(u.TelegramChatId))
+            .ToListAsync();
+
+        var realtimeUsers = allUsers.Where(u => MeetsSeverityThreshold(alert.Severity, u.AlertSeverityThreshold) && u.AlertDigestMode == "realtime").ToList();
+
+        var hasRecipients = serverRecipients.Count > 0 || realtimeUsers.Count > 0;
+        if (hasRecipients)
+        {
+            var sent = await telegramSvc.SendAlertAsync(tenantId, alert, null, ticket);
+            _logger.LogInformation("[BLOCK] Telegram alert sent. Recipients={Count}, Sent={Sent}", serverRecipients.Count + realtimeUsers.Count, sent);
+        }
+        else
+        {
+            _logger.LogInformation("[BLOCK] No Telegram recipients for block alert {AlertId}", alert.Id);
+        }
+    }
+
+    private static bool MeetsSeverityThreshold(string alertSeverity, string? userThreshold)
+    {
+        var order = new[] { "Low", "Medium", "High", "Critical" };
+        var alertIdx = Array.IndexOf(order, alertSeverity);
+        if (alertIdx < 0) alertIdx = 0;
+        var thresholdIdx = Array.IndexOf(order, userThreshold ?? "Medium");
+        if (thresholdIdx < 0) thresholdIdx = 1;
+        return alertIdx >= thresholdIdx;
+    }
+
+    private bool IsTelegramEnabled()
+    {
+        var enabled = _configuration["TelegramBot:Enabled"];
+        return bool.TryParse(enabled, out var value) && value;
+    }
 }
 
 // =============================================================================

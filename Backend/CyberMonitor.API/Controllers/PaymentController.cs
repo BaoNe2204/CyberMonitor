@@ -14,18 +14,15 @@ namespace CyberMonitor.API.Controllers;
 public class PaymentController : ControllerBase
 {
     private readonly CyberMonitorDbContext _db;
-    private readonly IVnpayService _vnpayService;
     private readonly IEmailService _emailService;
     private readonly ILogger<PaymentController> _logger;
 
     public PaymentController(
         CyberMonitorDbContext db,
-        IVnpayService vnpayService,
         IEmailService emailService,
         ILogger<PaymentController> logger)
     {
         _db = db;
-        _vnpayService = vnpayService;
         _emailService = emailService;
         _logger = logger;
     }
@@ -91,7 +88,8 @@ public class PaymentController : ControllerBase
         var orderId = $"ORD-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
         var description = $"Thanh toan goi {request.PlanName} - CyberMonitor SOC";
 
-        var paymentUrl = _vnpayService.CreatePaymentUrl(request.Amount, orderId, description, null);
+        // VNPay removed - return demo payment URL
+        var paymentUrl = $"/payment-result?orderId={orderId}&status=demo";
 
         var order = new PaymentOrder
         {
@@ -139,10 +137,9 @@ public class PaymentController : ControllerBase
 
     private async Task<ActionResult> ProcessVnpayReturn(bool redirect)
     {
-        var vnpData = Request.Query.Keys
-            .ToDictionary(k => k, k => Request.Query[k].ToString());
-
-        var result = _vnpayService.ProcessReturn(vnpData);
+        // VNPay removed - return demo result
+        var orderId = Request.Query["orderId"].ToString();
+        var result = new { Success = true, OrderId = orderId, TransactionNo = "DEMO", ResponseCode = "00", Message = "Demo payment" };
 
         var order = await _db.PaymentOrders
             .Include(o => o.Tenant)
@@ -162,11 +159,11 @@ public class PaymentController : ControllerBase
                 new PaymentResultData(order.OrderId, order.VnpayTransactionNo, order.Amount, order.PlanName)));
         }
 
-        order.VnpayTransactionNo  = result.TransactionNo;
-        order.VnpayResponseCode   = result.ResponseCode;
-        order.PaymentMethod       = "VNPay";
+        order.VnpayTransactionNo  = $"DEMO{DateTime.UtcNow:yyyyMMddHHmmss}";
+        order.VnpayResponseCode   = "00";
+        order.PaymentMethod       = "Demo";
 
-        if (result.Success)
+        if (true) // Always success in demo mode
         {
             order.Status  = "Paid";
             order.PaidAt  = DateTime.UtcNow;
@@ -180,7 +177,7 @@ public class PaymentController : ControllerBase
                 Action     = "PAYMENT_COMPLETED",
                 EntityType = "PaymentOrder",
                 EntityId   = order.OrderId,
-                Details    = $"Payment completed: {order.PlanName} - {order.Amount:N0} VND | TxnNo: {result.TransactionNo}",
+                Details    = $"Payment completed: {order.PlanName} - {order.Amount:N0} VND | TxnNo: {order.VnpayTransactionNo}",
             });
 
             await _db.SaveChangesAsync();
@@ -192,27 +189,7 @@ public class PaymentController : ControllerBase
             return Ok(new ApiResponse<PaymentResultData>(true, "Thanh toán thành công!",
                 new PaymentResultData(order.OrderId, order.VnpayTransactionNo, order.Amount, order.PlanName)));
         }
-        else
-        {
-            order.Status = "Failed";
-
-            _db.AuditLogs.Add(new AuditLog
-            {
-                TenantId   = order.TenantId,
-                Action     = "PAYMENT_FAILED",
-                EntityType = "PaymentOrder",
-                EntityId   = order.OrderId,
-                Details    = $"Payment failed: {result.Message} | Code: {result.ResponseCode}",
-            });
-
-            await _db.SaveChangesAsync();
-            _logger.LogWarning("Payment failed: {OrderId} — {Message}", order.OrderId, result.Message);
-
-            if (redirect)
-                return Redirect($"/payment-result?orderId={order.OrderId}&status=failed&message={Uri.EscapeDataString(result.Message)}");
-
-            return Ok(new ApiResponse<object>(false, result.Message, null));
-        }
+        // VNPay removed - no failure case in demo mode
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -225,8 +202,37 @@ public class PaymentController : ControllerBase
         [FromBody] DemoConfirmRequest request)
     {
         var tenantId = GetTenantId();
-        if (!tenantId.HasValue)
-            return Unauthorized(new ApiResponse<PaymentResultData>(false, "Không xác định được tenant.", null));
+        var role = GetUserRole();
+        
+        // SuperAdmin có thể xác nhận thanh toán cho bất kỳ tenant nào
+        Guid effectiveTenantId;
+        if (role == "SuperAdmin")
+        {
+            // SuperAdmin phải truyền TenantId trong request (hoặc lấy từ order)
+            if (request.TenantId.HasValue)
+            {
+                effectiveTenantId = request.TenantId.Value;
+            }
+            else if (!string.IsNullOrEmpty(request.OrderId))
+            {
+                // Lấy tenantId từ order nếu có
+                var existingOrder = await _db.PaymentOrders.FirstOrDefaultAsync(o => o.OrderId == request.OrderId);
+                if (existingOrder?.TenantId != null)
+                    effectiveTenantId = existingOrder.TenantId.Value;
+                else
+                    return BadRequest(new ApiResponse<PaymentResultData>(false, "SuperAdmin phải chỉ định TenantId hoặc OrderId hợp lệ.", null));
+            }
+            else
+            {
+                return BadRequest(new ApiResponse<PaymentResultData>(false, "SuperAdmin phải chỉ định TenantId hoặc OrderId.", null));
+            }
+        }
+        else
+        {
+            if (!tenantId.HasValue)
+                return Unauthorized(new ApiResponse<PaymentResultData>(false, "Không xác định được tenant.", null));
+            effectiveTenantId = tenantId.Value;
+        }
 
         // Tạo order mới với status Paid ngay
         var orderId = request.OrderId ?? $"DEMO-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
@@ -242,7 +248,7 @@ public class PaymentController : ControllerBase
         var order = existing ?? new PaymentOrder
         {
             OrderId   = orderId,
-            TenantId  = tenantId.Value,
+            TenantId  = effectiveTenantId,
             Amount    = request.Amount,
             PlanName  = request.PlanName,
             Currency  = "VND",
@@ -260,7 +266,7 @@ public class PaymentController : ControllerBase
 
         _db.AuditLogs.Add(new AuditLog
         {
-            TenantId   = tenantId,
+            TenantId   = effectiveTenantId,
             UserId     = GetUserId() == Guid.Empty ? null : GetUserId(),
             Action     = "PAYMENT_DEMO_CONFIRMED",
             EntityType = "PaymentOrder",
@@ -283,20 +289,18 @@ public class PaymentController : ControllerBase
     [AllowAnonymous]
     public async Task<ActionResult> VnpayIpn()
     {
-        var vnpData = Request.Query.Keys
-            .ToDictionary(k => k, k => Request.Query[k].ToString());
+        // VNPay removed — always return success to avoid VNPay retry spam
+        var orderId = Request.Query["vnp_TxnRef"].ToString();
 
-        var result = _vnpayService.ProcessReturn(vnpData);
-        if (!result.Success) return Ok(new { RspCode = "97", Message = "Invalid signature" });
+        if (string.IsNullOrEmpty(orderId))
+            return Ok(new { RspCode = "01", Message = "Invalid request" });
 
-        var order = await _db.PaymentOrders.FindAsync(result.OrderId);
+        var order = await _db.PaymentOrders.FindAsync(orderId);
         if (order == null) return Ok(new { RspCode = "01", Message = "Order not found" });
         if (order.Status == "Paid") return Ok(new { RspCode = "02", Message = "Already confirmed" });
 
-        order.Status              = "Paid";
-        order.PaidAt              = DateTime.UtcNow;
-        order.VnpayTransactionNo  = result.TransactionNo;
-        order.VnpayResponseCode   = result.ResponseCode;
+        order.Status = "Paid";
+        order.PaidAt  = DateTime.UtcNow;
 
         await ActivateSubscriptionAsync(order);
         await _db.SaveChangesAsync();
@@ -528,7 +532,8 @@ public record DemoConfirmRequest(
     string PlanName,
     decimal Amount,
     string? PaymentMethod,
-    string? BillingPeriod
+    string? BillingPeriod,
+    Guid? TenantId  // SuperAdmin dùng để chỉ định tenant
 );
 
 public record PaymentResultData(

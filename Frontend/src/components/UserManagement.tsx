@@ -4,6 +4,7 @@ import { cn } from '../lib/utils';
 import { Theme } from '../types';
 import { UsersApi, type User } from '../services/api';
 import { ChangeSubscriptionModal } from './ChangeSubscriptionModal';
+import { formatDateOnlyVi } from '../utils/dateUtils';
 
 interface UserManagementProps {
   theme: Theme;
@@ -370,7 +371,7 @@ export const UserManagement = ({ theme, userRole }: UserManagementProps) => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-xs text-slate-500">
-                      {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString('vi-VN') : 'Chưa đăng nhập'}
+                      {user.lastLoginAt ? formatDateOnlyVi(user.lastLoginAt) : 'Chưa đăng nhập'}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">

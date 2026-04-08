@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Shield } from 'lucide-react';
+import { Shield, Smartphone } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Theme, Language, AuthMode } from '../types';
 
@@ -58,8 +58,11 @@ interface AuthFormProps {
   authMode: AuthMode;
   setAuthMode: (mode: AuthMode) => void;
   setShowAuth: (show: boolean) => void;
-  handleLogin: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
+  handleLogin: (email: string, password: string, twoFactorCode?: string) => Promise<{ success: boolean; message: string; requiresTwoFactor?: boolean }>;
   handleRegister: (companyName: string, email: string, password: string) => Promise<{ success: boolean; message: string }>;
+  pending2FA: { email: string; password: string; tempToken: string } | null;
+  setPending2FA: (v: { email: string; password: string; tempToken: string } | null) => void;
+  handleLoginWith2FA: (code: string) => Promise<{ success: boolean; message: string }>;
   t: any;
 }
 
@@ -72,6 +75,9 @@ export const AuthForm = ({
   setShowAuth,
   handleLogin,
   handleRegister,
+  pending2FA,
+  setPending2FA,
+  handleLoginWith2FA,
   t
 }: AuthFormProps) => {
   const [email, setEmail] = useState('');
@@ -81,6 +87,27 @@ export const AuthForm = ({
   const [fullName, setFullName] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  // 2FA step
+  const [step, setStep] = useState<'credentials' | 'otp'>('credentials');
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [twoFactorError, setTwoFactorError] = useState('');
+  const [verifying2FA, setVerifying2FA] = useState(false);
+
+  // Switch to OTP step when backend requires 2FA
+  // Dùng ref + effect để theo dõi pending2FA thay đổi theo thời gian
+  const prevPendingRef = useRef(pending2FA);
+  useEffect(() => {
+    if (pending2FA && pending2FA !== prevPendingRef.current) {
+      prevPendingRef.current = pending2FA;
+      setStep('otp');
+    }
+    // Khi pending2FA về null (login 2FA thành công) → effect sẽ chạy với pending2FA=null
+    // → không làm gì cả vì step đang ở 'otp' nhưng isLoggedIn sẽ chuyển ra dashboard
+    if (!pending2FA && prevPendingRef.current !== null) {
+      prevPendingRef.current = null;
+      // setStep('credentials') — không cần vì App sẽ unmount AuthForm khi isLoggedIn=true
+    }
+  }, [pending2FA]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,11 +129,13 @@ export const AuthForm = ({
         if (!result.success) {
           setError(result.message);
         }
+        // Thành công: handleRegister đã set isLoggedIn=true + setUser → App tự render dashboard
       } else {
         const result = await handleLogin(email, password);
         if (!result.success) {
           setError(result.message);
         }
+        // Thành công: handleLogin đã set isLoggedIn=true + setUser → App tự render dashboard
       }
     } catch (err) {
       setError('Lỗi kết nối. Vui lòng kiểm tra backend server.');
@@ -114,6 +143,99 @@ export const AuthForm = ({
       setIsLoading(false);
     }
   };
+
+  const onSubmitOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!twoFactorCode || twoFactorCode.length < 6) {
+      setTwoFactorError('Vui lòng nhập mã 6 chữ số.');
+      return;
+    }
+    setTwoFactorError('');
+    setVerifying2FA(true);
+    try {
+      const result = await handleLoginWith2FA(twoFactorCode);
+      if (!result.success) {
+        setTwoFactorError(result.message);
+      }
+      // Thành công: handleLoginWith2FA đã clear pending2FA → App unmount AuthForm → hiển thị dashboard
+    } catch {
+      setTwoFactorError('Lỗi kết nối.');
+    } finally {
+      setVerifying2FA(false);
+    }
+  };
+
+  // 2FA OTP screen
+  if (step === 'otp') {
+    return (
+      <div className={cn("min-h-screen flex items-center justify-center p-4 transition-colors duration-300 relative overflow-hidden", theme === 'dark' ? "bg-[#020617]" : "bg-slate-50")}>
+        <AuthFallingStars />
+        <div className="absolute top-8 right-8 flex items-center gap-4 z-10">
+          <button onClick={() => { setStep('credentials'); setTwoFactorCode(''); setTwoFactorError(''); setError(''); setPending2FA(null); }}
+            className={cn("px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors", theme === 'dark' ? "bg-slate-900 border-slate-800 text-slate-400 hover:text-white" : "bg-white border-slate-200 text-slate-600 hover:text-slate-900")}>
+            ← Quay lại
+          </button>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={cn("w-full max-w-md p-8 rounded-2xl border shadow-2xl backdrop-blur-sm relative z-10", theme === 'dark' ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200")}
+        >
+          <div className="flex flex-col items-center mb-8">
+            <div className="bg-blue-600 p-3 rounded-xl mb-4">
+              <Smartphone size={32} className="text-white" />
+            </div>
+            <h2 className={cn("text-xl font-bold", theme === 'dark' ? "text-white" : "text-slate-900")}>Xác thực 2 bước</h2>
+            <p className="text-slate-500 text-sm mt-1">
+              Nhập mã từ ứng dụng Google Authenticator
+            </p>
+          </div>
+
+          {twoFactorError && (
+            <div className="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-bold text-center">
+              {twoFactorError}
+            </div>
+          )}
+
+          <form onSubmit={onSubmitOTP} className="space-y-6">
+            <div>
+              <label className={cn("block text-xs font-bold uppercase mb-2 text-center", theme === 'dark' ? "text-slate-500" : "text-slate-400")}>
+                Mã xác thực
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                value={twoFactorCode}
+                onChange={e => setTwoFactorCode(e.target.value.replace(/\D/g, ''))}
+                className={cn("w-full text-center text-3xl tracking-[0.6em] font-mono rounded-xl px-4 py-4 focus:outline-none border transition-colors", theme === 'dark' ? "bg-slate-950 border-slate-800 text-white" : "bg-slate-100 border-slate-200 text-slate-900")}
+                placeholder="● ● ● ● ● ●"
+                autoFocus
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={verifying2FA || twoFactorCode.length < 6}
+              className={cn("w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2", verifying2FA && "opacity-50 cursor-not-allowed")}
+            >
+              {verifying2FA ? (
+                <>
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Đang xác thực...
+                </>
+              ) : 'Xác thực'}
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("min-h-screen flex items-center justify-center p-4 transition-colors duration-300 relative overflow-hidden", theme === 'dark' ? "bg-[#020617]" : "bg-slate-50")}>

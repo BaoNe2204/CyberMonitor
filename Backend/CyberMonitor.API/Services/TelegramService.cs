@@ -15,6 +15,9 @@ public interface ITelegramService
 
     /// <summary>Send pending digest alerts for a specific mode and cutoff time.</summary>
     Task SendDigestAsync(string digestMode, DateTime cutoffUtc);
+
+    /// <summary>Send a whitelist notification to Telegram realtime users.</summary>
+    Task SendWhitelistNotificationAsync(Guid tenantId, string ipAddress, string userName, string scopeLabel);
 }
 
 public class TelegramService : ITelegramService
@@ -125,23 +128,30 @@ public class TelegramService : ITelegramService
 
         var message = BuildAlertMessage(tenantId, alert, server, ticket);
 
-        foreach (var user in eligibleUsers)
+        try
         {
-            _db.AlertDigestQueue.Add(new AlertDigestQueue
+            foreach (var user in eligibleUsers)
             {
-                TenantId = tenantId,
-                UserId = user.Id,
-                TelegramChatId = user.TelegramChatId!,
-                DigestMode = user.AlertDigestMode,
-                AlertId = alert.Id,
-                Severity = alert.Severity,
-                AlertTitle = alert.Title,
-                AlertMessage = message,
-                AlertCreatedAt = alert.CreatedAt,
-            });
-        }
+                _db.AlertDigestQueue.Add(new AlertDigestQueue
+                {
+                    TenantId = tenantId,
+                    UserId = user.Id,
+                    TelegramChatId = user.TelegramChatId!,
+                    DigestMode = user.AlertDigestMode,
+                    AlertId = alert.Id,
+                    Severity = alert.Severity,
+                    AlertTitle = alert.Title,
+                    AlertMessage = message,
+                    AlertCreatedAt = alert.CreatedAt,
+                });
+            }
 
-        await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to queue alert {AlertId} for digest — AlertDigestQueue table may not exist yet.", alert.Id);
+        }
     }
 
     public async Task SendDigestAsync(string digestMode, DateTime cutoffUtc)
@@ -156,13 +166,22 @@ public class TelegramService : ITelegramService
             return;
         }
 
-        // Get all queued, unsent entries for this digest mode older than cutoff
-        var queueItems = await _db.AlertDigestQueue
-            .Where(q => q.DigestMode == digestMode
-                        && !q.IsSent
-                        && q.QueuedAt <= cutoffUtc)
-            .OrderBy(q => q.QueuedAt)
-            .ToListAsync();
+        List<AlertDigestQueue> queueItems;
+        try
+        {
+            // Get all queued, unsent entries for this digest mode older than cutoff
+            queueItems = await _db.AlertDigestQueue
+                .Where(q => q.DigestMode == digestMode
+                            && !q.IsSent
+                            && q.QueuedAt <= cutoffUtc)
+                .OrderBy(q => q.QueuedAt)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[Digest:{Mode}] Failed to query AlertDigestQueue — table may not exist yet. Skipping digest.", digestMode);
+            return;
+        }
 
         if (queueItems.Count == 0)
         {
@@ -258,14 +277,21 @@ public class TelegramService : ITelegramService
         await _db.SaveChangesAsync();
 
         // Cleanup old sent entries older than 7 days
-        var oldCutoff = DateTime.UtcNow.AddDays(-7);
-        var oldItems = await _db.AlertDigestQueue
-            .Where(q => q.IsSent && q.SentAt < oldCutoff)
-            .ToListAsync();
-        if (oldItems.Count > 0)
+        try
         {
-            _db.AlertDigestQueue.RemoveRange(oldItems);
-            await _db.SaveChangesAsync();
+            var oldCutoff = DateTime.UtcNow.AddDays(-7);
+            var oldItems = await _db.AlertDigestQueue
+                .Where(q => q.IsSent && q.SentAt < oldCutoff)
+                .ToListAsync();
+            if (oldItems.Count > 0)
+            {
+                _db.AlertDigestQueue.RemoveRange(oldItems);
+                await _db.SaveChangesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to cleanup old digest entries — table may not exist yet.");
         }
     }
 
@@ -401,4 +427,69 @@ public class TelegramService : ITelegramService
     }
 
     private static string Encode(string value) => WebUtility.HtmlEncode(value);
+
+    public async Task SendWhitelistNotificationAsync(Guid tenantId, string ipAddress, string userName, string scopeLabel)
+    {
+        if (!IsEnabled())
+            return;
+
+        var botToken = _configuration["TelegramBot:BotToken"];
+        if (string.IsNullOrWhiteSpace(botToken))
+        {
+            _logger.LogWarning("TelegramBot: BotToken missing for whitelist notification.");
+            return;
+        }
+
+        var chatIds = await GetChatIdsAsync(tenantId, null, "realtime");
+        if (chatIds.Count == 0)
+        {
+            _logger.LogInformation("[WHITELIST] No Telegram realtime recipients for tenant {TenantId}", tenantId);
+            return;
+        }
+
+        var client = _httpClientFactory.CreateClient(nameof(TelegramService));
+        var endpoint = $"https://api.telegram.org/bot{botToken}/sendMessage";
+
+        var message = $"""
+            ⚪ <b>CyberMonitor — IP Added to Whitelist</b>
+
+            🛡️ <b>IP:</b> <code>{ipAddress}</code>
+            👤 <b>Added by:</b> {Encode(userName)}
+            📍 <b>Scope:</b> {Encode(scopeLabel)}
+
+            ⏰ <b>Time:</b> {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC
+
+            <i>AI alerts for this IP will be ignored from now on.</i>
+            """;
+
+        var sentCount = 0;
+        foreach (var chatId in chatIds)
+        {
+            try
+            {
+                using var content = new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["chat_id"] = chatId,
+                    ["text"] = message,
+                    ["parse_mode"] = "HTML",
+                    ["disable_web_page_preview"] = "true",
+                });
+
+                using var response = await client.PostAsync(endpoint, content);
+                if (response.IsSuccessStatusCode)
+                    sentCount++;
+                else
+                {
+                    var respBody = await response.Content.ReadAsStringAsync();
+                    _logger.LogWarning("[WHITELIST] Telegram send failed for chat {ChatId}: {Resp}", chatId, respBody);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[WHITELIST] Telegram send error for chat {ChatId}", chatId);
+            }
+        }
+
+        _logger.LogInformation("[WHITELIST] Telegram notification sent to {Sent}/{Total} recipients", sentCount, chatIds.Count);
+    }
 }

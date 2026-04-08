@@ -24,8 +24,12 @@ public class EmailService : IEmailService
     private readonly ILogger<EmailService> _logger;
 
     /// <summary>Rate limit: 1 email per (tenant + alertType + sourceIp) every 5 minutes.</summary>
-    private static readonly ConcurrentDictionary<string, DateTime> _lastSent = new();
-    private static readonly TimeSpan _cooldown = TimeSpan.FromMinutes(5);
+    private static readonly ConcurrentDictionary<string, DateTime> _lastAlertSent = new();
+    private static readonly TimeSpan _alertCooldown = TimeSpan.FromMinutes(5);
+
+    /// <summary>Rate limit: 1 notification email per (tenantId + recipientEmail) every 5 minutes.</summary>
+    private static readonly ConcurrentDictionary<string, DateTime> _lastNotifSent = new();
+    private static readonly TimeSpan _notifCooldown = TimeSpan.FromMinutes(5);
 
     public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
     {
@@ -33,18 +37,33 @@ public class EmailService : IEmailService
         _logger = logger;
     }
 
-    private static string RateKey(Guid tenantId, string alertType, string? sourceIp) =>
+    private static string AlertRateKey(Guid tenantId, string alertType, string? sourceIp) =>
         $"{tenantId}|{alertType}|{sourceIp ?? "none"}";
 
-    private bool IsRateLimited(Guid tenantId, string alertType, string? sourceIp)
+    private static string NotifRateKey(Guid tenantId, string email) =>
+        $"{tenantId}|{email}";
+
+    private bool IsAlertRateLimited(Guid tenantId, string alertType, string? sourceIp)
     {
-        var key = RateKey(tenantId, alertType, sourceIp);
-        if (_lastSent.TryGetValue(key, out var last))
+        var key = AlertRateKey(tenantId, alertType, sourceIp);
+        if (_lastAlertSent.TryGetValue(key, out var last))
         {
-            if (DateTime.UtcNow - last < _cooldown)
+            if (DateTime.UtcNow - last < _alertCooldown)
                 return true;
         }
-        _lastSent[key] = DateTime.UtcNow;
+        _lastAlertSent[key] = DateTime.UtcNow;
+        return false;
+    }
+
+    private bool TrySetNotifRateLimited(Guid tenantId, string email)
+    {
+        var key = NotifRateKey(tenantId, email);
+        if (_lastNotifSent.TryGetValue(key, out var last))
+        {
+            if (DateTime.UtcNow - last < _notifCooldown)
+                return true;
+        }
+        _lastNotifSent[key] = DateTime.UtcNow;
         return false;
     }
 
@@ -75,10 +94,11 @@ public class EmailService : IEmailService
     private string GetFromEmail() => _configuration["ConnectionStrings:EmailConfig:FromEmail"] ?? "noreply@cybermonitor.vn";
     private string GetFromName() => _configuration["ConnectionStrings:EmailConfig:FromName"] ?? "CyberMonitor SOC";
 
+
     public async Task SendAlertEmailAsync(Guid tenantId, string toEmail, Alert alert, Server? server)
     {
         // Rate limit: max 1 email per 5 minutes per (tenant + alertType + sourceIp)
-        if (IsRateLimited(tenantId, alert.AlertType ?? "Unknown", alert.SourceIp))
+        if (IsAlertRateLimited(tenantId, alert.AlertType ?? "Unknown", alert.SourceIp))
         {
             _logger.LogDebug("[Email] Rate-limited alert {AlertType} from {SourceIp} for tenant {TenantId}",
                 alert.AlertType, alert.SourceIp, tenantId);
@@ -172,6 +192,19 @@ public class EmailService : IEmailService
 
     public async Task SendTicketNotificationAsync(Guid tenantId, string toEmail, Ticket ticket, string action)
     {
+        // Rate limit: 1 email per (tenant + recipient) every 5 minutes
+        if (TrySetNotifRateLimited(tenantId, toEmail))
+        {
+            _logger.LogDebug("[Email] Ticket notification rate-limited for {Email} in tenant {TenantId}", toEmail, tenantId);
+            return;
+        }
+
+        // Fire-and-forget: không await, không chặn request chính
+        _ = SendTicketNotificationInternalAsync(tenantId, toEmail, ticket, action);
+    }
+
+    private async Task SendTicketNotificationInternalAsync(Guid tenantId, string toEmail, Ticket ticket, string action)
+    {
         try
         {
             var body = $@"
@@ -227,6 +260,12 @@ public class EmailService : IEmailService
 
     public async Task SendWelcomeEmailAsync(string toEmail, string companyName, string planName)
     {
+        // Fire-and-forget: không chặn đăng ký user
+        _ = SendWelcomeEmailInternalAsync(toEmail, companyName, planName);
+    }
+
+    private async Task SendWelcomeEmailInternalAsync(string toEmail, string companyName, string planName)
+    {
         try
         {
             var body = $@"
@@ -262,6 +301,12 @@ public class EmailService : IEmailService
     }
 
     public async Task SendPaymentConfirmationAsync(string toEmail, PaymentOrder order)
+    {
+        // Fire-and-forget: không chặn request chính
+        _ = SendPaymentConfirmationInternalAsync(toEmail, order);
+    }
+
+    private async Task SendPaymentConfirmationInternalAsync(string toEmail, PaymentOrder order)
     {
         try
         {
@@ -433,6 +478,19 @@ public class EmailService : IEmailService
     }
 
     public async Task SendTicketCommentEmailAsync(Guid tenantId, string toEmail, Ticket ticket, string commenterName, string commentContent)
+    {
+        // Rate limit: 1 email per (tenant + recipient) every 5 minutes
+        if (TrySetNotifRateLimited(tenantId, toEmail))
+        {
+            _logger.LogDebug("[Email] Ticket comment email rate-limited for {Email}", toEmail);
+            return;
+        }
+
+        // Fire-and-forget: không await
+        _ = SendTicketCommentEmailInternalAsync(tenantId, toEmail, ticket, commenterName, commentContent);
+    }
+
+    private async Task SendTicketCommentEmailInternalAsync(Guid tenantId, string toEmail, Ticket ticket, string commenterName, string commentContent)
     {
         try
         {

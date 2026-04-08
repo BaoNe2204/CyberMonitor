@@ -306,6 +306,7 @@ export interface User {
   telegramChatId?: string | null;
   alertSeverityThreshold?: string;
   alertDigestMode?: string;
+  avatarUrl?: string | null;
 }
 
 export interface Server {
@@ -488,6 +489,7 @@ export function setToken(token: string): void {
 export function clearAuth(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  _isClearingAuth = false;
 }
 
 export function getStoredUser(): User | null {
@@ -504,6 +506,9 @@ export function isAuthenticated(): boolean {
   return !!getToken();
 }
 
+// Singleton flag để ngăn nhiều request cùng lúc 401 gọi clearAuth() nhiều lần (race condition)
+let _isClearingAuth = false;
+
 // ============================================================================
 // HTTP CLIENT - Enhanced v2
 // ============================================================================
@@ -517,10 +522,12 @@ async function request<T>(
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    // Spread options.headers TRƯỚC để có thể override
     ...(options.headers as Record<string, string> || {}),
   };
 
-  if (token) {
+  // Chỉ thêm Authorization từ localStorage nếu headers chưa có (sau khi spread)
+  if (token && !headers['Authorization']) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
@@ -535,13 +542,40 @@ async function request<T>(
       ...options,
     });
 
-    // Auto-logout on 401 — token expired or invalid
+    // Auto-logout on 401 — chỉ một request đầu tiên gọi clearAuth(), các request 401 khác bỏ qua
+    // CẢI TIẾN: Đọc message từ backend response thay vì override cứng
     if (response.status === 401) {
-      clearAuth();
-      window.dispatchEvent(new CustomEvent('cm:auth:expired'));
+      // Thử parse response JSON để lấy message thực từ backend
+      // Vì text chưa được đọc ở đây, ta cần đọc trước
+      const errorText = await response.text();
+      let backendMessage: string | null = null;
+      try {
+        const errorData = JSON.parse(errorText);
+        backendMessage = errorData?.message ?? null;
+      } catch {
+        // Response không phải JSON, giữ nguyên
+      }
+
+      // Log chi tiết để debug 2FA issues
+      console.warn(`[API] 401 received: ${backendMessage ?? 'no message'}`, {
+        endpoint,
+        hasBackendMsg: !!backendMessage,
+        msgContent: backendMessage,
+      });
+
+      if (!_isClearingAuth) {
+        _isClearingAuth = true;
+        clearAuth();
+        window.dispatchEvent(new CustomEvent('cm:auth:expired'));
+      }
+
+      // Giữ nguyên message từ backend, KHÔNG override
+      // Điều này giúp phân biệt được:
+      // - "Token tạm thời chỉ dùng để xác thực 2FA..." (temp token bị chặn)
+      // - "Phiên đăng nhập hết hạn..." (token thực sự hết hạn)
       return {
         success: false,
-        message: 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.',
+        message: backendMessage ?? 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.',
         data: null,
       };
     }
@@ -578,13 +612,45 @@ async function request<T>(
 // ============================================================================
 
 export const AuthApi = {
-  login: async (email: string, password: string): Promise<ApiResponse<AuthResponse>> => {
-    const res = await request<AuthResponse>('/api/auth/login', { email, password }, { method: 'POST' });
+  login: async (email: string, password: string, twoFactorCode?: string): Promise<ApiResponse<AuthResponse>> => {
+    const body: Record<string, string> = { email, password };
+    if (twoFactorCode) body.twoFactorCode = twoFactorCode;
+    const res = await request<AuthResponse>('/api/auth/login', body, { method: 'POST' });
+    
+    // Chỉ lưu token khi đăng nhập thành công HOÀN TOÀN (không phải requiresTwoFactor)
+    // Nếu requiresTwoFactor = true, res.data sẽ là { requiresTwoFactor, tempToken } chứ không phải AuthResponse
+    if (res.success && res.data && 'token' in res.data && 'user' in res.data) {
+      setToken(res.data.token);
+      setStoredUser(res.data.user);
+    }
+    return res;
+  },
+
+  loginWith2FA: async (code: string, tempToken: string): Promise<ApiResponse<AuthResponse>> => {
+    const res = await request<AuthResponse>('/api/auth/login-2fa', { code }, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${tempToken}` 
+      }
+    });
     if (res.success && res.data) {
       setToken(res.data.token);
       setStoredUser(res.data.user);
     }
     return res;
+  },
+
+  setupTwoFactor: async (): Promise<ApiResponse<{ secret: string; qrCodeBase64: string; manualEntryKey: string }>> => {
+    return request('/api/auth/2fa/setup', {}, { method: 'POST' });
+  },
+
+  verifyTwoFactor: async (code: string): Promise<ApiResponse<object>> => {
+    return request('/api/auth/2fa/verify', { code }, { method: 'POST' });
+  },
+
+  disableTwoFactor: async (code: string): Promise<ApiResponse<object>> => {
+    return request('/api/auth/2fa/disable', { code }, { method: 'POST' });
   },
 
   register: async (companyName: string, email: string, password: string): Promise<ApiResponse<AuthResponse>> => {
@@ -630,6 +696,10 @@ export const AuthApi = {
       setStoredUser(res.data);
     }
     return res;
+  },
+
+  uploadAvatar: async (avatarDataUrl: string | null): Promise<ApiResponse<object>> => {
+    return request('/api/auth/avatar', { avatarDataUrl }, { method: 'POST' });
   },
 
   updateSecuritySettings: async (data: {
@@ -785,7 +855,7 @@ export const TicketsApi = {
   },
 
   create: async (data: {
-    tenantId: string;
+    tenantId?: string;  // Optional - Admin/User không cần truyền, SuperAdmin phải truyền
     alertId?: string;
     title: string;
     description?: string;

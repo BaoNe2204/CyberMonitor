@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Theme } from '../types';
+import { formatRelativeCompactTruoc } from '../utils/dateUtils';
 
 interface WhitelistEntry {
   id: string;
@@ -37,17 +38,6 @@ interface WhitelistProps {
   selectedServerId?: string | null;
   userRole?: string;
 }
-
-const formatTimeAgo = (dateStr: string | null) => {
-  if (!dateStr) return 'N/A';
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
-  if (diff < 60) return `${diff}s trước`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}p trước`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h trước`;
-  return `${Math.floor(diff / 86400)}d trước`;
-};
 
 export const Whitelist = ({
   theme,
@@ -329,7 +319,7 @@ export const Whitelist = ({
                       <div className="flex items-center gap-1">
                         <Clock size={12} className={cn(theme === 'dark' ? 'text-slate-500' : 'text-slate-400')} />
                         <span className={cn("text-xs", theme === 'dark' ? 'text-slate-400' : 'text-slate-500')}>
-                          {formatTimeAgo(w.createdAt)}
+                          {formatRelativeCompactTruoc(w.createdAt)}
                         </span>
                       </div>
                     </td>

@@ -18,6 +18,7 @@ import {
 import { cn } from '../lib/utils';
 import { Theme } from '../types';
 import type { BlockedIP } from '../services/api';
+import { formatDateTime, formatRelativeCompactTruoc, formatTimeUntilVi } from '../utils/dateUtils';
 
 interface DefenseProps {
   theme: Theme;
@@ -37,28 +38,6 @@ const severityColors: Record<string, string> = {
   High: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
   Medium: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
   Low: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-};
-
-const formatTimeAgo = (dateStr: string | null) => {
-  if (!dateStr) return 'N/A';
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
-  if (diff < 60) return `${diff}s trước`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}p trước`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h trước`;
-  return `${Math.floor(diff / 86400)}d trước`;
-};
-
-const formatExpiry = (dateStr: string | null) => {
-  if (!dateStr) return 'Vĩnh viễn';
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diff = Math.floor((date.getTime() - now.getTime()) / 1000);
-  if (diff <= 0) return 'Đã hết hạn';
-  if (diff < 3600) return `Còn ${Math.floor(diff / 60)}p`;
-  if (diff < 86400) return `Còn ${Math.floor(diff / 3600)}h`;
-  return `Còn ${Math.floor(diff / 86400)}d`;
 };
 
 export const Defense = ({
@@ -306,8 +285,8 @@ export const Defense = ({
                 <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
                   {checkResult.attackType && <span>Attack: {checkResult.attackType}</span>}
                   {checkResult.reason && <span>Reason: {checkResult.reason}</span>}
-                  {checkResult.blockedAt && <span>Blocked: {new Date(checkResult.blockedAt).toLocaleString()}</span>}
-                  {checkResult.expiresAt && <span>Expires: {formatExpiry(checkResult.expiresAt)}</span>}
+                  {checkResult.blockedAt && <span>Blocked: {formatDateTime(checkResult.blockedAt)}</span>}
+                  {checkResult.expiresAt && <span>Expires: {formatTimeUntilVi(checkResult.expiresAt)}</span>}
                 </div>
               )}
             </div>
@@ -415,13 +394,13 @@ export const Defense = ({
                       <div className="flex items-center gap-1">
                         <Clock size={12} className={cn(theme === 'dark' ? 'text-slate-500' : 'text-slate-400')} />
                         <span className={cn("text-xs", theme === 'dark' ? 'text-slate-400' : 'text-slate-500')}>
-                          {formatTimeAgo(ip.blockedAt)}
+                          {formatRelativeCompactTruoc(ip.blockedAt)}
                         </span>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <span className={cn("text-xs", ip.expiresAt ? (theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600') : (theme === 'dark' ? 'text-slate-400' : 'text-slate-500'))}>
-                        {formatExpiry(ip.expiresAt)}
+                        {formatTimeUntilVi(ip.expiresAt)}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">

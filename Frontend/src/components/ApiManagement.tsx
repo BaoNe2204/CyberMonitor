@@ -3,6 +3,7 @@ import { Save, Plus, Trash2, Key, Copy, Eye, EyeOff, RefreshCw, ExternalLink, Sh
 import { cn } from '../lib/utils';
 import { Theme } from '../types';
 import { ServersApi } from '../services/api';
+import { formatDateOnlyVi } from '../utils/dateUtils';
 
 interface ApiManagementProps {
   theme: Theme;
@@ -429,7 +430,7 @@ const ServersApiKeysSection = ({
                   </code>
                   <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
                     <span>Prefix: <code className="font-mono text-slate-400">{apiKey.keyPrefix || 'N/A'}</code></span>
-                    <span>Created: {new Date(apiKey.createdAt).toLocaleDateString('vi-VN')}</span>
+                    <span>Created: {formatDateOnlyVi(apiKey.createdAt)}</span>
                   </div>
                 </div>
               ) : (

@@ -69,6 +69,10 @@ public class User
     [MaxLength(20)]
     public string AlertDigestMode { get; set; } = "realtime";
 
+    /// <summary>Base64 avatar image data URL (compressed, max ~50KB).</summary>
+    [MaxLength(100_000)]
+    public string? AvatarUrl { get; set; }
+
     // Navigation
     [ForeignKey(nameof(TenantId))]
     public Tenant? Tenant { get; set; }
@@ -715,6 +719,8 @@ public class Whitelist
 
     [MaxLength(255)]
     public string? Description { get; set; }
+
+    public bool IsActive { get; set; } = true;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

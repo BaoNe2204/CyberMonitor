@@ -15,6 +15,7 @@ interface SettingsProps {
   setLanguage: (lang: Language) => void;
   t: any;
   is2FAEnabled: boolean;
+  setIs2FAEnabled: (enabled: boolean) => void;
   setShow2FAModal: (show: boolean) => void;
   user: User | null;
   setUser: (user: User | null) => void;
@@ -30,6 +31,7 @@ export const Settings = ({
   setLanguage,
   t,
   is2FAEnabled,
+  setIs2FAEnabled,
   setShow2FAModal,
   user,
   setUser,
@@ -49,7 +51,8 @@ export const Settings = ({
 
   // Load saved preferences from user object (backend) or localStorage fallback
   useEffect(() => {
-    setTwoFactorEnabled(user?.twoFactorEnabled ?? is2FAEnabled ?? false);
+    // Không dùng ?? : user.twoFactorEnabled === false vẫn "có giá trị" nên không fallback sang is2FAEnabled
+    setTwoFactorEnabled(!!user?.twoFactorEnabled || is2FAEnabled);
 
     if (user) {
       // Prefer backend-saved values
@@ -104,6 +107,13 @@ export const Settings = ({
   const handleToggleTwoFactor = async (value: boolean) => {
     if (!user) return;
 
+    // Khi bật 2FA → mở modal setup để scan QR code
+    if (value) {
+      setShow2FAModal(true);
+      return;
+    }
+
+    // Khi tắt 2FA → gọi API trực tiếp
     const previous = twoFactorEnabled;
     setTwoFactorEnabled(value);
     setSecurityLoading(true);
@@ -119,7 +129,8 @@ export const Settings = ({
 
       if (response.success && response.data) {
         setUser(response.data as unknown as User);
-        setSecurityMessage(value ? 'Đã bật xác thực 2 yếu tố.' : 'Đã tắt xác thực 2 yếu tố.');
+        setIs2FAEnabled(false);
+        setSecurityMessage('Đã tắt xác thực 2 yếu tố.');
         setTimeout(() => setSecurityMessage(''), 2500);
       } else {
         setTwoFactorEnabled(previous);

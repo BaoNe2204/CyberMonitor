@@ -8,6 +8,7 @@ import {
 import { cn } from '../lib/utils';
 import { Theme } from '../types';
 import { SubscriptionsApi, PaymentApi, type PaymentHistoryEntry } from '../services/api';
+import { formatDateOnlyVi, formatDateTime } from '../utils/dateUtils';
 
 interface MySubscriptionProps {
   theme: Theme;
@@ -108,8 +109,8 @@ export const MySubscription = ({ theme, onUpgrade, refreshKey = 0 }: MySubscript
     const rows = history.map(o => [
       o.orderId, o.source === 'subscription' ? 'Đăng ký' : 'Thanh toán',
       o.planName, String(o.amount), o.currency, o.paymentMethod ?? '',
-      payLabel(o.status), new Date(o.createdAt).toLocaleString('vi-VN'),
-      o.paidAt ? new Date(o.paidAt).toLocaleString('vi-VN') : '',
+      payLabel(o.status), formatDateTime(o.createdAt),
+      o.paidAt ? formatDateTime(o.paidAt) : '',
     ]);
     const BOM = '\ufeff';
     const csv = [BOM, [headers.join(','), ...rows.map(r => r.map(v => `"${v}"`).join(','))].join('\n')].join('');
@@ -164,8 +165,8 @@ export const MySubscription = ({ theme, onUpgrade, refreshKey = 0 }: MySubscript
             {!loading && subscription && (
               <div className={cn('mt-5 pt-4 border-t grid grid-cols-2 sm:grid-cols-4 gap-4', dark ? 'border-slate-700' : 'border-slate-100')}>
                 {[
-                  { label: 'Ngày bắt đầu', value: new Date(subscription.startDate).toLocaleDateString('vi-VN'), icon: Calendar },
-                  { label: 'Ngày hết hạn', value: new Date(subscription.endDate).toLocaleDateString('vi-VN'), icon: Calendar },
+                  { label: 'Ngày bắt đầu', value: formatDateOnlyVi(subscription.startDate), icon: Calendar },
+                  { label: 'Ngày hết hạn', value: formatDateOnlyVi(subscription.endDate), icon: Calendar },
                   {
                     label: 'Còn lại', value: `${subscription.daysRemaining} ngày`,
                     cls: subscription.daysRemaining <= 7 ? 'text-rose-400' : subscription.daysRemaining <= 30 ? 'text-yellow-400' : 'text-green-400',
@@ -279,7 +280,7 @@ export const MySubscription = ({ theme, onUpgrade, refreshKey = 0 }: MySubscript
                             </span>
                           </td>
                           <td className="py-2.5 text-xs text-slate-500 whitespace-nowrap">
-                            {new Date(o.createdAt).toLocaleDateString('vi-VN')}
+                            {formatDateOnlyVi(o.createdAt)}
                           </td>
                         </tr>
                       );

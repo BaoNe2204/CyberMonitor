@@ -117,13 +117,34 @@ public class TicketsController : ControllerBase
     public async Task<ActionResult<ApiResponse<TicketDto>>> CreateTicket([FromBody] CreateTicketRequest request)
     {
         var tenantId = GetTenantId();
+        var role = GetUserRole();
+        
+        // SuperAdmin có thể tạo ticket cho bất kỳ tenant nào (dùng request.TenantId)
+        // Admin/User phải có tenantId trong JWT
+        Guid effectiveTenantId;
+        if (role == "SuperAdmin")
+        {
+            if (!request.TenantId.HasValue)
+                return BadRequest(new ApiResponse<TicketDto>(false, "SuperAdmin phải chỉ định TenantId.", null));
+            effectiveTenantId = request.TenantId.Value;
+        }
+        else
+        {
+            if (!tenantId.HasValue)
+                return Unauthorized(new ApiResponse<TicketDto>(false, "Không xác định được tenant. Vui lòng đăng nhập lại.", null));
+            effectiveTenantId = tenantId.Value;
+        }
+
         var userId = GetUserId();
+
+        // Sử dụng effectiveTenantId (từ JWT hoặc request tùy role)
+        var ticketTenantId = effectiveTenantId;
 
         var ticketNumber = $"TK-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
 
         var ticket = new Ticket
         {
-            TenantId = request.TenantId,
+            TenantId = ticketTenantId,
             AlertId = request.AlertId,
             TicketNumber = ticketNumber,
             Title = request.Title,
@@ -143,7 +164,7 @@ public class TicketsController : ControllerBase
         // Audit
         _db.AuditLogs.Add(new AuditLog
         {
-            TenantId = request.TenantId,
+            TenantId = ticketTenantId,
             UserId = userId,
             Action = "TICKET_CREATED",
             EntityType = "Ticket",
@@ -159,13 +180,13 @@ public class TicketsController : ControllerBase
 
         var dto = MapTicketDto(ticket);
 
-        // Real-time notification
-        await _hub.Clients.Group(request.TenantId.ToString()).TicketCreated(dto);
+        // Real-time notification — dùng ticketTenantId (từ JWT) thay vì request.TenantId
+        await _hub.Clients.Group(ticketTenantId.ToString()).TicketCreated(dto);
 
         // === NOTIFICATION EMAIL ===
         // Gửi email cho tất cả Admin/SuperAdmin trong tenant về ticket mới
         var admins = await _db.Users
-            .Where(u => u.TenantId == request.TenantId && (u.Role == "Admin" || u.Role == "SuperAdmin"))
+            .Where(u => u.TenantId == ticketTenantId && (u.Role == "Admin" || u.Role == "SuperAdmin"))
             .ToListAsync();
 
         var creator = await _db.Users.FindAsync(request.CreatedBy);
@@ -175,7 +196,7 @@ public class TicketsController : ControllerBase
             // DB notification
             _db.Notifications.Add(new Notification
             {
-                TenantId = request.TenantId,
+                TenantId = ticketTenantId,
                 UserId = admin.Id,
                 Title = $"🎫 Ticket mới: {ticketNumber}",
                 Message = $"{ticket.Title} (Priority: {ticket.Priority})",
@@ -187,18 +208,18 @@ public class TicketsController : ControllerBase
             if (request.AssignedTo.HasValue && request.AssignedTo.Value == admin.Id)
             {
                 if (admin.EmailAlertsEnabled)
-                    await _emailService.SendTicketNotificationAsync(request.TenantId, admin.Email, ticket, "đã được phân công cho bạn");
+                    await _emailService.SendTicketNotificationAsync(ticketTenantId, admin.Email, ticket, "đã được phân công cho bạn");
             }
             else if (!request.AssignedTo.HasValue)
             {
                 if (admin.EmailAlertsEnabled)
-                    await _emailService.SendTicketNotificationAsync(request.TenantId, admin.Email, ticket, "Ticket mới được tạo");
+                    await _emailService.SendTicketNotificationAsync(ticketTenantId, admin.Email, ticket, "Ticket mới được tạo");
             }
         }
 
         // SignalR real-time notification push
         var notifDto = new NotificationDto(
-            Guid.NewGuid(), request.TenantId, Guid.Empty,
+            Guid.NewGuid(), ticketTenantId, Guid.Empty,
             $"🎫 Ticket mới: {ticketNumber}",
             $"{ticket.Title} (Priority: {ticket.Priority})",
             "Ticket",
@@ -206,7 +227,7 @@ public class TicketsController : ControllerBase
             $"/dashboard/tickets/{ticket.Id}",
             DateTime.UtcNow
         );
-        await _hub.Clients.Group(request.TenantId.ToString()).NotificationReceived(notifDto);
+        await _hub.Clients.Group(ticketTenantId.ToString()).NotificationReceived(notifDto);
 
         await _db.SaveChangesAsync();
 

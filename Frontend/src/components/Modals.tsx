@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { XCircle, QrCode, CheckCircle2, Plus, Copy, Trash2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { XCircle, QrCode, CheckCircle2, Plus, Copy, Trash2, AlertTriangle, RefreshCw, Smartphone } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Theme, ApiKey, ServerKeyModalState } from '../types';
+import { AuthApi } from '../services/api';
+import { TwoFASetupModal } from './TwoFASetupModal';
 
 interface ModalsProps {
   theme: Theme;
@@ -11,13 +13,15 @@ interface ModalsProps {
   setShowAddServerModal: (show: boolean) => void;
   show2FAModal: boolean;
   setShow2FAModal: (show: boolean) => void;
-  is2FAEnabled: boolean;
-  setIs2FAEnabled: (enabled: boolean) => void;
   showAPIKeyModal: boolean;
   setShowAPIKeyModal: (show: boolean) => void;
-  apiKeys: ApiKey[];
-  generateApiKey: () => void;
+  apiKeys: Array<{ id: string; name: string; key: string; created: string; plainApiKey: string }>;
+  generateApiKey: () => Promise<string | null>;
   deleteApiKey: (id: string) => void;
+  is2FAEnabled: boolean;
+  setIs2FAEnabled: (enabled: boolean) => void;
+  /** Gọi sau khi bật/tắt 2FA thành công — refresh /me để UI đồng bộ */
+  onTwoFAProfileSynced?: () => void | Promise<void>;
   selectedDetail: { type: string, data: any } | null;
   setSelectedDetail: (detail: { type: string, data: any } | null) => void;
   onAddServer: (
@@ -36,13 +40,14 @@ export const Modals = ({
   setShowAddServerModal,
   show2FAModal,
   setShow2FAModal,
-  is2FAEnabled,
-  setIs2FAEnabled,
   showAPIKeyModal,
   setShowAPIKeyModal,
   apiKeys,
   generateApiKey,
   deleteApiKey,
+  is2FAEnabled,
+  setIs2FAEnabled,
+  onTwoFAProfileSynced,
   selectedDetail,
   setSelectedDetail,
   onAddServer,
@@ -157,65 +162,14 @@ export const Modals = ({
       )}
 
       {show2FAModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className={cn("w-full max-w-md p-6 rounded-2xl border shadow-2xl transition-colors", theme === 'dark' ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200")}
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h3 className={cn("text-xl font-bold", theme === 'dark' ? "text-white" : "text-slate-900")}>{t.twoFactorSetup}</h3>
-              <button onClick={() => setShow2FAModal(false)} className="text-slate-500 hover:text-rose-500 transition-colors"><XCircle size={24} /></button>
-            </div>
-            
-            {!is2FAEnabled ? (
-              <div className="space-y-6">
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <div className={cn("p-4 rounded-2xl", theme === 'dark' ? "bg-slate-950" : "bg-slate-50")}>
-                    <QrCode size={160} className={theme === 'dark' ? "text-white" : "text-slate-900"} />
-                  </div>
-                  <p className={cn("text-sm", theme === 'dark' ? "text-slate-400" : "text-slate-600")}>
-                    {t.scanQr}
-                  </p>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-slate-500 uppercase">{t.verifyCode}</label>
-                  <input 
-                    type="text" 
-                    maxLength={6}
-                    className={cn("w-full text-center text-2xl tracking-[1em] font-mono rounded-lg px-4 py-3 focus:outline-none border transition-colors", theme === 'dark' ? "bg-slate-950 border-slate-800 text-white" : "bg-slate-50 border-slate-200 text-slate-900")}
-                    placeholder="000000"
-                  />
-                </div>
-                
-                <button 
-                  onClick={() => { setIs2FAEnabled(true); setShow2FAModal(false); }}
-                  className="w-full py-3 rounded-lg bg-emerald-600 text-white font-bold hover:bg-emerald-500 transition-colors shadow-lg shadow-emerald-900/20"
-                >
-                  {t.enable2FA}
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-6 text-center">
-                <div className="flex justify-center">
-                  <div className="bg-emerald-500/20 p-4 rounded-full">
-                    <CheckCircle2 size={48} className="text-emerald-500" />
-                  </div>
-                </div>
-                <p className={cn("text-lg font-bold", theme === 'dark' ? "text-white" : "text-slate-900")}>2FA is active</p>
-                <p className="text-sm text-slate-500">Your account is protected with two-factor authentication.</p>
-                <button 
-                  onClick={() => { setIs2FAEnabled(false); setShow2FAModal(false); }}
-                  className="w-full py-3 rounded-lg bg-rose-600 text-white font-bold hover:bg-rose-500 transition-colors"
-                >
-                  {t.disable2FA}
-                </button>
-              </div>
-            )}
-          </motion.div>
-        </div>
+        <TwoFASetupModal
+          theme={theme}
+          t={t}
+          is2FAEnabled={is2FAEnabled}
+          setIs2FAEnabled={setIs2FAEnabled}
+          onProfileSynced={onTwoFAProfileSynced}
+          onClose={() => setShow2FAModal(false)}
+        />
       )}
 
       {showAPIKeyModal && (

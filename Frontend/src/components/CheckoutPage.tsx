@@ -112,15 +112,20 @@ export const CheckoutPage = ({ theme, plan, onBack, onPaymentSuccess }: Checkout
       if (res.success && res.data) {
         onPaymentSuccess(res.data.orderId || orderCode, plan.name, finalPrice);
       } else {
-        // Log lỗi cụ thể ra console để debug
         console.error('[Payment] demo-confirm failed:', res.message, res);
-        // Thử fallback: hiện thông báo lỗi rõ ràng
         const errMsg = res.message || 'Lỗi không xác định';
-        if (errMsg.includes('tenant') || errMsg.includes('401') || errMsg.includes('Unauthorized')) {
-          alert('Lỗi xác thực: Vui lòng đăng xuất và đăng nhập lại.');
+
+        // Phân biệt các loại lỗi dựa trên message từ backend
+        if (errMsg.includes('tạm thời') || errMsg.includes('2FA') || errMsg.includes('token')) {
+          alert('Lỗi xác thực 2FA: Token không hợp lệ. Vui lòng đăng nhập lại và xác thực 2FA.');
+        } else if (errMsg.includes('tenant') || errMsg.includes('Tenant') || errMsg.includes('xác định')) {
+          alert('Lỗi tenant: Không xác định được workspace. Vui lòng đăng xuất và đăng nhập lại.');
         } else if (errMsg.includes('404') || errMsg.includes('not found') || errMsg.includes('endpoint')) {
           alert('Backend chưa cập nhật endpoint mới.\nVui lòng restart backend (Ctrl+C rồi dotnet run).');
+        } else if (errMsg.includes('Unauthorized') || errMsg.includes('401')) {
+          alert(`Lỗi xác thực: ${errMsg}\n\nVui lòng đăng xuất và đăng nhập lại.`);
         } else {
+          // Hiển thị message thực từ backend thay vì ghi đè
           alert(`Lỗi lưu giao dịch: ${errMsg}`);
         }
         setLoading(false);

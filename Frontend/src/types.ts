@@ -6,37 +6,8 @@ export type Theme = 'dark' | 'light';
 export type Language = 'vi' | 'en';
 export type AuthMode = 'login' | 'register';
 
-// --- User & Auth ---
-export interface User {
-  id: string;
-  tenantId: string | null;
-  tenantName?: string | null;
-  email: string;
-  fullName: string;
-  role: 'superAdmin' | 'admin' | 'user' | 'SuperAdmin' | 'Admin' | 'User';
-  isActive?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-  lastLoginAt?: string;
-  avatar?: string;
-  phone?: string;
-  companyName?: string;
-  twoFactorEnabled?: boolean;
-  sessionTimeoutEnabled?: boolean;
-  sessionTimeoutMinutes?: number;
-  emailAlertsEnabled?: boolean;
-  telegramAlertsEnabled?: boolean;
-  pushNotificationsEnabled?: boolean;
-  telegramChatId?: string | null;
-  alertSeverityThreshold?: string;
-  alertDigestMode?: string;
-}
-
-export interface AuthResponse {
-  token: string;
-  user: User;
-  expiresAt: string;
-}
+// --- User & Auth - Import from api.ts to avoid duplication ---
+// User, Alert, Ticket, Notification types are defined in api.ts
 
 // --- Agent / Server ---
 export interface Agent {
@@ -52,45 +23,6 @@ export interface Agent {
   version?: string;
   tenantId?: string;
   apiKey?: string;
-}
-
-// --- Alert / Incident ---
-export interface Alert {
-  id: string;
-  title: string;
-  message: string;
-  severity: 'Critical' | 'High' | 'Medium' | 'Warning' | 'Low' | 'Info';
-  alertType: string;
-  sourceIp: string;
-  targetAsset: string;
-  serverName?: string;
-  mitreTechnique?: string;
-  mitreTactic?: string;
-  status: 'open' | 'acknowledged' | 'resolved' | 'closed' | 'Open' | 'Acknowledged' | 'Investigating' | 'Resolved' | 'Closed';
-  isRead: boolean;
-  createdAt: string;
-  updatedAt?: string;
-  resolvedAt?: string;
-  assignee?: string;
-  notes?: string;
-  tenantId?: string;
-  mitre?: string;
-}
-
-// --- Ticket ---
-export interface Ticket {
-  id: string;
-  title: string;
-  description: string;
-  priority: 'Low' | 'Medium' | 'High' | 'Critical';
-  status: 'open' | 'inProgress' | 'resolved' | 'closed';
-  category: string;
-  createdBy: string;
-  assignedTo?: string;
-  createdAt: string;
-  updatedAt?: string;
-  resolvedAt?: string;
-  tenantId?: string;
 }
 
 // --- API Key ---

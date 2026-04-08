@@ -27,6 +27,7 @@ import { cn } from '../lib/utils';
 import { Theme, Agent, Alert } from '../types';
 import { StatCard } from './common/StatCard';
 import { DashboardSkeleton, AgentListSkeleton } from './SkeletonLoader';
+import { formatRelativeCompactTruoc } from '../utils/dateUtils';
 
 interface DashboardProps {
   theme: Theme;
@@ -43,17 +44,6 @@ interface DashboardProps {
   setActiveTab: (tab: string) => void;
   isLoading?: boolean;
 }
-
-const formatTimeAgo = (dateStr: string | null) => {
-  if (!dateStr) return 'N/A';
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
-  if (diff < 60) return `${diff}s trước`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}p trước`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h trước`;
-  return `${Math.floor(diff / 86400)}d trước`;
-};
 
 export const Dashboard = memo(({ 
   theme, 
@@ -395,7 +385,7 @@ export const Dashboard = memo(({
                           {alert.mitreTechnique || alert.mitreTactic || '—'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-500 font-medium">{formatTimeAgo(alert.createdAt)}</td>
+                      <td className="px-4 py-3 text-xs text-slate-500 font-medium">{formatRelativeCompactTruoc(alert.createdAt)}</td>
                     </tr>
                   ))}
                 </tbody>

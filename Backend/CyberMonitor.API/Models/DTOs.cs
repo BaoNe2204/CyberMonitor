@@ -11,12 +11,36 @@ public record RegisterRequest(
 
 public record LoginRequest(
     [Required, EmailAddress] string Email,
-    [Required] string Password
+    [Required] string Password,
+    string? TwoFactorCode
 );
 
 public record AuthResponse(
     string Token,
     UserDto User
+);
+
+public record LoginResult(
+    bool RequiresTwoFactor,
+    string? TempToken
+);
+
+public record TwoFactorSetupResponse(
+    string Secret,
+    string QrCodeBase64,
+    string ManualEntryKey
+);
+
+public record TwoFactorVerifyRequest(
+    [Required] string Code
+);
+
+public record TwoFactorSetupRequest(
+    [Required] string Code
+);
+
+public record AvatarUploadRequest(
+    string? AvatarDataUrl
 );
 
 public record UserDto(
@@ -35,7 +59,8 @@ public record UserDto(
     bool PushNotificationsEnabled,
     string? TelegramChatId,
     string AlertSeverityThreshold,
-    string AlertDigestMode
+    string AlertDigestMode,
+    string? AvatarUrl
 );
 
 public record CreateUserRequest(
@@ -221,7 +246,7 @@ public record TicketCommentDto(
 );
 
 public record CreateTicketRequest(
-    Guid TenantId,
+    Guid? TenantId,  // SuperAdmin phải truyền, Admin/User lấy từ JWT
     Guid? AlertId,
     [Required] string Title,
     string? Description,

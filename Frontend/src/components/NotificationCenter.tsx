@@ -6,6 +6,7 @@ import {
 import { cn } from '../lib/utils';
 import { Theme } from '../types';
 import { NotificationsApi } from '../services/api';
+import { formatRelativeNotification } from '../utils/dateUtils';
 
 const PAGE_SIZE = 20;
 
@@ -18,18 +19,6 @@ const TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string; label:
 
 function typeConfig(type: string) {
   return TYPE_CONFIG[type] ?? { icon: <Info size={12} />, color: 'text-slate-400 bg-slate-500/10', label: type };
-}
-
-function timeAgo(d: string) {
-  const diff = Date.now() - new Date(d).getTime();
-  if (diff < 60000) return 'Vừa xong';
-  if (diff < 3600000) return `${Math.floor(diff / 60000)} phút`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)} giờ`;
-  return `${Math.floor(diff / 86400000)} ngày`;
-}
-
-function formatDate(d: string) {
-  return new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
 interface NotificationCenterProps {
@@ -180,7 +169,7 @@ export const NotificationCenter = ({ theme }: NotificationCenterProps) => {
                         : theme === 'dark' ? 'text-white' : 'text-slate-900')}>
                         {n.title}
                       </p>
-                      <span className="text-[10px] text-slate-500 whitespace-nowrap shrink-0">{timeAgo(n.createdAt)}</span>
+                      <span className="text-[10px] text-slate-500 whitespace-nowrap shrink-0">{formatRelativeNotification(n.createdAt)}</span>
                     </div>
                     <p className={cn('text-xs mt-0.5 leading-relaxed', theme === 'dark' ? 'text-slate-400' : 'text-slate-600')}>
                       {n.message}

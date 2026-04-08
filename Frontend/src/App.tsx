@@ -16,7 +16,8 @@ import { cn } from './lib/utils';
 import { useDataWorker, useFetchWorker } from './hooks/useDataWorker';
 
 // Types & Data
-import { Theme, Language, AuthMode, ApiKey, Alert, Agent, User, ServerKeyModalState, Notification } from './types';
+import { Theme, Language, AuthMode, ApiKey, Agent, ServerKeyModalState } from './types';
+import type { User, Alert, Notification, Ticket } from './services/api';
 import { translations } from './i18n/translations';
 
 // API Client
@@ -36,6 +37,7 @@ import {
   createSignalRConnection,
   type SignalRCallbacks,
   getStoredUser,
+  setStoredUser,
   isAuthenticated,
   clearAuth,
 } from './services/api';
@@ -98,6 +100,8 @@ export default function App() {
   const [show2FAModal, setShow2FAModal] = useState(false);
   const [showAPIKeyModal, setShowAPIKeyModal] = useState(false);
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  // 2FA login flow
+  const [pending2FA, setPending2FA] = useState<{ email: string; password: string; tempToken: string } | null>(null);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [selectedDetail, setSelectedDetail] = useState<{ type: string; data: any } | null>(null);
   const [pricingPlans, setPricingPlans] = useState<any[]>([]);
@@ -130,7 +134,7 @@ export default function App() {
   // Whitelists
   const [whitelists, setWhitelists] = useState<WhitelistEntry[]>([]);
   // Tickets (real-time)
-  const [tickets, setTickets] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   // Loading states
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
 
@@ -520,8 +524,8 @@ export default function App() {
 
     fetchInitialData();
 
-    // Refresh dashboard stats every 60 seconds
-    const interval = setInterval(fetchDashboardStats, 60000);
+    // Refresh dashboard stats every 30 seconds
+    const interval = setInterval(fetchDashboardStats, 30000);
     return () => clearInterval(interval);
   }, [isLoggedIn, fetchDashboardStats, fetchDashboard, processDashboardData, workerReady]);
 
@@ -529,15 +533,44 @@ export default function App() {
   // (Now fetched in parallel above)
 
   // --- Handlers ---
-  const handleLogin = useCallback(async (email: string, password: string): Promise<{ success: boolean; message: string }> => {
-    const res = await AuthApi.login(email, password);
+  const handleLogin = useCallback(async (email: string, password: string, twoFactorCode?: string): Promise<{ success: boolean; message: string; requiresTwoFactor?: boolean }> => {
+    const res = await AuthApi.login(email, password, twoFactorCode);
+
+    // 1) Backend yêu cầu 2FA → chỉ set pending2FA, KHÔNG setIsLoggedIn
+    const data = (res as any).data;
+    if (res.success && data?.requiresTwoFactor) {
+      setPending2FA({ email, password, tempToken: data.tempToken });
+      return { success: false, message: res.message || 'Vui lòng nhập mã 2FA.', requiresTwoFactor: true };
+    }
+
+    // 2) Đăng nhập thành công (không có 2FA)
+    if (res.success && res.data && res.data.token) {
+      setUser(res.data.user);
+      setIsLoggedIn(true);
+      setPending2FA(null);
+      return { success: true, message: 'Đăng nhập thành công!' };
+    }
+
+    // 3) Lỗi đăng nhập
+    return { success: false, message: res.message || 'Đăng nhập thất bại' };
+  }, []);
+
+  const handleLoginWith2FA = useCallback(async (code: string): Promise<{ success: boolean; message: string }> => {
+    if (!pending2FA) return { success: false, message: 'Không có phiên đăng nhập 2FA.' };
+
+    // AuthApi.loginWith2FA đã setToken + setStoredUser bên trong rồi
+    // → chỉ cần sync React state + đóng 2FA flow
+    // Quan trọng: clear pending2FA TRƯỚC setIsLoggedIn để AuthForm không hiển thị màn hình OTP che dashboard
+    const res = await AuthApi.loginWith2FA(code, pending2FA.tempToken);
     if (res.success && res.data) {
+      // Token + user đã được lưu bởi AuthApi.loginWith2FA
+      setPending2FA(null);
       setUser(res.data.user);
       setIsLoggedIn(true);
       return { success: true, message: 'Đăng nhập thành công!' };
     }
-    return { success: false, message: res.message || 'Đăng nhập thất bại' };
-  }, []);
+    return { success: false, message: res.message || 'Mã 2FA không đúng.' };
+  }, [pending2FA]);
 
   const handleRegister = useCallback(async (companyName: string, email: string, password: string): Promise<{ success: boolean; message: string }> => {
     const res = await AuthApi.register(companyName, email, password);
@@ -547,6 +580,16 @@ export default function App() {
       return { success: true, message: 'Đăng ký thành công! Workspace đã được tạo.' };
     }
     return { success: false, message: res.message || 'Đăng ký thất bại' };
+  }, []);
+
+  /** Sau khi bật/tắt 2FA trong modal — đồng bộ user + localStorage để toggle Settings/Account đúng. */
+  const syncUserProfileFromServer = useCallback(async () => {
+    const res = await AuthApi.getMe();
+    if (res.success && res.data) {
+      setUser(res.data as User);
+      setStoredUser(res.data as User);
+      setIs2FAEnabled(!!res.data.twoFactorEnabled);
+    }
   }, []);
 
   const handleLogout = useCallback(() => {
@@ -857,10 +900,13 @@ export default function App() {
           setLanguage={setLanguage}
           setShowAuth={setShowAuth}
           authMode={authMode}
-          setAuthMode={setAuthMode}
-          handleLogin={handleLogin}
-          handleRegister={handleRegister}
-          t={t}
+        setAuthMode={setAuthMode}
+        handleLogin={handleLogin}
+        handleRegister={handleRegister}
+        pending2FA={pending2FA}
+        setPending2FA={setPending2FA}
+        handleLoginWith2FA={handleLoginWith2FA}
+        t={t}
         />
       );
     }
@@ -887,13 +933,14 @@ export default function App() {
         setShowAddServerModal={setShowAddServerModal}
         show2FAModal={show2FAModal}
         setShow2FAModal={setShow2FAModal}
-        is2FAEnabled={is2FAEnabled}
-        setIs2FAEnabled={setIs2FAEnabled}
         showAPIKeyModal={showAPIKeyModal}
         setShowAPIKeyModal={setShowAPIKeyModal}
         apiKeys={apiKeys}
         generateApiKey={generateApiKey}
         deleteApiKey={deleteApiKey}
+        is2FAEnabled={is2FAEnabled}
+        setIs2FAEnabled={setIs2FAEnabled}
+        onTwoFAProfileSynced={syncUserProfileFromServer}
         selectedDetail={selectedDetail}
         setSelectedDetail={setSelectedDetail}
         onAddServer={handleAddServer}
@@ -1319,6 +1366,7 @@ export default function App() {
                     setLanguage={setLanguage}
                     t={t}
                     is2FAEnabled={is2FAEnabled}
+                    setIs2FAEnabled={setIs2FAEnabled}
                     setShow2FAModal={setShow2FAModal}
                     user={user}
                     setUser={setUser}
@@ -1329,7 +1377,16 @@ export default function App() {
                 )}
 
                 {activeTab === 'account' && (
-                  <Account theme={theme} t={t} />
+                  <Account
+                    theme={theme}
+                    t={t}
+                    show2FAModal={show2FAModal}
+                    setShow2FAModal={setShow2FAModal}
+                    is2FAEnabled={is2FAEnabled}
+                    setIs2FAEnabled={setIs2FAEnabled}
+                    user={user}
+                    onUserUpdate={setUser}
+                  />
                 )}
 
                 {activeTab === 'userManagement' && (

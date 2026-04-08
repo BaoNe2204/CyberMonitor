@@ -364,6 +364,66 @@ namespace CyberMonitor.API.Migrations
                     b.ToTable("BlockedIPs");
                 });
 
+            modelBuilder.Entity("CyberMonitor.API.Models.ContactMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("RepliedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("RepliedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Reply")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Subject")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_ContactMessages_CreatedAt");
+
+                    b.HasIndex("RepliedBy");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_ContactMessages_Status");
+
+                    b.ToTable("ContactMessages");
+                });
+
             modelBuilder.Entity("CyberMonitor.API.Models.Notification", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1023,6 +1083,10 @@ namespace CyberMonitor.API.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<string>("AvatarUrl")
+                        .HasMaxLength(100000)
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -1129,6 +1193,9 @@ namespace CyberMonitor.API.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<Guid?>("ServerId")
                         .HasColumnType("uniqueidentifier");
@@ -1254,6 +1321,16 @@ namespace CyberMonitor.API.Migrations
                     b.Navigation("Server");
 
                     b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("CyberMonitor.API.Models.ContactMessage", b =>
+                {
+                    b.HasOne("CyberMonitor.API.Models.User", "RepliedByUser")
+                        .WithMany()
+                        .HasForeignKey("RepliedBy")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("RepliedByUser");
                 });
 
             modelBuilder.Entity("CyberMonitor.API.Models.Notification", b =>

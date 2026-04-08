@@ -221,6 +221,7 @@ public class ServersController : ControllerBase
     {
         var tenantId = GetTenantId();
         var role = GetUserRole();
+        var userId = GetUserId();
 
         // Staff không được sửa server
         if (role == "Staff")
@@ -228,7 +229,7 @@ public class ServersController : ControllerBase
 
         var server = await _db.Servers.FindAsync(id);
         if (server == null)
-            return NotFound(new ApiResponse<ServerDto>(false, "Server không tìm thấy.", null));
+            return NotFound(new ApiResponse<ServerDto>(false, "Server không tìm tại.", null));
 
         if (role != "SuperAdmin" && server.TenantId != tenantId)
             return Forbid();
@@ -237,6 +238,16 @@ public class ServersController : ControllerBase
             server.Name = request.Name;
         if (!string.IsNullOrEmpty(request.Status))
             server.Status = request.Status;
+
+        _db.AuditLogs.Add(new AuditLog
+        {
+            TenantId = server.TenantId,
+            UserId = userId,
+            Action = "SERVER_UPDATED",
+            EntityType = "Server",
+            EntityId = server.Id.ToString(),
+            Details = $"Server '{server.Name}' updated"
+        });
 
         await _db.SaveChangesAsync();
 
@@ -250,6 +261,7 @@ public class ServersController : ControllerBase
     {
         var tenantId = GetTenantId();
         var role = GetUserRole();
+        var userId = GetUserId();
 
         if (role != "SuperAdmin" && role != "Admin")
             return Forbid();
@@ -274,6 +286,17 @@ public class ServersController : ControllerBase
         _db.TrafficLogs.RemoveRange(trafficLogs);
         _db.BlockedIPs.RemoveRange(blockedIPs);
         _db.ServerAlertEmails.RemoveRange(serverAlertEmails);
+
+        _db.AuditLogs.Add(new AuditLog
+        {
+            TenantId = server.TenantId,
+            UserId = userId,
+            Action = "SERVER_DELETED",
+            EntityType = "Server",
+            EntityId = server.Id.ToString(),
+            Details = $"Server '{server.Name}' ({server.IpAddress}) deleted with {alerts.Count} alerts, {tickets.Count} tickets"
+        });
+
         _db.Servers.Remove(server);
         await _db.SaveChangesAsync();
 
@@ -287,6 +310,7 @@ public class ServersController : ControllerBase
     {
         var tenantId = GetTenantId();
         var role = GetUserRole();
+        var userId = GetUserId();
 
         var server = await _db.Servers.FindAsync(id);
         if (server == null)
@@ -313,6 +337,17 @@ public class ServersController : ControllerBase
             IsActive = true
         };
         _db.ApiKeys.Add(newKey);
+
+        _db.AuditLogs.Add(new AuditLog
+        {
+            TenantId = server.TenantId,
+            UserId = userId,
+            Action = "API_KEY_REGENERATED",
+            EntityType = "Server",
+            EntityId = server.Id.ToString(),
+            Details = $"API key regenerated for server '{server.Name}'"
+        });
+
         await _db.SaveChangesAsync();
 
         return Ok(new ApiResponse<ApiKeyGeneratedResponse>(true,
@@ -367,6 +402,12 @@ public class ServersController : ControllerBase
     }
 
     private string GetUserRole() => User.FindFirstValue(System.Security.Claims.ClaimTypes.Role) ?? "User";
+
+    private Guid? GetUserId()
+    {
+        var val = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+        return val != null ? Guid.Parse(val) : null;
+    }
 
     private static string GenerateSecureKey(int length)
     {

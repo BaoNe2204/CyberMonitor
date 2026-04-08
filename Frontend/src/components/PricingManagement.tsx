@@ -11,6 +11,7 @@ import {
 import { cn } from '../lib/utils';
 import { Theme } from '../types';
 import { SubscriptionsApi, PaymentApi, PricingPlansApi } from '../services/api';
+import { formatDateOnlyVi } from '../utils/dateUtils';
 
 // Helper parse price - handles "299,000" string from API
 export const parsePrice = (priceStr: string | number): number => {
@@ -1838,7 +1839,7 @@ const PaymentsSection = ({ theme, paymentHistory, loading }: {
           {paymentHistory.map(payment => (
             <tr key={payment.id} className="hover:bg-slate-800/20">
               <td className="p-4 font-mono text-sm">{payment.orderId}</td>
-              <td className="p-4 text-slate-300">{new Date(payment.date).toLocaleDateString('vi-VN')}</td>
+              <td className="p-4 text-slate-300">{formatDateOnlyVi(payment.date)}</td>
               <td className="p-4 font-medium">{payment.planName}</td>
               <td className="p-4 text-right font-mono font-bold">{payment.amount.toLocaleString()}đ</td>
               <td className="p-4 text-center">

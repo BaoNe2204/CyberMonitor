@@ -3,6 +3,8 @@
  * Chạy trên thread riêng, không block UI
  */
 
+import { getApiTimeMs } from '../utils/dateUtils';
+
 self.onmessage = (e: MessageEvent) => {
   const { type, data } = e.data;
 
@@ -116,7 +118,7 @@ function processAlerts(alerts: any[]) {
   // Sort, filter, transform alerts
   return alerts
     .filter(a => a.id)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .sort((a, b) => getApiTimeMs(b.createdAt) - getApiTimeMs(a.createdAt))
     .slice(0, 50);
 }
 

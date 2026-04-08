@@ -73,7 +73,7 @@ public class UsersController : ControllerBase
                 u.Id, u.TenantId, u.Tenant!.CompanyName, u.Email, u.FullName, u.Role,
                 u.LastLoginAt, u.TwoFactorEnabled, u.SessionTimeoutEnabled, u.SessionTimeoutMinutes,
                 u.EmailAlertsEnabled, u.TelegramAlertsEnabled, u.PushNotificationsEnabled,
-                u.TelegramChatId, u.AlertSeverityThreshold, u.AlertDigestMode))
+                u.TelegramChatId, u.AlertSeverityThreshold, u.AlertDigestMode, u.AvatarUrl))
             .ToListAsync();
 
         return Ok(new ApiResponse<PagedResult<UserDto>>(true, "OK", new PagedResult<UserDto>(
@@ -143,44 +143,61 @@ public class UsersController : ControllerBase
         // === NOTIFICATIONS ===
         await _emailService.SendNewUserCreatedEmailAsync(user.Email, user.FullName, request.Password, "Admin");
 
-        var admins = await _db.Users
-            .Where(u => u.TenantId == user.TenantId && u.Id != user.Id && (u.Role == "Admin" || u.Role == "SuperAdmin"))
-            .ToListAsync();
-
-        foreach (var admin in admins)
+        // Chỉ tạo notifications nếu có TenantId hợp lệ
+        if (user.TenantId.HasValue)
         {
+            var admins = await _db.Users
+                .Where(u => u.TenantId == user.TenantId && u.Id != user.Id && (u.Role == "Admin" || u.Role == "SuperAdmin"))
+                .ToListAsync();
+
+            foreach (var admin in admins)
+            {
+                _db.Notifications.Add(new Notification
+                {
+                    TenantId = user.TenantId.Value,
+                    UserId = admin.Id,
+                    Title = $"User mới: {user.FullName}",
+                    Message = $"Tài khoản {user.Email} với vai trò {user.Role} đã được tạo.",
+                    Type = "Info",
+                    Link = "/dashboard/users"
+                });
+            }
+
             _db.Notifications.Add(new Notification
             {
-                TenantId = user.TenantId!.Value,
-                UserId = admin.Id,
-                Title = $"User mới: {user.FullName}",
-                Message = $"Tài khoản {user.Email} với vai trò {user.Role} đã được tạo.",
+                TenantId = user.TenantId.Value,
+                UserId = user.Id,
+                Title = "Chào mừng bạn!",
+                Message = $"Tài khoản của bạn đã được tạo. Vai trò: {user.Role}",
                 Type = "Info",
-                Link = "/dashboard/users"
+                Link = "/dashboard"
             });
+
+            _db.AuditLogs.Add(new AuditLog
+            {
+                TenantId = user.TenantId,
+                UserId = GetUserId(),
+                Action = "USER_CREATED",
+                EntityType = "User",
+                EntityId = user.Id.ToString(),
+                Details = $"User {user.Email} created"
+            });
+
+            await _db.SaveChangesAsync();
         }
-
-        _db.Notifications.Add(new Notification
+        else
         {
-            TenantId = user.TenantId!.Value,
-            UserId = user.Id,
-            Title = "Chào mừng bạn!",
-            Message = $"Tài khoản của bạn đã được tạo. Vai trò: {user.Role}",
-            Type = "Info",
-            Link = "/dashboard"
-        });
-
-        _db.AuditLogs.Add(new AuditLog
-        {
-            TenantId = user.TenantId,
-            UserId = GetUserId(),
-            Action = "USER_CREATED",
-            EntityType = "User",
-            EntityId = user.Id.ToString(),
-            Details = $"User {user.Email} created"
-        });
-
-        await _db.SaveChangesAsync();
+            // Vẫn ghi audit log nhưng không có TenantId
+            _db.AuditLogs.Add(new AuditLog
+            {
+                UserId = GetUserId(),
+                Action = "USER_CREATED",
+                EntityType = "User",
+                EntityId = user.Id.ToString(),
+                Details = $"User {user.Email} created (no tenant)"
+            });
+            await _db.SaveChangesAsync();
+        }
 
         return Ok(new ApiResponse<UserDto>(true, "Tạo user thành công!", MapUserDto(user)));
     }
@@ -266,6 +283,35 @@ public class UsersController : ControllerBase
             EntityId = user.Id.ToString(),
             Details = $"User {user.Email} deleted"
         });
+
+        // Null out CreatedBy on tickets created by this user to avoid FK conflict
+        var ticketsCreatedByUser = await _db.Tickets
+            .Where(t => t.CreatedBy == user.Id)
+            .ToListAsync();
+        foreach (var ticket in ticketsCreatedByUser)
+            ticket.CreatedBy = null;
+
+        // Null out AssignedTo/AssignedBy on tickets assigned to this user
+        var ticketsAssigned = await _db.Tickets
+            .Where(t => t.AssignedTo == user.Id || t.AssignedBy == user.Id)
+            .ToListAsync();
+        foreach (var ticket in ticketsAssigned)
+        {
+            if (ticket.AssignedTo == user.Id) ticket.AssignedTo = null;
+            if (ticket.AssignedBy == user.Id) ticket.AssignedBy = null;
+        }
+
+        // Delete ticket comments by this user (UserId is [Required], can't null)
+        var comments = await _db.TicketComments.Where(c => c.UserId == user.Id).ToListAsync();
+        _db.TicketComments.RemoveRange(comments);
+
+        // Delete notifications by this user (UserId is NOT NULL in DB, can't null)
+        var notifications = await _db.Notifications.Where(n => n.UserId == user.Id).ToListAsync();
+        _db.Notifications.RemoveRange(notifications);
+
+        // Remove AlertDigestQueue entries by this user
+        var digestQueue = await _db.AlertDigestQueue.Where(q => q.UserId == user.Id).ToListAsync();
+        _db.AlertDigestQueue.RemoveRange(digestQueue);
 
         _db.Users.Remove(user);
         await _db.SaveChangesAsync();
@@ -444,7 +490,7 @@ public class UsersController : ControllerBase
         user.Id, user.TenantId, user.Tenant?.CompanyName, user.Email, user.FullName, user.Role,
         user.LastLoginAt, user.TwoFactorEnabled, user.SessionTimeoutEnabled, user.SessionTimeoutMinutes,
         user.EmailAlertsEnabled, user.TelegramAlertsEnabled, user.PushNotificationsEnabled,
-        user.TelegramChatId, user.AlertSeverityThreshold, user.AlertDigestMode);
+        user.TelegramChatId, user.AlertSeverityThreshold, user.AlertDigestMode, user.AvatarUrl);
 }
 
 public record ChangeUserPasswordRequest(string NewPassword);

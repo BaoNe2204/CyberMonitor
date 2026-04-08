@@ -184,6 +184,11 @@ class IPBlocker:
 
     def _block_local(self, ip: str, reason: str) -> bool:
         rule = f"CyberMonitor_Block_{ip.replace('.', '_')}"
+        
+        # Đưa việc khai báo ra ngoài cùng để lúc nào cũng có biến này
+        # Dùng trực tiếp hằng số 0x08000000 để tránh lỗi import
+        cf = 0x08000000 if self._plat == "Windows" else 0
+        
         if self._plat == "Windows":
             cmd = [
                 "netsh", "advfirewall", "firewall", "add", "rule",
@@ -193,20 +198,23 @@ class IPBlocker:
             ]
         else:
             cmd = ["iptables", "-A", "INPUT", "-s", ip, "-j", "DROP"]
+            
         try:
-            r = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            # Sử dụng biến 'cf' đồng nhất cho cả 2 hệ điều hành
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=10, creationflags=cf)
             return r.returncode == 0
         except Exception:
             return False
 
     def _unblock_local(self, ip: str) -> bool:
         rule = f"CyberMonitor_Block_{ip.replace('.', '_')}"
+        cf = 0x08000000 if self._plat == "Windows" else 0
         if self._plat == "Windows":
             cmd = ["netsh", "advfirewall", "firewall", "delete", "rule", f"name={rule}"]
         else:
             cmd = ["iptables", "-D", "INPUT", "-s", ip, "-j", "DROP"]
         try:
-            r = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=10, creationflags=creation_flags)
             return r.returncode == 0
         except Exception:
             return False
@@ -737,6 +745,40 @@ class SystemCollector:
 #  Main Agent
 # ──────────────────────────────────────────────
 class CyberMonitorAgentV3:
+    import winreg
+    import sys
+    import os
+
+    # ──────────────────────────────────────────────
+#  Main Agent
+# ──────────────────────────────────────────────
+class CyberMonitorAgentV3:
+    def _add_to_startup(self):
+        """Tự động thêm Agent vào khởi động cùng Windows (Registry)"""
+        if platform.system() != "Windows":
+            return
+
+        import winreg
+        try:
+            # Lấy đường dẫn file hiện tại
+            script_path = os.path.realpath(sys.argv[0])
+            
+            # Nếu chạy file .py (chưa build exe) thì dùng pythonw để ẩn terminal
+            if script_path.endswith(".py"):
+                python_path = sys.executable.replace("python.exe", "pythonw.exe")
+                cmd = f'"{python_path}" "{script_path}"'
+            else:
+                # Nếu đã build thành file .exe
+                cmd = f'"{script_path}"'
+
+            key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
+            winreg.SetValueEx(key, "CyberMonitorAgent", 0, winreg.REG_SZ, cmd)
+            winreg.CloseKey(key)
+            logger.info("[Agent] Da tu dong dang ky Startup thành công.")
+        except Exception as e:
+            logger.warning(f"[Agent] Khong the tu dang ky Startup: {e}")
+
     def __init__(
         self,
         api_key: str,
@@ -747,6 +789,9 @@ class CyberMonitorAgentV3:
         demo_mode: bool = False,
         ssl_verify: bool = True,
     ):
+        # Tự động đăng ký khi khởi tạo Agent
+        self._add_to_startup()
+        
         self.api_key = api_key
         self.server_url = server_url.rstrip("/")
         self.server_id = server_id

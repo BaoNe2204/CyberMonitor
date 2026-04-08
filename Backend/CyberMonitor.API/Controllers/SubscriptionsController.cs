@@ -15,16 +15,13 @@ namespace CyberMonitor.API.Controllers;
 public class SubscriptionsController : ControllerBase
 {
     private readonly CyberMonitorDbContext _db;
-    private readonly IVnpayService _vnpayService;
     private readonly ILogger<SubscriptionsController> _logger;
 
     public SubscriptionsController(
         CyberMonitorDbContext db,
-        IVnpayService vnpayService,
         ILogger<SubscriptionsController> logger)
     {
         _db = db;
-        _vnpayService = vnpayService;
         _logger = logger;
     }
 
@@ -177,7 +174,7 @@ public class SubscriptionsController : ControllerBase
         )));
     }
 
-    /// <summary>Tạo thanh toán VNPay</summary>
+    /// <summary>Tạo thanh toán (demo)</summary>
     [HttpPost("create-payment")]
     public async Task<ActionResult<ApiResponse<PaymentResponse>>> CreatePayment([FromBody] CreatePaymentRequest request)
     {
@@ -196,8 +193,7 @@ public class SubscriptionsController : ControllerBase
         }
 
         var orderId = $"ORD-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
-        var description = $"Thanh toán gói {request.PlanName} - CyberMonitor SOC Platform";
-        var paymentUrl = _vnpayService.CreatePaymentUrl(request.Amount, orderId, description, null);
+        var paymentUrl = $"/payment-result?orderId={orderId}&status=demo";
 
         var order = new PaymentOrder
         {

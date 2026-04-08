@@ -6,10 +6,7 @@ import {
 import { cn } from '../lib/utils';
 import { Theme } from '../types';
 import { ServersApi, type Server, type ServerAlertEmail, type ServerTelegramRecipient } from '../services/api';
-
-function formatDate(d: string) {
-  return new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: '2-digit' });
-}
+import { formatDateShortVi } from '../utils/dateUtils';
 
 interface AddEmailModalProps {
   theme: Theme; serverId: string; onClose: () => void; onAdded: () => void;
@@ -296,7 +293,7 @@ export const ServerSettings = ({ theme }: ServerSettingsProps) => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className={cn('text-sm font-medium truncate', theme === 'dark' ? 'text-white' : 'text-slate-900', !email.isActive && 'opacity-50')}>{email.email}</p>
-                          <p className="text-[10px] text-slate-500">Them {formatDate(email.createdAt)}</p>
+                          <p className="text-[10px] text-slate-500">Them {formatDateShortVi(email.createdAt)}</p>
                         </div>
                         <button onClick={() => handleToggleEmail(email)} title={email.isActive ? 'Tat' : 'Bat'}>
                           {email.isActive ? <ToggleRight size={22} className="text-emerald-400" /> : <ToggleLeft size={22} className="text-slate-500" />}
