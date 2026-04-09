@@ -60,7 +60,7 @@ import requests
 # CẤU HÌNH
 # ──────────────────────────────────────────────────────────────────────────────
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:5000")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://10.206.67.242:5000")
 AI_API_KEY = os.getenv("AI_API_KEY", "sk-ai-engine-secret-key-2026")
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "5"))
 LOOKBACK_MINUTES = int(os.getenv("LOOKBACK_MINUTES", "2"))
@@ -1308,9 +1308,20 @@ class AutoBlockEngine:
 
     def block(self, d: ThreatDecision) -> bool:
         ip = d.source_ip.split(",")[0].strip()
+        
+        # Check cooldown trước khi log — tránh spam
+        with self._lock:
+            blocked_at = self._blocked.get(ip)
+        
+        if blocked_at:
+            elapsed = (datetime.now(timezone.utc) - blocked_at).total_seconds()
+            if elapsed < BLOCK_COOLDOWN_MIN * 60:
+                # Đã block gần đây, bỏ qua (không log nữa)
+                return True
+        
+        # Lần đầu block hoặc hết cooldown → log + thực thi
         logger.warning(
-            "[AUTO-BLOCK] %s | %s | IP: %s | Score: %.3f | MITRE: %s",
-            "BLOCKING" if d.should_block else "REPORTING",
+            "[AUTO-BLOCK] BLOCKING | %s | IP: %s | Score: %.3f | MITRE: %s",
             d.attack_type, ip, d.score, d.mitre_id
         )
 
@@ -1529,6 +1540,14 @@ class AIEngineV3Service:
 
         # Process each threat
         for d in high_conf:
+            # Check whitelist TRƯỚC — nếu whitelisted thì bỏ qua luôn (không log WARNING)
+            if self._is_whitelisted(d.source_ip, d.server_id):
+                logger.debug(
+                    "[WHITELIST] Skipping %s from %s (whitelisted)",
+                    d.attack_type, d.source_ip
+                )
+                continue
+            
             self._trigger_alert(d)
             with self._lock:
                 self._stats["threats"] += 1
@@ -1582,12 +1601,7 @@ class AIEngineV3Service:
             return []
 
     def _trigger_alert(self, d: ThreatDecision) -> None:
-        if self._is_whitelisted(d.source_ip, d.server_id):
-            logger.info(
-                "[WHITELIST SKIP] IP %s is whitelisted (server: %s) - no alert sent",
-                d.source_ip, d.server_id or "any"
-            )
-            return 
+        # Whitelist check đã được thực hiện ở caller, không cần check lại
         mitre = MITRE.get(d.attack_type, MITRE["UnknownAnomaly"])
         # Determine serverId: from threat decision, or fallback to engine-level
         server_id = d.server_id or self.server_id or None

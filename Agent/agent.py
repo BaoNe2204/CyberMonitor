@@ -72,6 +72,28 @@ except Exception:
         6379: "Redis", 8080: "HTTP-ALT", 8443: "HTTPS-ALT", 27017: "MongoDB",
     }
     SUSPICIOUS_PORTS = {4444, 5555, 6666, 7777, 8888, 9999, 12345, 31337}
+
+    # Trusted networks (Google, Microsoft, Azure, AWS, GitHub, Cloudflare)
+    TRUSTED_NETWORKS = [
+        ipaddress.ip_network("2404:6800::/32"),  # Google
+        ipaddress.ip_network("2607:f8b0::/32"),  # Google
+        ipaddress.ip_network("2001:4860::/32"),  # Google
+        ipaddress.ip_network("13.107.0.0/16"),   # Microsoft
+        ipaddress.ip_network("20.0.0.0/8"),      # Azure
+        ipaddress.ip_network("52.0.0.0/8"),      # AWS/Azure
+        ipaddress.ip_network("140.82.0.0/16"),   # GitHub
+        ipaddress.ip_network("104.16.0.0/12"),   # Cloudflare
+        ipaddress.ip_network("172.64.0.0/13"),   # Cloudflare
+    ]
+
+    def is_trusted_ip(ip: str) -> bool:
+        """Check if IP belongs to trusted networks (Google, Microsoft, AWS, GitHub, Cloudflare)"""
+        try:
+            ip_obj = ipaddress.ip_address(ip)
+            return any(ip_obj in net for net in TRUSTED_NETWORKS)
+        except ValueError:
+            return False
+
     SQLI_PATTERNS = [
         r"UNION\s+(ALL\s+)?SELECT",
         r"DROP\s+(TABLE|DATABASE|INDEX)",
@@ -152,15 +174,24 @@ except Exception:
         evidence: dict[str, Any]
 
     class AttackDetector:
-        def __init__(self, local_ip: str):
+        def __init__(self, local_ip: str, backend_ip: str | None = None):
             self.local_ip = local_ip
+            self.backend_ip = backend_ip
             self._history: dict[str, deque[dict[str, Any]]] = defaultdict(lambda: deque(maxlen=120))
             self._lock = threading.Lock()
 
         def analyze(self, logs: list[TrafficLogEntry]) -> list[AttackSignature]:
             grouped: dict[str, list[TrafficLogEntry]] = defaultdict(list)
+            # Whitelist: local IP, localhost, backend IP
+            whitelist = {self.local_ip, "127.0.0.1", "::1", "localhost"}
+            if self.backend_ip:
+                whitelist.add(self.backend_ip)
+            
             for log in logs:
-                if log.source_ip and log.source_ip not in {self.local_ip, "127.0.0.1", "::1", "localhost"}:
+                if log.source_ip and log.source_ip not in whitelist:
+                    # Skip trusted networks (Google, Microsoft, AWS, GitHub, Cloudflare)
+                    if is_trusted_ip(log.source_ip):
+                        continue
                     grouped[log.source_ip].append(log)
 
             attacks: list[AttackSignature] = []
@@ -268,15 +299,11 @@ except Exception:
             return local_ok
 
         def unblock(self, ip: str) -> bool:
-            with self._lock:
-                if ip not in self._blocked_ips:
-                    logger.info("[UNBLOCK] %s — khong co trong danh sach bi chan (bo qua)", ip)
-                    return True
             logger.info("[UNBLOCK] Dang mo chan %s", ip)
             ok = self._unblock_local(ip)
+            with self._lock:
+                self._blocked_ips.discard(ip)
             if ok:
-                with self._lock:
-                    self._blocked_ips.discard(ip)
                 logger.info("[UNBLOCK] %s — DA MO CHAN thanh cong", ip)
             else:
                 logger.warning("[UNBLOCK] %s — THAT BAI (khong the mo chan local)", ip)
@@ -679,7 +706,13 @@ class CyberMonitorAgentV3:
 
         self.collector = EnhancedDataCollector(demo_mode=demo_mode)
         local_ip = self.collector._get_local_ip()
-        self.detector = AttackDetector(local_ip=local_ip)
+        
+        # Extract backend IP from server_url to whitelist it
+        backend_ip = self._extract_backend_ip(server_url)
+        if backend_ip:
+            logger.info("Backend IP detected: %s (will be whitelisted)", backend_ip)
+        
+        self.detector = AttackDetector(local_ip=local_ip, backend_ip=backend_ip)
         self.blocker = IPBlocker(backend_url=server_url, api_key=api_key)
         self.hub_listener: AgentHubListener | None = None
         self.session = requests.Session()
@@ -709,6 +742,27 @@ class CyberMonitorAgentV3:
     @property
     def api_key_prefix(self) -> str:
         return self.api_key[:12] + "***" if len(self.api_key) > 12 else "***"
+
+    def _extract_backend_ip(self, url: str) -> str | None:
+        """Extract IP address from backend URL for whitelisting."""
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(url)
+            hostname = parsed.hostname
+            if not hostname:
+                return None
+            # Check if hostname is already an IP
+            try:
+                ipaddress.ip_address(hostname)
+                return hostname
+            except ValueError:
+                # Hostname is a domain, resolve it
+                try:
+                    return socket.gethostbyname(hostname)
+                except Exception:
+                    return None
+        except Exception:
+            return None
 
     def start(self) -> None:
         self._running = True

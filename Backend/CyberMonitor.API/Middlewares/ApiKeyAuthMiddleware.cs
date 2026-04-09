@@ -103,30 +103,38 @@ public class ApiKeyAuthMiddleware
                     server.LastSeenAt = DateTime.UtcNow;
                     server.Status = "Online";
 
-                    context.Request.EnableBuffering();
-                    context.Request.Body.Position = 0;
-                    using var reader = new StreamReader(context.Request.Body, leaveOpen: true);
-                    var body = await reader.ReadToEndAsync();
-                    context.Request.Body.Position = 0;
-
-                    if (!string.IsNullOrEmpty(body))
+                    try
                     {
-                        try
+                        context.Request.EnableBuffering();
+                        context.Request.Body.Position = 0;
+                        using var reader = new StreamReader(context.Request.Body, leaveOpen: true);
+                        var body = await reader.ReadToEndAsync();
+                        context.Request.Body.Position = 0;
+
+                        if (!string.IsNullOrEmpty(body))
                         {
-                            using var doc = JsonDocument.Parse(body);
-                            var root = doc.RootElement;
-                            if (root.TryGetProperty("hostname", out var hostname))
-                                server.Name = hostname.GetString() ?? server.Name;
-                            if (root.TryGetProperty("os", out var os))
-                                server.OS = os.GetString() ?? server.OS;
-                            if (root.TryGetProperty("cpu_percent", out var cpu))
-                                server.CpuUsage = (decimal)cpu.GetDouble();
-                            if (root.TryGetProperty("ram_percent", out var ram))
-                                server.RamUsage = (decimal)ram.GetDouble();
-                            if (root.TryGetProperty("disk_percent", out var disk))
-                                server.DiskUsage = (decimal)disk.GetDouble();
+                            try
+                            {
+                                using var doc = JsonDocument.Parse(body);
+                                var root = doc.RootElement;
+                                if (root.TryGetProperty("hostname", out var hostname))
+                                    server.Name = hostname.GetString() ?? server.Name;
+                                if (root.TryGetProperty("os", out var os))
+                                    server.OS = os.GetString() ?? server.OS;
+                                if (root.TryGetProperty("cpu_percent", out var cpu))
+                                    server.CpuUsage = (decimal)cpu.GetDouble();
+                                if (root.TryGetProperty("ram_percent", out var ram))
+                                    server.RamUsage = (decimal)ram.GetDouble();
+                                if (root.TryGetProperty("disk_percent", out var disk))
+                                    server.DiskUsage = (decimal)disk.GetDouble();
+                            }
+                            catch (JsonException) { /* ignore malformed JSON */ }
                         }
-                        catch (JsonException) { /* ignore */ }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Client ngắt kết nối giữa chừng hoặc body không đọc được
+                        _logger.LogDebug(ex, "Could not read request body for server health update");
                     }
                 }
             }

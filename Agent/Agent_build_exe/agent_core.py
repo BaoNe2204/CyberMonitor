@@ -67,6 +67,28 @@ PORT_SERVICE_MAP = {
     6379: "Redis", 8080: "HTTP-ALT", 8443: "HTTPS-ALT", 27017: "MongoDB",
 }
 SUSPICIOUS_PORTS = {4444, 5555, 6666, 7777, 8888, 9999, 12345, 31337}
+
+# Trusted networks (Google, Microsoft, Azure, AWS, GitHub, Cloudflare)
+TRUSTED_NETWORKS = [
+    ipaddress.ip_network("2404:6800::/32"),  # Google
+    ipaddress.ip_network("2607:f8b0::/32"),  # Google
+    ipaddress.ip_network("2001:4860::/32"),  # Google
+    ipaddress.ip_network("13.107.0.0/16"),   # Microsoft
+    ipaddress.ip_network("20.0.0.0/8"),      # Azure
+    ipaddress.ip_network("52.0.0.0/8"),      # AWS/Azure
+    ipaddress.ip_network("140.82.0.0/16"),   # GitHub
+    ipaddress.ip_network("104.16.0.0/12"),   # Cloudflare
+    ipaddress.ip_network("172.64.0.0/13"),   # Cloudflare
+]
+
+def is_trusted_ip(ip: str) -> bool:
+    """Check if IP belongs to trusted networks (Google, Microsoft, AWS, GitHub, Cloudflare)"""
+    try:
+        ip_obj = ipaddress.ip_address(ip)
+        return any(ip_obj in net for net in TRUSTED_NETWORKS)
+    except ValueError:
+        return False
+
 SQLI_PATTERNS = [
     r"UNION\s+(ALL\s+)?SELECT", r"DROP\s+(TABLE|DATABASE|INDEX)",
     r"WAITFOR\s+DELAY", r"BENCHMARK\s*\(", r"SLEEP\s*\(",
@@ -248,6 +270,9 @@ class AttackDetector:
         skip = {self.local_ip, "127.0.0.1", "::1", "localhost"}
         for log in logs:
             if log.source_ip and log.source_ip not in skip:
+                # Skip trusted networks (Google, Microsoft, AWS, GitHub, Cloudflare)
+                if is_trusted_ip(log.source_ip):
+                    continue
                 grouped[log.source_ip].append(log)
 
         attacks: list[AttackSignature] = []

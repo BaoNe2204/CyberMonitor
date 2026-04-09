@@ -400,6 +400,8 @@ public class DefenseController : ControllerBase
         await _db.SaveChangesAsync();
 
         // Push lệnh unblock qua SignalR → Agent nhận + thực thi
+        // Nếu có ServerId cụ thể → push đến server đó
+        // Nếu không có ServerId (tenant-wide block) → push đến tất cả server trong tenant
         if (request.ServerId.HasValue)
         {
             await _agentHub.Clients.Group(request.ServerId.Value.ToString())
@@ -408,6 +410,21 @@ public class DefenseController : ControllerBase
             _logger.LogInformation(
                 "[AGENT-PUSH] Unblock command sent to Server {ServerId}: IP={Ip}",
                 request.ServerId, request.Ip);
+        }
+        else if (tenantId.HasValue)
+        {
+            // Tenant-wide block → push unblock đến tất cả server trong tenant
+            var tenantServers = await _db.Servers
+                .Where(s => s.TenantId == tenantId.Value)
+                .Select(s => s.Id)
+                .ToListAsync();
+
+            foreach (var sid in tenantServers)
+                await _agentHub.Clients.Group(sid.ToString()).ReceiveUnblockCommand(request.Ip);
+
+            _logger.LogInformation(
+                "[AGENT-PUSH] Unblock command sent to {Count} servers (tenant-wide): IP={Ip}",
+                tenantServers.Count, request.Ip);
         }
 
         _logger.LogInformation("[UNBLOCK] IP {Ip} unblocked and removed from database (ServerId={ServerId})",

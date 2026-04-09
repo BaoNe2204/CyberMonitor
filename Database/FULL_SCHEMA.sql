@@ -58,6 +58,7 @@ CREATE TABLE Users (
     TelegramChatId NVARCHAR(100) NULL,
     AlertSeverityThreshold NVARCHAR(20) NOT NULL DEFAULT N'Medium',
     AlertDigestMode NVARCHAR(20) NOT NULL DEFAULT N'realtime',
+    AvatarUrl NVARCHAR(MAX) NULL,
     CONSTRAINT FK_Users_Tenants FOREIGN KEY (TenantId) REFERENCES Tenants(Id) ON DELETE SET NULL
 );
 CREATE UNIQUE INDEX IX_Users_Email ON Users(Email);
@@ -390,12 +391,16 @@ CREATE TABLE PricingPlans (
 CREATE TABLE Whitelists (
     Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     TenantId UNIQUEIDENTIFIER NULL,
+    ServerId UNIQUEIDENTIFIER NULL,
     IpAddress NVARCHAR(50) NOT NULL,
     Description NVARCHAR(255) NULL,
-    CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE()
+    IsActive BIT NOT NULL DEFAULT 1,
+    CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+    CONSTRAINT FK_Whitelists_Servers FOREIGN KEY (ServerId) REFERENCES Servers(Id) ON DELETE NO ACTION
 );
 CREATE INDEX IX_Whitelists_TenantId ON Whitelists(TenantId);
 CREATE INDEX IX_Whitelists_IpAddress ON Whitelists(IpAddress);
+CREATE INDEX IX_Whitelists_ServerId ON Whitelists(ServerId);
 
 -- 19. EF MIGRATIONS HISTORY
 CREATE TABLE __EFMigrationsHistory (
