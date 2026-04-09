@@ -11,6 +11,7 @@ import hashlib
 import ipaddress
 import json
 import logging
+import logging.handlers
 import os
 import platform
 import re
@@ -35,8 +36,30 @@ import sys
 LOG_DIR = os.path.join(os.environ.get("LOCALAPPDATA", "."), "CyberMonitor", "logs")
 os.makedirs(LOG_DIR, exist_ok=True)
 
-_file_handler = logging.FileHandler(os.path.join(LOG_DIR, "agent.log"), encoding="utf-8")
+# Log rotation: 5 MB/file, giữ 5 file, tự động xóa file cũ > 30 ngày
+_max_bytes = 5 * 1024 * 1024  # 5 MB
+_backup_count = 5
+
+_log_file = os.path.join(LOG_DIR, "agent.log")
+_file_handler = logging.handlers.RotatingFileHandler(
+    _log_file, maxBytes=_max_bytes, backupCount=_backup_count,
+    encoding="utf-8"
+)
 _file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s - %(message)s"))
+
+# Dọn log cũ > 30 ngày
+try:
+    cutoff = time.time() - 30 * 86400
+    for f in os.listdir(LOG_DIR):
+        if f.startswith("agent.log"):
+            fp = os.path.join(LOG_DIR, f)
+            if os.path.getmtime(fp) < cutoff:
+                try:
+                    os.remove(fp)
+                except Exception:
+                    pass
+except Exception:
+    pass
 _console_handler = logging.StreamHandler(sys.stdout)
 _console_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
 
@@ -160,9 +183,10 @@ class AttackSignature:
 #  IP Blocker
 # ──────────────────────────────────────────────
 class IPBlocker:
-    def __init__(self, backend_url: str, api_key: str):
+    def __init__(self, backend_url: str, api_key: str, server_id: str = ""):
         self.backend_url = backend_url.rstrip("/")
         self.api_key = api_key
+        self.server_id = server_id
         self.session = requests.Session()
         self.session.headers.update({
             "X-API-Key": api_key,
@@ -172,11 +196,30 @@ class IPBlocker:
         self._lock = threading.Lock()
         self._plat = platform.system()
 
+    def _is_whitelisted(self, ip: str) -> bool:
+        """Kiểm tra IP có trong Whitelist không — không cần block nếu đã whitelisted."""
+        try:
+            resp = self.session.get(
+                f"{self.backend_url}/api/whitelists/ai-check/{ip}",
+                timeout=5,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                return data.get("data", {}).get("isWhitelisted", False)
+            return False
+        except Exception:
+            return False
+
     def block(self, ip: str, reason: str, attack_type: str, severity: str) -> bool:
         with self._lock:
             if ip in self._blocked_ips:
                 logger.info("[BLOCK] %s — da bi chan roi (bo qua)", ip)
                 return True
+
+        # Check whitelist trước khi block
+        if self._is_whitelisted(ip):
+            logger.info("[BLOCK] %s — nam trong Whitelist, BO QUA block", ip)
+            return False
 
         logger.info("[BLOCK] Dang chan %s — %s | %s | %s", ip, attack_type, severity, reason[:40])
         local_ok = self._block_local(ip, reason)
@@ -243,13 +286,21 @@ class IPBlocker:
 
     def _report_block_to_backend(self, ip: str, attack_type: str, severity: str, reason: str) -> None:
         try:
+            payload = {
+                "ip": ip,
+                "attackType": attack_type,
+                "severity": severity,
+                "reason": reason,
+                "score": 1.0,
+                "blockedBy": "Agent-V3",
+                "blockDurationMinutes": 60,
+            }
+            if self.server_id:
+                payload["serverId"] = self.server_id
+
             self.session.post(
                 f"{self.backend_url}/api/defense/block-ip",
-                json={
-                    "ip": ip, "attackType": attack_type, "severity": severity,
-                    "reason": reason, "score": 1.0, "blockedBy": "Agent-V3",
-                    "blockDurationMinutes": 60,
-                },
+                json=payload,
                 timeout=10,
             )
         except Exception:
@@ -836,7 +887,7 @@ class CyberMonitorAgentV3:
 
         self.collector = SystemCollector(demo_mode=demo_mode)
         self.detector = AttackDetector(local_ip=local_ip)
-        self.blocker = IPBlocker(backend_url=server_url, api_key=api_key)
+        self.blocker = IPBlocker(backend_url=server_url, api_key=api_key, server_id=server_id)
         self.hub: AgentHubListener | None = None
         self.session = requests.Session()
         self.session.headers.update({

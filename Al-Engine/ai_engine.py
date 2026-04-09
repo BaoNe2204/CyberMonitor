@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import json
 import logging
+import logging.handlers
 import math
 import os
 import platform
@@ -60,7 +61,7 @@ import requests
 # CẤU HÌNH
 # ──────────────────────────────────────────────────────────────────────────────
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://10.206.67.242:5000")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:5000")
 AI_API_KEY = os.getenv("AI_API_KEY", "sk-ai-engine-secret-key-2026")
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "5"))
 LOOKBACK_MINUTES = int(os.getenv("LOOKBACK_MINUTES", "2"))
@@ -79,11 +80,42 @@ MAX_IPS_FOR_ML = int(os.getenv("MAX_IPS_FOR_ML", "400"))
 MAX_LOGS_FOR_FEATURES = int(os.getenv("MAX_LOGS_FOR_FEATURES", "3000"))
 
 LOGGING_FORMAT = "%(asctime)s [%(levelname)s] AI-PRO - %(message)s"
+
+# Log rotation: 5 MB/file, giữ 5 file
+_log_dir = os.path.join(os.environ.get("LOCALAPPDATA", "."), "CyberMonitor", "logs")
+os.makedirs(_log_dir, exist_ok=True)
+
+_file_handler = logging.handlers.RotatingFileHandler(
+    os.path.join(_log_dir, "ai_engine.log"),
+    maxBytes=5 * 1024 * 1024,  # 5 MB
+    backupCount=5,
+    encoding="utf-8",
+)
+_file_handler.setFormatter(logging.Formatter(LOGGING_FORMAT))
+
 logging.basicConfig(
     level=logging.INFO,
     format=LOGGING_FORMAT,
-    handlers=[logging.StreamHandler(sys.stdout)],
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        _file_handler,
+    ],
 )
+
+# Dọn log cũ > 30 ngày
+try:
+    cutoff = time.time() - 30 * 86400
+    for f in os.listdir(_log_dir):
+        if f.startswith("ai_engine.log"):
+            fp = os.path.join(_log_dir, f)
+            if os.path.getmtime(fp) < cutoff:
+                try:
+                    os.remove(fp)
+                except Exception:
+                    pass
+except Exception:
+    pass
+
 logger = logging.getLogger("AIEnginePro")
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1373,6 +1405,7 @@ class AutoBlockEngine:
 
     def _report_to_backend(self, d: ThreatDecision, ip: str) -> bool:
         mitre = MITRE.get(d.attack_type, MITRE["UnknownAnomaly"])
+        server_id = d.server_id or self.server_id or None
         payload = {
             "ip": ip,
             "attackType": d.attack_type,
@@ -1381,7 +1414,7 @@ class AutoBlockEngine:
             "score": d.score,
             "blockedBy": "AI-Engine-v3",
             "blockDurationMinutes": 60,
-            "serverId": self.server_id or None,
+            "serverId": server_id,
             "mitreId": d.mitre_id,
             "mitreTactic": d.mitre_tactic,
         }

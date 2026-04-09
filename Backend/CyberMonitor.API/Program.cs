@@ -131,7 +131,7 @@ builder.Services.AddCors(options =>
                 {
                     var uri = new Uri(origin);
                     var h = uri.Host;
-                    if (h is "localhost" or "127.0.0.1" or "10.206.67.242") return true;
+                    if (h is "localhost" or "127.0.0.1" or "localhost") return true;
                     if (h.StartsWith("192.168.", StringComparison.Ordinal)) return true;
                     if (h.StartsWith("10.", StringComparison.Ordinal)) return true;
                     return false;
@@ -287,6 +287,6 @@ app.MapGet("/", () => new
     health = "/health"
 });
 
-Console.WriteLine("CyberMonitor API listening on http://10.206.67.242:5000 (LAN + localhost)");
+Console.WriteLine("CyberMonitor API listening on http://localhost:5000 (LAN + localhost)");
 
 app.Run();
