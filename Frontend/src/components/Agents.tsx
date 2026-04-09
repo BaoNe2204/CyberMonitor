@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Cpu, Plus, Server, Activity, Database, AlertTriangle,
   CheckCircle2, Trash2, KeyRound, Mail, Send, Download,
@@ -32,28 +32,19 @@ export const Agents = ({
   onManageTelegram,
 }: AgentsProps) => {
   const [downloadStatus, setDownloadStatus] = useState<AgentStatus | null>(null);
-  const [checkingStatus, setCheckingStatus] = useState(false);
-  const [showAgentModal, setShowAgentModal] = useState(false);
   const [showBuildModal, setShowBuildModal] = useState(false);
 
+  // Kiểm tra trạng thái Agent khi component mount (để hiện badge)
+  useEffect(() => {
+    DownloadApi.getAgentStatus().then(setDownloadStatus).catch(() => {});
+  }, []);
+
   const handleDownloadAgent = async () => {
-    setCheckingStatus(true);
-    try {
-      const status = await DownloadApi.getAgentStatus();
-      setDownloadStatus(status);
-      if (status.exists) {
-        window.open(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/download/agent`,
-          '_blank'
-        );
-      } else {
-        setShowBuildModal(true);
-      }
-    } catch {
-      setDownloadStatus({ exists: false, message: 'Không thể kiểm tra trạng thái Agent' });
-    } finally {
-      setCheckingStatus(false);
-    }
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const zipUrl = `${baseUrl}/api/download/agent`;
+
+    // Tải trực tiếp file .zip từ backend (backend serve file từ dist folder)
+    window.location.href = zipUrl;
   };
 
   return (
@@ -89,15 +80,10 @@ export const Agents = ({
             </div>
             <button
               onClick={handleDownloadAgent}
-              disabled={checkingStatus}
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-800 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-emerald-600/20"
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-emerald-600/20"
             >
-              {checkingStatus ? (
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <Download size={16} />
-              )}
-              {checkingStatus ? 'Đang kiểm tra...' : 'Tải Agent'}
+              <Download size={16} />
+              Tải Agent
             </button>
           </div>
         </div>
@@ -134,25 +120,25 @@ export const Agents = ({
               "text-sm mb-5",
               theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
             )}>
-              File <code className="text-emerald-400 font-mono">CyberMonitorAgent.exe</code> chưa tồn tại.
-              Chạy script build để tạo file EXE:
+              File <code className="text-emerald-400 font-mono">CyberMonitorAgent.zip</code> chưa tồn tại.
+              Chạy script build để tạo file ZIP:
             </p>
 
             <div className={cn(
               "p-4 rounded-xl font-mono text-sm space-y-2 mb-5",
               theme === 'dark' ? 'bg-slate-950 text-slate-300' : 'bg-slate-950 text-slate-300'
             )}>
-              <p className="text-slate-500 text-xs mb-2"># Mở PowerShell (Run as Administrator)</p>
+              <p className="text-slate-500 text-xs mb-2"># Mở CMD hoặc PowerShell (Run as Administrator)</p>
               <p className="text-emerald-400">cd "E:\Dự Án\CyberMonitor\Agent\Agent_build_exe"</p>
-              <p className="text-blue-400">powershell -ExecutionPolicy Bypass -File build.ps1</p>
+              <p className="text-blue-400">build.bat</p>
             </div>
 
             <div className={cn(
               "p-3 rounded-lg text-xs",
-              theme === 'dark' ? 'bg-amber-500/10 border border-amber-500/20 text-amber-400' : 'bg-amber-50 border border-amber-200 text-amber-600'
+              theme === 'dark' ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-emerald-50 border border-emerald-200 text-emerald-600'
             )}>
-              ⚡ Build tạo file EXE tại <code className="font-mono">dist/CyberMonitorAgent.exe</code>.
-              Kích thước ~40-80 MB tùy Python packages.
+              ⚡ Build tạo file ZIP tại <code className="font-mono">dist/CyberMonitorAgent.zip</code>.
+              Chứa <code className="font-mono">CyberMonitorAgent.exe</code> + driver WinDivert64.dll/sys.
             </div>
 
             <div className="flex gap-3 mt-5">
@@ -169,12 +155,6 @@ export const Agents = ({
                 onClick={async () => {
                   const status = await DownloadApi.getAgentStatus();
                   setDownloadStatus(status);
-                  if (status.exists) {
-                    window.open(
-                      `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/download/agent`,
-                      '_blank'
-                    );
-                  }
                   setShowBuildModal(false);
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm transition-all"
@@ -200,33 +180,6 @@ export const Agents = ({
             </span>
           </h3>
           <div className="flex items-center gap-2">
-            {/* Agent Status Badge */}
-            {downloadStatus && (
-              <div className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border",
-                downloadStatus.exists
-                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                  : "bg-amber-500/10 border-amber-500/30 text-amber-400"
-              )}>
-                {downloadStatus.exists ? (
-                  <>
-                    <CheckCircle2 size={12} />
-                    Agent OK ({downloadStatus.sizeMB} MB)
-                  </>
-                ) : (
-                  <>
-                    <AlertCircle size={12} />
-                    Chưa build
-                  </>
-                )}
-                <button
-                  onClick={handleDownloadAgent}
-                  className="ml-1 underline hover:no-underline opacity-70 hover:opacity-100"
-                >
-                  refresh
-                </button>
-              </div>
-            )}
             <button
               onClick={() => setShowAddServerModal(true)}
               className="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors"

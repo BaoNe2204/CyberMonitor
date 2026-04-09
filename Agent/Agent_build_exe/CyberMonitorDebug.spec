@@ -5,7 +5,7 @@ a = Analysis(
     ['agent_debug_window.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('trusted_ip_ranges.txt', '.'),],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

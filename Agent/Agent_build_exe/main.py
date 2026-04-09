@@ -255,6 +255,9 @@ def _start_agent(api_key: str, server_url: str) -> bool:
                 demo_mode=False,
                 ssl_verify=True,
             )
+            # Set notification callback để agent có thể thông báo lỗi
+            _agent.set_notification_callback(_notify)
+        
         t = threading.Thread(target=_agent_main_loop, daemon=True, name="CyberMonitorAgent")
         t.start()
         logger.info("Agent thread started. Log: %s", LOG_DIR / "agent.log")

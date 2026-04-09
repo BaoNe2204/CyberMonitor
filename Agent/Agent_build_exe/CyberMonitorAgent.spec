@@ -4,7 +4,9 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('WinDivert64.sys', '.'),
+    ('WinDivert.dll', '.'),
+    ('trusted_ip_ranges.txt', '.'),],
     hiddenimports=[
         'agent_core',
         'requests',
@@ -18,6 +20,7 @@ a = Analysis(
         'websocket',
         'websocket._app',
         'websocket._core',
+        'pydivert',
     ],
     hookspath=[],
     hooksconfig={},

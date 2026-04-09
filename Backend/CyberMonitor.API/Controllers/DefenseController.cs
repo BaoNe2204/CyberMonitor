@@ -212,7 +212,7 @@ public class DefenseController : ControllerBase
                     {
                         Id = Guid.NewGuid(),
                         TenantId = effectiveTenantId,
-                        ServerId = null,
+                        ServerId = request.ServerId,  // Lưu đúng server ID
                         Title = $"[Auto-Blocked] {request.AttackType} from {request.Ip}",
                         Description = request.Reason ?? $"IP {request.Ip} automatically blocked.",
                         Severity = request.Severity ?? "Medium",

@@ -116,6 +116,7 @@ builder.Services.AddScoped<CyberMonitor.API.Services.IJwtService, CyberMonitor.A
 builder.Services.AddScoped<CyberMonitor.API.Services.IEmailService, CyberMonitor.API.Services.EmailService>();
 builder.Services.AddScoped<CyberMonitor.API.Services.ITelegramService, CyberMonitor.API.Services.TelegramService>();
 builder.Services.AddHostedService<CyberMonitor.API.Services.AlertDigestBackgroundService>();
+builder.Services.AddHostedService<CyberMonitor.API.Services.AgentHealthBackgroundService>();
 builder.Services.AddHttpClient();
 
 builder.Services.AddCors(options =>
@@ -250,7 +251,16 @@ BEGIN
         ALTER TABLE AlertDigestQueue ADD SentAt DATETIME2 NULL;
     IF COL_LENGTH('AlertDigestQueue', 'QueuedAt') IS NULL
         ALTER TABLE AlertDigestQueue ADD QueuedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE();
-END;");
+END;
+
+-- Migration: thêm cột HealthUrl/IsHealthy cho Server (Agent Health Check)
+IF COL_LENGTH('Servers', 'HealthUrl') IS NULL
+    ALTER TABLE Servers ADD HealthUrl NVARCHAR(500) NULL;
+IF COL_LENGTH('Servers', 'LastHealthCheckAt') IS NULL
+    ALTER TABLE Servers ADD LastHealthCheckAt DATETIME2 NULL;
+IF COL_LENGTH('Servers', 'IsHealthy') IS NULL
+    ALTER TABLE Servers ADD IsHealthy BIT NOT NULL DEFAULT 0;
+");
         Console.WriteLine("Database connected successfully!");
     }
     catch (Exception ex)

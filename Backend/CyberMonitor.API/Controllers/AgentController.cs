@@ -138,7 +138,7 @@ public class AgentController : ControllerBase
             _logger.LogInformation("[Agent] ApiKey {ApiKeyId} linked to server {ServerId}", apiKeyId, serverId);
         }
 
-        // 5. Cập nhật LastSeen
+        // 5. Cập nhật LastSeen + HealthUrl
         var server = await _db.Servers.FindAsync(serverId);
         if (server != null)
         {
@@ -150,6 +150,9 @@ public class AgentController : ControllerBase
             if (!string.IsNullOrEmpty(request.Hostname))
                 server.Name = request.Hostname;
             server.Status = "Online";
+            server.IsHealthy = true;
+            if (!string.IsNullOrEmpty(request.HealthUrl))
+                server.HealthUrl = request.HealthUrl;
         }
 
         await _db.SaveChangesAsync();

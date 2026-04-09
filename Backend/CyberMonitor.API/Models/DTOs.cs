@@ -484,7 +484,8 @@ public record AgentRegisterRequest(
     Guid ServerId,       // suggested/idempotent server ID (từ Agent, deterministic theo hostname)
     string Hostname,     // required
     string? IpAddress,
-    string? Os
+    string? Os,
+    string? HealthUrl    // Agent health check URL, vd: http://192.168.1.100:17999
 );
 
 // ============ WHITELIST DTOs ============

@@ -190,6 +190,14 @@ public class Server
     public DateTime? LastSeenAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    // Agent Health Check
+    [MaxLength(500)]
+    public string? HealthUrl { get; set; }
+
+    public DateTime? LastHealthCheckAt { get; set; }
+
+    public bool IsHealthy { get; set; } = false;
+
     // Navigation
     [ForeignKey(nameof(TenantId))]
     public Tenant Tenant { get; set; } = null!;

@@ -23,7 +23,7 @@ public class DownloadController : ControllerBase
     [AllowAnonymous]
     public IActionResult GetAgentStatus()
     {
-        var agentPath = GetAgentPath();
+        var (agentPath, isZip) = GetAgentPathWithType();
         if (System.IO.File.Exists(agentPath))
         {
             var fileInfo = new System.IO.FileInfo(agentPath);
@@ -34,33 +34,34 @@ public class DownloadController : ControllerBase
                 sizeMB = Math.Round(fileInfo.Length / (double)(1024 * 1024), 2),
                 lastModified = fileInfo.LastWriteTimeUtc,
                 version = "v1.0.0",
-                path = agentPath
+                path = agentPath,
+                type = isZip ? "zip" : "exe"
             });
         }
 
         return Ok(new
         {
             exists = false,
-            message = "Agent chưa được build. Chạy script build để tạo file EXE.",
-            buildScript = "Agent/Agent_build_exe/build.ps1",
+            message = "Agent chưa được build. Chạy script build để tạo file ZIP.",
+            buildScript = "Agent/Agent_build_exe/build.bat",
             instructions = new[]
             {
-                "Mở PowerShell (Admin)",
+                "Mở CMD hoặc PowerShell (Admin)",
                 "cd Agent/Agent_build_exe",
-                "powershell -ExecutionPolicy Bypass -File build.ps1",
-                "File EXE sẽ được tạo tại dist/CyberMonitorAgent.exe"
+                "build.bat",
+                "File ZIP sẽ được tạo tại dist/CyberMonitorAgent.zip"
             }
         });
     }
 
     /// <summary>
-    /// Download CyberMonitor Agent executable
+    /// Download CyberMonitor Agent (.zip hoặc .exe)
     /// </summary>
     [HttpGet("agent")]
     [AllowAnonymous]
     public IActionResult DownloadAgent()
     {
-        var agentPath = GetAgentPath();
+        var (agentPath, isZip) = GetAgentPathWithType();
         try
         {
             if (!System.IO.File.Exists(agentPath))
@@ -68,14 +69,16 @@ public class DownloadController : ControllerBase
                 return NotFound(new
                 {
                     success = false,
-                    message = "Agent chưa được build. Chạy Agent/Agent_build_exe/build.ps1 để tạo file EXE.",
-                    hint = "powershell -ExecutionPolicy Bypass -File Agent\\Agent_build_exe\\build.ps1"
+                    message = "Agent chưa được build. Chạy Agent/Agent_build_exe/build.bat để tạo file ZIP.",
+                    hint = "cd Agent\\Agent_build_exe && build.bat"
                 });
             }
 
             var fileBytes = System.IO.File.ReadAllBytes(agentPath);
-            _logger.LogInformation("[DOWNLOAD] Agent downloaded: {Size} bytes", fileBytes.Length);
-            return File(fileBytes, "application/vnd.microsoft.portable-executable", "CyberMonitorAgent.exe");
+            var fileName = isZip ? "CyberMonitorAgent.zip" : "CyberMonitorAgent.exe";
+            var contentType = isZip ? "application/zip" : "application/vnd.microsoft.portable-executable";
+            _logger.LogInformation("[DOWNLOAD] Agent downloaded: {FileName} ({Size} bytes)", fileName, fileBytes.Length);
+            return File(fileBytes, contentType, fileName);
         }
         catch (Exception ex)
         {
@@ -84,11 +87,44 @@ public class DownloadController : ControllerBase
         }
     }
 
-    private string GetAgentPath()
+    /// <summary>
+    /// Debug: kiểm tra đường dẫn agent
+    /// </summary>
+    [HttpGet("debug-paths")]
+    [AllowAnonymous]
+    public IActionResult DebugPaths()
     {
         var apiPath = _env.ContentRootPath;
-        var rootProjectDir = Directory.GetParent(apiPath)?.FullName
-                           ?? throw new Exception("Không tìm thấy thư mục gốc dự án");
-        return Path.Combine(rootProjectDir, "Agent", "Agent_build_exe", "dist", "CyberMonitorAgent.exe");
+        // Agent cùng cấp với Backend: Backend/.. = root -> Agent
+        var rootDir = Path.GetFullPath(Path.Combine(apiPath, "..", ".."));
+        var distDir = Path.Combine(rootDir, "Agent", "Agent_build_exe", "dist");
+        var exePath = Path.Combine(distDir, "CyberMonitorAgent.exe");
+        var zipPath = Path.Combine(distDir, "CyberMonitorAgent.zip");
+        return Ok(new
+        {
+            contentRoot = apiPath,
+            rootDir = rootDir,
+            distDir = distDir,
+            distDirExists = Directory.Exists(distDir),
+            exeExists = System.IO.File.Exists(exePath),
+            zipExists = System.IO.File.Exists(zipPath),
+        });
+    }
+
+    private (string path, bool isZip) GetAgentPathWithType()
+    {
+        // Agent cùng cấp với Backend: Backend/.. = root -> Agent
+        var apiPath = _env.ContentRootPath;
+        var rootDir = Path.GetFullPath(Path.Combine(apiPath, "..", ".."));
+        var distDir = Path.Combine(rootDir, "Agent", "Agent_build_exe", "dist");
+
+        var zipPath = Path.Combine(distDir, "CyberMonitorAgent.zip");
+        var exePath = Path.Combine(distDir, "CyberMonitorAgent.exe");
+
+        if (System.IO.File.Exists(zipPath))
+            return (zipPath, true);
+        if (System.IO.File.Exists(exePath))
+            return (exePath, false);
+        return (zipPath, true);
     }
 }

@@ -104,6 +104,7 @@ obj/Debug/net8.0/
  CyberMonitor.API.GlobalUsings.g.cs
 Program.cs
 Services/
+ AgentHealthBackgroundService.cs
  AlertDigestBackgroundService.cs
  EmailService.cs
  JwtService.cs

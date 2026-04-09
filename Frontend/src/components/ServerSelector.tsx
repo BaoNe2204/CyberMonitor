@@ -102,10 +102,12 @@ export const ServerSelector = ({
                 )}
               >
                 <div className={cn(
-                  "w-2 h-2 rounded-full",
-                  server.status === 'online' ? "bg-emerald-500" :
-                  server.status === 'warning' ? "bg-amber-500" :
-                  "bg-slate-500"
+                  "w-2.5 h-2.5 rounded-full flex-shrink-0",
+                  server.status === 'online'
+                    ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)] animate-pulse"
+                    : server.status === 'warning'
+                    ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.7)] animate-pulse"
+                    : "bg-slate-500"
                 )} />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{server.name}</p>

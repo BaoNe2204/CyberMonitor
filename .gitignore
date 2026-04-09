@@ -24,3 +24,4 @@ test_fake_traffic.py
 test_attack_simulation.py
 build
 __pycache__/
+%TEMP%

@@ -82,6 +82,7 @@ DEFAULT_BATCH_SIZE = 100
 MAX_RETRIES = 3
 RETRY_DELAY = 5
 HEARTBEAT_INTERVAL = 30
+HEALTH_PORT = 17999  # Cổng health check HTTP — backend gọi GET /health để check agent online
 
 PORT_SERVICE_MAP = {
     21: "FTP", 22: "SSH", 23: "TELNET", 25: "SMTP", 53: "DNS",
@@ -103,6 +104,43 @@ TRUSTED_NETWORKS = [
     ipaddress.ip_network("104.16.0.0/12"),   # Cloudflare
     ipaddress.ip_network("172.64.0.0/13"),   # Cloudflare
 ]
+
+def load_trusted_ip_ranges() -> list:
+    """Load trusted IP ranges from file - optimized for large files"""
+    ranges = []
+    try:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        trusted_file = os.path.join(script_dir, "trusted_ip_ranges.txt")
+        
+        if os.path.exists(trusted_file):
+            logger.info(f"Loading trusted IP ranges from {trusted_file}...")
+            start_time = time.time()
+            
+            # Read file with larger buffer for better performance
+            with open(trusted_file, 'r', buffering=8192) as f:
+                valid_count = 0
+                invalid_count = 0
+                
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#'):
+                        try:
+                            ranges.append(ipaddress.ip_network(line))
+                            valid_count += 1
+                        except ValueError:
+                            invalid_count += 1
+                            if invalid_count <= 5:  # Only log first 5 errors
+                                logger.warning(f"Invalid IP range: {line}")
+            
+            elapsed = time.time() - start_time
+            logger.info(f"Loaded {valid_count} trusted IP ranges in {elapsed:.2f}s (skipped {invalid_count} invalid)")
+    except Exception as e:
+        logger.error(f"Could not load trusted_ip_ranges.txt: {e}")
+    
+    return ranges
+
+# Load trusted ranges from file + hardcoded
+TRUSTED_NETWORKS.extend(load_trusted_ip_ranges())
 
 def is_trusted_ip(ip: str) -> bool:
     """Check if IP belongs to trusted networks (Google, Microsoft, AWS, GitHub, Cloudflare)"""
@@ -132,6 +170,124 @@ PROCESS_RISK_KEYWORDS = {
 }
 
 logger = logging.getLogger("AgentCore")
+
+
+# ──────────────────────────────────────────────
+#  Health Check HTTP Server (siêu nhẹ, chạy nền)
+# ──────────────────────────────────────────────
+class HealthServer:
+    """HTTP server nền trả về trạng thái Agent — backend gọi GET /health."""
+
+    def __init__(self, agent: "AgentCore"):
+        self.agent = agent
+        self._running = False
+        self._thread: threading.Thread | None = None
+        self._port = HEALTH_PORT
+        self._last_seen: float = time.time()
+
+    def _ensure_firewall_rule(self) -> None:
+        """Tự động mở port trong Windows Firewall."""
+        if platform.system() != "Windows":
+            return
+        
+        rule_name = "CyberMonitor_Health_Port"
+        try:
+            # Kiểm tra rule đã tồn tại chưa
+            check = subprocess.run(
+                ["netsh", "advfirewall", "firewall", "show", "rule", f"name={rule_name}"],
+                capture_output=True, text=True, timeout=5, creationflags=0x08000000
+            )
+            
+            if "No rules match" in check.stdout or check.returncode != 0:
+                # Tạo rule mới
+                cmd = [
+                    "netsh", "advfirewall", "firewall", "add", "rule",
+                    f"name={rule_name}",
+                    "dir=in",
+                    "action=allow",
+                    "protocol=TCP",
+                    f"localport={self._port}",
+                    "description=CyberMonitor Agent Health Check - Auto-created"
+                ]
+                result = subprocess.run(
+                    cmd, capture_output=True, text=True, timeout=10, creationflags=0x08000000
+                )
+                if result.returncode == 0:
+                    logger.info("[FIREWALL] Opened port %d for health check", self._port)
+                else:
+                    logger.warning("[FIREWALL] Failed to open port %d: %s", self._port, result.stderr)
+            else:
+                logger.debug("[FIREWALL] Port %d already allowed", self._port)
+        except Exception as exc:
+            logger.warning("[FIREWALL] Firewall rule error: %s", exc)
+
+    def start(self) -> None:
+        if self._running:
+            return
+        self._running = True
+        
+        # Tự động mở firewall trước khi start server
+        self._ensure_firewall_rule()
+        
+        self._thread = threading.Thread(target=self._serve, daemon=True, name="HealthServer")
+        self._thread.start()
+        logger.info("[HEALTH] HTTP server started on port %d", self._port)
+
+    def _serve(self) -> None:
+        import http.server
+        class _Handler(http.server.BaseHTTPRequestHandler):
+            agent_ref = self.agent
+            last_seen = self._last_seen
+
+            def do_GET(self):
+                if self.path == "/health" or self.path == "/":
+                    uptime = int(time.time() - (self.agent_ref._stats.get("start_time") or time.time()))
+                    body = json.dumps({
+                        "status": "online",
+                        "server_id": self.agent_ref.server_id,
+                        "api_key_prefix": self.agent_ref.api_key_prefix,
+                        "uptime_seconds": uptime,
+                        "version": "3.0",
+                    }).encode()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Length", len(body))
+                    self.end_headers()
+                    self.wfile.write(body)
+                elif self.path == "/metrics":
+                    stats = self.agent_ref._stats
+                    body = json.dumps({
+                        "total_sent": stats.get("total_sent", 0),
+                        "total_failed": stats.get("total_failed", 0),
+                        "total_attacks": stats.get("total_attacks", 0),
+                        "total_blocked": stats.get("total_blocked", 0),
+                    }).encode()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Length", len(body))
+                    self.end_headers()
+                    self.wfile.write(body)
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+
+            def log_message(self, fmt, *args):
+                pass  # Suppress request logging
+
+        import socket
+        srv = http.server.HTTPServer(("0.0.0.0", self._port), _Handler)
+        srv.timeout = 1
+        while self._running:
+            try:
+                srv.handle_request()
+            except Exception:
+                if not self._running:
+                    break
+        srv.server_close()
+        logger.info("[HEALTH] HTTP server stopped")
+
+    def stop(self) -> None:
+        self._running = False
 
 
 # ──────────────────────────────────────────────
@@ -183,6 +339,15 @@ class AttackSignature:
 #  IP Blocker
 # ──────────────────────────────────────────────
 class IPBlocker:
+    """
+    Chặn IP tấn công bằng 2 cơ chế:
+      1. Primary  : Windows Firewall (netsh) / iptables — tường lửa hệ điều hành
+      2. Fallback : pydivert packet interceptor — chặn ở tầng network driver
+
+    Luồng daemon pydivert chạy nền, dùng threading.Lock để cập nhật danh sách
+    IP bị chặn an toàn giữa các thread.
+    """
+
     def __init__(self, backend_url: str, api_key: str, server_id: str = ""):
         self.backend_url = backend_url.rstrip("/")
         self.api_key = api_key
@@ -196,64 +361,225 @@ class IPBlocker:
         self._lock = threading.Lock()
         self._plat = platform.system()
 
-    def _is_whitelisted(self, ip: str) -> bool:
-        """Kiểm tra IP có trong Whitelist không — không cần block nếu đã whitelisted."""
-        try:
-            resp = self.session.get(
-                f"{self.backend_url}/api/whitelists/ai-check/{ip}",
-                timeout=5,
-            )
-            if resp.status_code == 200:
-                data = resp.json()
-                return data.get("data", {}).get("isWhitelisted", False)
-            return False
-        except Exception:
-            return False
+        # ── Pydivert daemon ─────────────────────────
+        self._divert_running = False
+        self._divert_thread: threading.Thread | None = None
+        self._pydivert_available = False
 
+        if self._plat == "Windows":
+            try:
+                import wdivert  # type: ignore
+                self._wdivert = wdivert
+                self._pydivert_available = True
+                logger.info("[BLOCKER] pydivert (wdivert) available — packet interceptor enabled")
+            except ImportError:
+                try:
+                    import pydivert  # type: ignore
+                    self._pydivert = pydivert
+                    self._pydivert_available = True
+                    logger.info("[BLOCKER] pydivert available — packet interceptor enabled")
+                except ImportError:
+                    logger.warning("[BLOCKER] pydivert NOT installed — fallback interceptor disabled")
+
+        if self._pydivert_available:
+            self._start_divert_daemon()
+
+    # ── Pydivert daemon ──────────────────────────────────────────
+    def _start_divert_daemon(self) -> None:
+        """Khởi động daemon thread bắt và hủy gói tin từ IP bị chặn."""
+        lib = getattr(self, "_pydivert", None) or getattr(self, "_wdivert", None)
+        lib_name = "pydivert" if hasattr(self, "_pydivert") else "wdivert"
+
+        self._divert_running = True
+        self._divert_thread = threading.Thread(
+            target=self._divert_loop,
+            daemon=True,
+            name="PydivertDaemon"
+        )
+        self._divert_thread.start()
+        logger.info(
+            "[BLOCKER] Pydivert daemon started (lib=%s) — intercepting inbound packets on all interfaces",
+            lib_name
+        )
+
+        # Kiểm tra sau 2 giây: thread có đang sống không?
+        threading.Timer(2.0, self._verify_divert_running, args=(lib, lib_name)).start()
+
+    def _verify_divert_running(self, lib, lib_name: str) -> None:
+        """Kiểm tra pydivert daemon có thực sự đang chạy không, sau 2 giây từ lúc start."""
+        if self._divert_running and self._divert_thread and self._divert_thread.is_alive():
+            logger.info(
+                "[BLOCKER] Pydivert VERIFIED alive — thread_id=%s is_alive=True",
+                self._divert_thread.ident
+            )
+        else:
+            # Tái khởi động một lần
+            logger.warning("[BLOCKER] Pydivert daemon chết sau 2s — thu lam 1 lan")
+            try:
+                self._divert_running = False
+                if self._divert_thread:
+                    self._divert_thread.join(timeout=2)
+            except Exception:
+                pass
+            self._divert_running = True
+            self._divert_thread = threading.Thread(
+                target=self._divert_loop,
+                daemon=True,
+                name="PydivertDaemon-RESTART"
+            )
+            self._divert_thread.start()
+            if self._divert_thread.is_alive():
+                logger.info("[BLOCKER] Pydivert restart OK — thread_id=%s", self._divert_thread.ident)
+            else:
+                logger.error(
+                    "[BLOCKER] Pydivert restart VAN CHET — can kiem tra WinDivert driver/permission\n"
+                    "  => Thu chay agent bang quyen Administrator (run as admin)"
+                )
+
+    def _divert_loop(self) -> None:
+        """Daemon loop: bắt gói tin inbound, drop nếu IP trong danh sách chặn."""
+        lib = getattr(self, "_pydivert", None) or getattr(self, "_wdivert", None)
+        lib_name = "pydivert" if hasattr(self, "_pydivert") else "wdivert"
+        if lib is None:
+            logger.error("[BLOCKER] Pydivert: lib is None, daemon thoat")
+            return
+
+        dropped_this_cycle = 0
+        packets_this_cycle = 0
+        last_report = time.time()
+
+        while self._divert_running:
+            try:
+                # Filter: bắt inbound, loại local loopback
+                with lib.WinDivert("inbound and ip.DstAddr != 127.0.0.1 and ip.DstAddr != ::1") as w:
+                    for packet in w:
+                        try:
+                            ip_header = packet.ipv4 if packet.ipv4 else packet.ipv6
+                            packets_this_cycle += 1
+                            if ip_header:
+                                src_ip = str(ip_header.src_addr)
+                                with self._lock:
+                                    if src_ip in self._blocked_ips:
+                                        # Drop — không forward lên OS
+                                        dropped_this_cycle += 1
+                                        continue
+                        except Exception:
+                            pass
+                        w.send(packet)
+
+                        # Report mỗi 30 giây
+                        if time.time() - last_report >= 30:
+                            if dropped_this_cycle > 0:
+                                logger.info(
+                                    "[BLOCKER] Pydivert cycle report — pkts=%d dropped=%d (lib=%s)",
+                                    packets_this_cycle, dropped_this_cycle, lib_name
+                                )
+                            packets_this_cycle = 0
+                            dropped_this_cycle = 0
+                            last_report = time.time()
+
+            except OSError as e:
+                # E.g. "Access is denied" → thiếu quyền admin
+                if not self._divert_running:
+                    break
+                logger.error(
+                    "[BLOCKER] Pydivert OSError (lib=%s) — kiem tra quyen Administrator:\n  %s",
+                    lib_name, e
+                )
+                time.sleep(5)
+            except Exception as e:
+                if not self._divert_running:
+                    break
+                logger.debug("[BLOCKER] Pydivert cycle error (lib=%s): %s", lib_name, e)
+                time.sleep(1)
+
+    def _stop_divert_daemon(self) -> None:
+        """Dừng daemon thread khi agent shutdown."""
+        was_running = self._divert_running
+        self._divert_running = False
+        if self._divert_thread and self._divert_thread.is_alive():
+            self._divert_thread.join(timeout=3)
+            logger.info("[BLOCKER] Pydivert daemon stopped (was_alive=%s)", was_running)
+        else:
+            logger.info("[BLOCKER] Pydivert daemon cleanup (was_running=%s)", was_running)
+
+    # ── Public API ────────────────────────────────────────────────
     def block(self, ip: str, reason: str, attack_type: str, severity: str) -> bool:
+        # CHỐNG BLOCK NHẦM BACKEND SERVER
+        backend_host = self.backend_url.split("//")[-1].split(":")[0]
+        try:
+            backend_ip = socket.gethostbyname(backend_host)
+            if ip == backend_ip or ip == "127.0.0.1" or ip == "::1":
+                logger.error(f"[CRITICAL] Agent định block IP của chính Backend/Localhost ({ip}). ĐÃ CHẶN HÀNH VI NÀY!")
+                return False
+        except:
+            pass
+        # 1. Kiểm tra đã block chưa
         with self._lock:
             if ip in self._blocked_ips:
                 logger.info("[BLOCK] %s — da bi chan roi (bo qua)", ip)
                 return True
 
-        # Check whitelist trước khi block
+        # 2. Kiểm tra whitelist
         if self._is_whitelisted(ip):
             logger.info("[BLOCK] %s — nam trong Whitelist, BO QUA block", ip)
             return False
 
         logger.info("[BLOCK] Dang chan %s — %s | %s | %s", ip, attack_type, severity, reason[:40])
+
+        # 3. Block bằng firewall (primary)
         local_ok = self._block_local(ip, reason)
+
+        # 4. Thêm vào danh sách nội bộ (an toàn Lock)
+        with self._lock:
+            self._blocked_ips.add(ip)
+
         if local_ok:
-            with self._lock:
-                self._blocked_ips.add(ip)
-            logger.info("[BLOCK] %s — DA CHAN thanh cong (local firewall)", ip)
+            logger.info(
+                "[BLOCK] %s — DA CHAN (netsh OK + pydivert active=%s)",
+                ip, self._pydivert_available
+            )
         else:
-            logger.warning("[BLOCK] %s — THAT BAI (local firewall bi loi)", ip)
+            logger.warning(
+                "[BLOCK] %s — netsh FAILED, pydivert active=%s (chỉ chặn tại driver-level)",
+                ip, self._pydivert_available
+            )
+
+        # 5. Report lên backend
         self._report_block_to_backend(ip, attack_type, severity, reason)
-        return local_ok
+        return True
 
     def unblock(self, ip: str) -> bool:
         with self._lock:
             if ip not in self._blocked_ips:
-                logger.info("[UNBLOCK] %s — khong co trong danh sach bi chan (bo qua)", ip)
+                logger.info("[UNBLOCK] %s — khong co trong danh sach (bo qua)", ip)
                 return True
+
         logger.info("[UNBLOCK] Dang mo chan %s", ip)
+
         ok = self._unblock_local(ip)
+        with self._lock:
+            self._blocked_ips.discard(ip)
+
         if ok:
-            with self._lock:
-                self._blocked_ips.discard(ip)
-            logger.info("[UNBLOCK] %s — DA MO CHAN thanh cong", ip)
+            logger.info("[UNBLOCK] %s — DA MO CHAN (netsh)", ip)
         else:
-            logger.warning("[UNBLOCK] %s — THAT BAI (khong the mo chan local)", ip)
+            logger.warning("[UNBLOCK] %s — that bai netsh, da xoa khoi pydivert list", ip)
         return ok
 
+    def get_blocked_count(self) -> int:
+        with self._lock:
+            return len(self._blocked_ips)
+
+    def shutdown(self) -> None:
+        """Dọn dẹp khi agent dừng."""
+        self._stop_divert_daemon()
+
+    # ── Firewall (primary) ────────────────────────────────────────
     def _block_local(self, ip: str, reason: str) -> bool:
         rule = f"CyberMonitor_Block_{ip.replace('.', '_')}"
-        
-        # Đưa việc khai báo ra ngoài cùng để lúc nào cũng có biến này
-        # Dùng trực tiếp hằng số 0x08000000 để tránh lỗi import
         cf = 0x08000000 if self._plat == "Windows" else 0
-        
+
         if self._plat == "Windows":
             cmd = [
                 "netsh", "advfirewall", "firewall", "add", "rule",
@@ -263,9 +589,8 @@ class IPBlocker:
             ]
         else:
             cmd = ["iptables", "-A", "INPUT", "-s", ip, "-j", "DROP"]
-            
+
         try:
-            # Sử dụng biến 'cf' đồng nhất cho cả 2 hệ điều hành
             r = subprocess.run(cmd, capture_output=True, text=True, timeout=10, creationflags=cf)
             return r.returncode == 0
         except Exception:
@@ -279,8 +604,22 @@ class IPBlocker:
         else:
             cmd = ["iptables", "-D", "INPUT", "-s", ip, "-j", "DROP"]
         try:
-            r = subprocess.run(cmd, capture_output=True, text=True, timeout=10, creationflags=creation_flags)
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=10, creationflags=cf)
             return r.returncode == 0
+        except Exception:
+            return False
+
+    # ── Backend reporting ─────────────────────────────────────────
+    def _is_whitelisted(self, ip: str) -> bool:
+        try:
+            resp = self.session.get(
+                f"{self.backend_url}/api/whitelists/ai-check/{ip}",
+                timeout=5,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                return data.get("data", {}).get("isWhitelisted", False)
+            return False
         except Exception:
             return False
 
@@ -297,7 +636,6 @@ class IPBlocker:
             }
             if self.server_id:
                 payload["serverId"] = self.server_id
-
             self.session.post(
                 f"{self.backend_url}/api/defense/block-ip",
                 json=payload,
@@ -889,6 +1227,7 @@ class CyberMonitorAgentV3:
         self.detector = AttackDetector(local_ip=local_ip)
         self.blocker = IPBlocker(backend_url=server_url, api_key=api_key, server_id=server_id)
         self.hub: AgentHubListener | None = None
+        self.health_server = HealthServer(self)
         self.session = requests.Session()
         self.session.headers.update({
             "X-API-Key": api_key,
@@ -905,10 +1244,18 @@ class CyberMonitorAgentV3:
         }
         self._recent_alerts: dict[str, datetime] = {}
         self._recent_distributed: deque[dict[str, Any]] = deque(maxlen=30)
+        
+        # Callback để thông báo lỗi API key cho người dùng
+        self._notification_callback = None
+        self._api_key_error_notified = False
 
     @property
     def api_key_prefix(self) -> str:
         return self.api_key[:12] + "***" if len(self.api_key) > 12 else "***"
+
+    def set_notification_callback(self, callback) -> None:
+        """Set callback để gửi notification (từ main.py)"""
+        self._notification_callback = callback
 
     def apply_api_key(self, new_key: str) -> None:
         """Đổi API key khi agent đang chạy (menu khay hệ thống)."""
@@ -956,6 +1303,9 @@ class CyberMonitorAgentV3:
         self._print_start_banner()
         self._register()
 
+        # Health check HTTP server — backend gọi GET http://localhost:17999/health
+        self.health_server.start()
+
         # SignalR
         if self.server_id:
             self.hub = AgentHubListener(
@@ -980,6 +1330,8 @@ class CyberMonitorAgentV3:
         self._running = False
         if self.hub:
             self.hub.stop()
+        self.health_server.stop()
+        self.blocker.shutdown()
         logger.info("[Agent] Da dung.")
 
     def get_stats(self) -> dict[str, Any]:
@@ -1051,6 +1403,7 @@ class CyberMonitorAgentV3:
             "hostname": hostname,
             "ipAddress": local_ip,
             "os": f"{platform.system()} {platform.release()}",
+            "healthUrl": f"http://{local_ip}:{HEALTH_PORT}",
         }
 
         try:
@@ -1249,21 +1602,68 @@ class CyberMonitorAgentV3:
                 if r.status_code == 200:
                     data = r.json()
                     if data.get("success"):
+                        # Reset flag khi kết nối thành công trở lại
+                        if self._api_key_error_notified:
+                            logger.info("[INGEST] Ket noi thanh cong tro lai!")
+                            self._api_key_error_notified = False
                         return True
+                
                 if r.status_code == 401:
-                    logger.error("[INGEST] API Key bi reject (401)!")
+                    # Parse response để biết lý do cụ thể
+                    error_msg = "API Key không hợp lệ"
+                    try:
+                        error_data = r.json()
+                        error_msg = error_data.get("message", error_msg)
+                    except:
+                        pass
+                    
+                    logger.error("[INGEST] API Key bi reject (401): %s", error_msg)
+                    
+                    # Thông báo cho người dùng (chỉ 1 lần)
+                    if not self._api_key_error_notified and self._notification_callback:
+                        self._api_key_error_notified = True
+                        
+                        # Xác định lý do cụ thể
+                        if "expired" in error_msg.lower():
+                            reason = "API Key đã HẾT HẠN"
+                        elif "not found" in error_msg.lower() or "invalid" in error_msg.lower():
+                            reason = "API Key KHÔNG TỒN TẠI (có thể đã bị xóa)"
+                        elif "inactive" in error_msg.lower() or "disabled" in error_msg.lower():
+                            reason = "API Key đã bị VÔ HIỆU HÓA"
+                        else:
+                            reason = "API Key KHÔNG HỢP LỆ"
+                        
+                        self._notification_callback(
+                            "CyberMonitor Agent - Lỗi API Key",
+                            f"{reason}\n\n"
+                            f"Agent không thể gửi logs lên server.\n\n"
+                            f"Vui lòng:\n"
+                            f"1. Kiểm tra API Key trong Dashboard\n"
+                            f"2. Cập nhật API Key mới qua menu 'Đổi API Key'\n"
+                            f"3. Hoặc khởi động lại agent với API Key mới"
+                        )
+                    
+                    # CHỈ DỪNG KHI LỖI 401 (API key lỗi)
+                    # Không dừng khi lỗi network (backend tắt)
+                    self._running = False
                     return False
+                    
             except requests.exceptions.SSLError:
                 self.ssl_verify = False
             except requests.exceptions.ConnectionError as exc:
-                logger.warning("[INGEST] Loi ket noi (lan %d): %s", attempt + 1, exc)
+                # Backend tắt → KHÔNG dừng agent, chỉ log warning
+                logger.warning("[INGEST] Backend chua san sang (lan %d): %s", attempt + 1, exc)
             except requests.exceptions.Timeout:
+                # Timeout → KHÔNG dừng agent, chỉ log warning
                 logger.warning("[INGEST] Timeout (lan %d)", attempt + 1)
             except Exception as exc:
                 logger.error("[INGEST] Loi khong ro: %s", exc)
                 return False
             if attempt < MAX_RETRIES - 1:
                 time.sleep(RETRY_DELAY * (attempt + 1))
+        
+        # Retry hết → return False nhưng KHÔNG dừng agent
+        # Agent sẽ tự động retry ở cycle tiếp theo (5 giây sau)
         return False
 
     def _heartbeat_loop(self) -> None:

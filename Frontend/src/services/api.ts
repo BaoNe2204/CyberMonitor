@@ -1566,6 +1566,7 @@ export interface AgentStatus {
   version?: string;
   message?: string;
   instructions?: string[];
+  type?: 'exe' | 'zip';
 }
 
 export const DownloadApi = {
