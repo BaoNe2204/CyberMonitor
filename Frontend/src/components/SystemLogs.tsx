@@ -1,53 +1,30 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Terminal, RefreshCw, Download, Filter, ChevronLeft, ChevronRight,
   Shield, User, Server, AlertTriangle, CreditCard, Settings, Search,
-  X, Activity, BarChart3, Clock, ShieldCheck, Plus, Trash2, Edit, Key, Wifi
+  X, Activity, BarChart3, Clock, ShieldCheck, Plus, Trash2, Edit, Wifi,
+  Zap, ArrowUp, ArrowDown, TrendingUp, Eye, ToggleLeft, ToggleRight
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Theme } from '../types';
 import { AuditLogsApi, type AuditLogEntry } from '../services/api';
 import { formatDateOnlyVi, formatDateTime, formatTimestampRelativeAbsolute } from '../utils/dateUtils';
+import { createSignalRConnection } from '../services/api';
 
 const PAGE_SIZE = 25;
+const AUTO_REFRESH_INTERVAL = 30000; // 30s
 
 const ACTION_CATEGORIES: { label: string; actions: string[] }[] = [
-  {
-    label: 'Xác thực',
-    actions: ['LOGIN', 'LOGOUT', 'LOGIN_FAILED', 'PASSWORD_CHANGED', 'PASSWORD_RESET'],
-  },
-  {
-    label: 'Người dùng',
-    actions: ['USER_CREATED', 'USER_UPDATED', 'USER_DELETED', 'USER_ROLE_CHANGED'],
-  },
-  {
-    label: 'Server',
-    actions: ['SERVER_ADDED', 'SERVER_UPDATED', 'SERVER_DELETED', 'API_KEY_CREATED', 'API_KEY_REVOKED', 'API_KEY_REGENERATED'],
-  },
-  {
-    label: 'Cảnh báo',
-    actions: ['ALERT_TRIGGERED', 'ALERT_ACKNOWLEDGED', 'ALERT_RESOLVED', 'ALERT_DELETED'],
-  },
-  {
-    label: 'Block IP',
-    actions: ['AUTO_BLOCKED', 'MANUAL_BLOCK', 'IP_UNBLOCKED'],
-  },
-  {
-    label: 'Whitelist',
-    actions: ['WHITELIST_ADDED', 'WHITELIST_REMOVED'],
-  },
-  {
-    label: 'Thanh toán',
-    actions: ['PAYMENT_INITIATED', 'PAYMENT_COMPLETED', 'PAYMENT_FAILED'],
-  },
-  {
-    label: 'Gói cước',
-    actions: ['TRIAL_SUBSCRIPTION_CREATED', 'SUBSCRIPTION_CREATED', 'SUBSCRIPTION_UPDATED'],
-  },
-  {
-    label: 'Khác',
-    actions: ['SETTINGS_UPDATED', 'DEFENSE_TRIGGERED'],
-  },
+  { label: 'Xác thực',      actions: ['LOGIN','LOGOUT','LOGIN_FAILED','PASSWORD_CHANGED','PASSWORD_RESET','TWO_FA_ENABLED','TWO_FA_DISABLED'] },
+  { label: 'Người dùng',    actions: ['USER_CREATED','USER_UPDATED','USER_DELETED','USER_ROLE_CHANGED'] },
+  { label: 'Server',         actions: ['SERVER_ADDED','SERVER_UPDATED','SERVER_DELETED','API_KEY_CREATED','API_KEY_REVOKED','API_KEY_REGENERATED'] },
+  { label: 'Cảnh báo',       actions: ['ALERT_TRIGGERED','ALERT_ACKNOWLEDGED','ALERT_RESOLVED','ALERT_DELETED'] },
+  { label: 'Block IP',       actions: ['AUTO_BLOCKED','MANUAL_BLOCK','IP_UNBLOCKED','RATE_LIMIT_BLOCKED'] },
+  { label: 'Whitelist',      actions: ['WHITELIST_ADDED','WHITELIST_REMOVED'] },
+  { label: 'Ticket',         actions: ['TICKET_CREATED','TICKET_STATUS_CHANGED','TICKET_ASSIGNED','TICKET_COMMENT_ADDED'] },
+  { label: 'Thanh toán',     actions: ['PAYMENT_INITIATED','PAYMENT_COMPLETED','PAYMENT_FAILED'] },
+  { label: 'Gói cước',       actions: ['TRIAL_SUBSCRIPTION_CREATED','SUBSCRIPTION_CREATED','SUBSCRIPTION_UPDATED','SUBSCRIPTION_CANCELLED'] },
+  { label: 'Khác',           actions: ['SETTINGS_UPDATED','DEFENSE_TRIGGERED','NOTIFICATION_SENT'] },
 ];
 
 function getActionCategory(action: string): string {
@@ -96,6 +73,7 @@ const ENTITY_ICONS: Record<string, React.ReactNode> = {
   Settings: <Settings size={12} />,
   Ticket: <Plus size={12} />,
   Whitelist: <ShieldCheck size={12} />,
+  TrafficLog: <Activity size={12} />,
 };
 
 interface SystemLogsProps {
@@ -108,12 +86,28 @@ interface AuditStat {
   count: number;
 }
 
+interface TimelinePoint {
+  Date: string;
+  Count: number;
+}
+
+interface TopUser {
+  UserId: string;
+  UserName: string;
+  Email: string;
+  ActionCount: number;
+}
+
 export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
   const [stats, setStats] = useState<AuditStat[]>([]);
+  const [timeline, setTimeline] = useState<TimelinePoint[]>([]);
+  const [topUsers, setTopUsers] = useState<TopUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  /** API trả 403 — khác với “chưa có log” */
+  const [auditAccessDenied, setAuditAccessDenied] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -125,19 +119,45 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null);
   const [daysRange, setDaysRange] = useState(7);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [newLogsCount, setNewLogsCount] = useState(0);
+  const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
+  const autoRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastLoadTime = useRef<string>(new Date().toISOString());
 
+  // Load stats
   const loadStats = useCallback(async () => {
     setStatsLoading(true);
     try {
-      const res = await AuditLogsApi.getStats(daysRange);
-      if (res?.success && res.data) {
-        setStats(res.data as AuditStat[]);
+      const [statsRes, timelineRes, topUsersRes] = await Promise.allSettled([
+        AuditLogsApi.getStats(daysRange),
+        AuditLogsApi.getTimeline(daysRange),
+        AuditLogsApi.getTopUsers(daysRange, 5),
+      ]);
+
+      const denied = [statsRes, timelineRes, topUsersRes].some(
+        (r) =>
+          r.status === 'fulfilled' &&
+          !r.value.success &&
+          r.value.httpStatus === 403
+      );
+      if (denied) setAuditAccessDenied(true);
+
+      if (statsRes.status === 'fulfilled' && statsRes.value.success) {
+        setStats(statsRes.value.data as AuditStat[]);
+      }
+      if (timelineRes.status === 'fulfilled' && timelineRes.value.success) {
+        setTimeline(timelineRes.value.data as TimelinePoint[]);
+      }
+      if (topUsersRes.status === 'fulfilled' && topUsersRes.value.success) {
+        setTopUsers(topUsersRes.value.data as TopUser[]);
       }
     } catch { /* silent */ } finally {
       setStatsLoading(false);
     }
   }, [daysRange]);
 
+  // Load logs
   const loadLogs = useCallback(async (pageNum = 1) => {
     setLoading(true);
     setError(null);
@@ -148,29 +168,88 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
       if (dateFrom) filters.fromDate = dateFrom;
       if (dateTo) filters.toDate = dateTo;
 
-      const data = await AuditLogsApi.getAll(pageNum, PAGE_SIZE, filters);
-      if (!data) {
-        setError('Không tải được nhật ký. Đăng nhập lại nếu cần.');
+      const res = await AuditLogsApi.getAll(pageNum, PAGE_SIZE, filters);
+      if (res.success && res.data) {
+        setAuditAccessDenied(false);
+        setLogs(res.data.items ?? []);
+        setPage(res.data.page);
+        setTotalPages(res.data.totalPages);
+        setTotalCount(res.data.totalCount);
+        lastLoadTime.current = new Date().toISOString();
         return;
       }
-      setLogs(data.items);
-      setPage(data.page);
-      setTotalPages(data.totalPages);
-      setTotalCount(data.totalCount);
-    } catch {
+
+      if (res.httpStatus === 403) {
+        setAuditAccessDenied(true);
+        setError(
+          'Bạn không có quyền xem nhật ký hệ thống. Chỉ tài khoản Admin hoặc SuperAdmin mới được phép (vai trò User không xem được).'
+        );
+        return;
+      }
+      if (res.httpStatus === 401) {
+        setError(res.message || 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+        return;
+      }
+      setError(
+        res.message?.trim() ||
+          'Không tải được nhật ký. Kiểm tra API đang chạy và tài khoản của bạn.'
+      );
+    } catch (err) {
+      console.error('[SystemLogs] Load logs error:', err);
       setError('Lỗi kết nối đến máy chủ.');
     } finally {
       setLoading(false);
     }
   }, [selectedAction, selectedEntity, dateFrom, dateTo]);
 
+  // Check for new logs
+  const checkNewLogs = useCallback(async () => {
+    try {
+      const res = await AuditLogsApi.getCountSince(lastLoadTime.current, selectedAction || undefined, selectedEntity || undefined);
+      if (res.success && res.data && (res.data as any).count > 0) {
+        setNewLogsCount((res.data as any).count);
+      }
+    } catch { /* silent */ }
+  }, [selectedAction, selectedEntity]);
+
+  // Initial load
   useEffect(() => {
     loadStats();
-  }, [loadStats]);
-
-  useEffect(() => {
     loadLogs(1);
-  }, [loadLogs]);
+  }, [loadStats, loadLogs]);
+
+  // Auto-refresh
+  useEffect(() => {
+    if (autoRefresh) {
+      autoRefreshRef.current = setInterval(() => {
+        loadLogs(page);
+        loadStats();
+        checkNewLogs();
+      }, AUTO_REFRESH_INTERVAL);
+    } else {
+      if (autoRefreshRef.current) {
+        clearInterval(autoRefreshRef.current);
+        autoRefreshRef.current = null;
+      }
+      setNewLogsCount(0);
+    }
+    return () => {
+      if (autoRefreshRef.current) clearInterval(autoRefreshRef.current);
+    };
+  }, [autoRefresh, loadLogs, loadStats, checkNewLogs, page]);
+
+  // Real-time SignalR
+  useEffect(() => {
+    const { connect, disconnect } = createSignalRConnection({
+      onAuditLogReceived: (auditLog) => {
+        setLogs(prev => [auditLog as unknown as AuditLogEntry, ...prev.slice(0, PAGE_SIZE - 1)]);
+        setTotalCount(prev => prev + 1);
+        setNewLogsCount(prev => prev + 1);
+      },
+    });
+    connect();
+    return disconnect;
+  }, []);
 
   const displayLogs = searchQuery.trim()
     ? logs.filter(log =>
@@ -182,31 +261,24 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
     : logs;
 
   const handleExport = () => {
-    if (displayLogs.length === 0) return;
-    const headers = ['ID', 'Hành động', 'Đối tượng', 'Chi tiết', 'Người dùng', 'IP', 'Thời gian'];
-    const rows = displayLogs.map(l => [
-      l.id,
-      l.action,
-      l.entityType ?? '',
-      (l.details ?? '').replace(/"/g, '""'),
-      l.userName ?? '',
-      l.ipAddress ?? '',
-      formatDateTime(l.timestamp),
-    ]);
-    const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${v}"`).join(','))].join('\n');
-    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `audit_logs_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
+    const filters = {
+      action: selectedAction || undefined,
+      entityType: selectedEntity || undefined,
+      fromDate: dateFrom || undefined,
+      toDate: dateTo || undefined,
+    };
+    AuditLogsApi.exportCsv(filters);
   };
 
-  // Stats cards
+  // Stats
   const topActions = stats.slice(0, 8);
   const totalActivity = stats.reduce((sum, s) => sum + s.count, 0);
   const maxCount = topActions.length > 0 ? topActions[0].count : 1;
 
-  // Recent timeline (last 5 logs from current page)
+  // Timeline chart
+  const maxTimeline = timeline.length > 0 ? Math.max(...timeline.map(t => t.Count), 1) : 1;
+
+  // Recent timeline
   const recentLogs = logs.slice(0, 5);
 
   return (
@@ -219,13 +291,56 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
           </h2>
           <p className="text-slate-400 text-sm mt-0.5">
             {totalCount > 0
-              ? `${totalCount.toLocaleString('vi-VN')} hoạt động — {page}/{totalPages}`
+              ? `${totalCount.toLocaleString('vi-VN')} hoạt động — trang ${page}/${totalPages}`
               : 'Theo dõi mọi hoạt động trong hệ thống'}
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* New logs badge */}
+          {newLogsCount > 0 && (
+            <button
+              onClick={() => { loadLogs(1); setNewLogsCount(0); }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow animate-pulse"
+            >
+              <Zap size={14} />
+              {newLogsCount} mới
+            </button>
+          )}
+
+          {/* Auto-refresh toggle */}
           <button
-            onClick={() => { loadLogs(page); loadStats(); }}
+            onClick={() => setAutoRefresh(v => !v)}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-all',
+              autoRefresh
+                ? 'bg-emerald-600 border-emerald-600 text-white'
+                : theme === 'dark'
+                  ? 'border-slate-700 text-slate-400 hover:bg-slate-800'
+                  : 'border-slate-200 text-slate-600 hover:bg-slate-100'
+            )}
+            title={autoRefresh ? 'Tắt tự động làm mới' : 'Bật tự động làm mới (30s)'}
+          >
+            {autoRefresh ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
+            <span className="hidden sm:inline">{autoRefresh ? 'Tự động' : 'Tắt tự động'}</span>
+          </button>
+
+          {/* View mode */}
+          <button
+            onClick={() => setViewMode(v => v === 'table' ? 'timeline' : 'table')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-all',
+              theme === 'dark'
+                ? 'border-slate-700 text-slate-400 hover:bg-slate-800'
+                : 'border-slate-200 text-slate-600 hover:bg-slate-100'
+            )}
+            title={viewMode === 'table' ? 'Chế độ timeline' : 'Chế độ bảng'}
+          >
+            {viewMode === 'table' ? <Clock size={15} /> : <BarChart3 size={15} />}
+          </button>
+
+          {/* Refresh */}
+          <button
+            onClick={() => { loadLogs(page); loadStats(); setNewLogsCount(0); }}
             className={cn(
               'p-2.5 rounded-lg border transition-all',
               theme === 'dark'
@@ -236,6 +351,8 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
+
+          {/* Export */}
           <button
             onClick={handleExport}
             disabled={displayLogs.length === 0}
@@ -283,55 +400,125 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
           <div className="flex items-center justify-center h-24 text-slate-500">
             <RefreshCw size={16} className="animate-spin mr-2" /> Đang tải thống kê…
           </div>
+        ) : auditAccessDenied ? (
+          <div className="text-center text-amber-500/90 text-sm py-4">
+            Không có quyền tải thống kê nhật ký. Chỉ Admin hoặc SuperAdmin được xem mục này.
+          </div>
         ) : stats.length === 0 ? (
           <div className="text-center text-slate-500 text-sm py-4">
             Chưa có dữ liệu hoạt động trong {daysRange} ngày qua
           </div>
         ) : (
           <div className="space-y-2">
-            {/* Top stat card */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-              <div className={cn(
-                'rounded-xl p-3 text-center',
-                theme === 'dark' ? 'bg-blue-600/10 border border-blue-500/20' : 'bg-blue-50 border border-blue-100'
-              )}>
-                <p className={cn('text-2xl font-bold', theme === 'dark' ? 'text-blue-400' : 'text-blue-600')}>
-                  {totalActivity.toLocaleString('vi-VN')}
-                </p>
-                <p className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wide">Tổng hoạt động</p>
-              </div>
-              <div className={cn(
-                'rounded-xl p-3 text-center',
-                theme === 'dark' ? 'bg-emerald-600/10 border border-emerald-500/20' : 'bg-emerald-50 border border-emerald-100'
-              )}>
-                <p className={cn('text-2xl font-bold', theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600')}>
-                  {stats.filter(s => s.action.includes('CREATED') || s.action.includes('ADDED') || s.action.includes('LOGIN')).reduce((sum, s) => sum + s.count, 0)}
-                </p>
-                <p className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wide">Tạo mới / Đăng nhập</p>
-              </div>
-              <div className={cn(
-                'rounded-xl p-3 text-center',
-                theme === 'dark' ? 'bg-amber-600/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-100'
-              )}>
-                <p className={cn('text-2xl font-bold', theme === 'dark' ? 'text-amber-400' : 'text-amber-600')}>
-                  {stats.filter(s => s.action.includes('UPDATED') || s.action.includes('CHANGED')).reduce((sum, s) => sum + s.count, 0)}
-                </p>
-                <p className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wide">Cập nhật</p>
-              </div>
-              <div className={cn(
-                'rounded-xl p-3 text-center',
-                theme === 'dark' ? 'bg-rose-600/10 border border-rose-500/20' : 'bg-rose-50 border border-rose-100'
-              )}>
-                <p className={cn('text-2xl font-bold', theme === 'dark' ? 'text-rose-400' : 'text-rose-600')}>
-                  {stats.filter(s => s.action.includes('FAILED') || s.action.includes('DELETED')).reduce((sum, s) => sum + s.count, 0)}
-                </p>
-                <p className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wide">Lỗi / Xóa</p>
-              </div>
+            {/* Top stat cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3 mb-4">
+              <StatCard
+                theme={theme}
+                label="Tổng hoạt động"
+                value={totalActivity}
+                color="blue"
+                icon={<Activity size={14} />}
+              />
+              <StatCard
+                theme={theme}
+                label="Tạo mới / Đăng nhập"
+                value={stats.filter(s => s.action.includes('CREATED') || s.action.includes('ADDED') || s.action.includes('LOGIN')).reduce((sum, s) => sum + s.count, 0)}
+                color="emerald"
+                icon={<Plus size={14} />}
+              />
+              <StatCard
+                theme={theme}
+                label="Cập nhật"
+                value={stats.filter(s => s.action.includes('UPDATED') || s.action.includes('CHANGED')).reduce((sum, s) => sum + s.count, 0)}
+                color="amber"
+                icon={<Edit size={14} />}
+              />
+              <StatCard
+                theme={theme}
+                label="Lỗi / Xóa"
+                value={stats.filter(s => s.action.includes('FAILED') || s.action.includes('DELETED')).reduce((sum, s) => sum + s.count, 0)}
+                color="rose"
+                icon={<Trash2 size={14} />}
+              />
+              <StatCard
+                theme={theme}
+                label="Block IP"
+                value={stats.filter(s => s.action.includes('BLOCKED')).reduce((sum, s) => sum + s.count, 0)}
+                color="orange"
+                icon={<Shield size={14} />}
+              />
             </div>
 
-            {/* Bar chart */}
+            {/* Timeline chart */}
+            {timeline.length > 0 && (
+              <div className={cn(
+                'rounded-xl p-3 mb-3',
+                theme === 'dark' ? 'bg-slate-800/50' : 'bg-slate-50'
+              )}>
+                <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">Xu hướng hoạt động</p>
+                <div className="flex items-end gap-1 h-12">
+                  {timeline.map((point, idx) => {
+                    const heightPct = (point.Count / maxTimeline) * 100;
+                    const date = new Date(point.Date);
+                    return (
+                      <div key={idx} className="flex-1 flex flex-col items-center gap-0.5 group cursor-help">
+                        <span className="text-[9px] text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {point.Count}
+                        </span>
+                        <div
+                          className="w-full rounded-t-sm bg-blue-500/60 hover:bg-blue-500 transition-all min-h-[2px]"
+                          style={{ height: `${Math.max(heightPct, 5)}%` }}
+                          title={`${point.Date}: ${point.Count} hoạt động`}
+                        />
+                        <span className="text-[8px] text-slate-600">
+                          {date.getDate()}/{date.getMonth() + 1}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Top users */}
+            {topUsers.length > 0 && (
+              <div className={cn(
+                'rounded-xl p-3 mb-3',
+                theme === 'dark' ? 'bg-slate-800/50' : 'bg-slate-50'
+              )}>
+                <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">Người dùng hoạt động nhiều nhất</p>
+                <div className="space-y-1.5">
+                  {topUsers.map((u, idx) => (
+                    <div key={u.UserId || (u as any).userId || idx} className="flex items-center gap-2">
+                      <span className={cn(
+                        'text-[10px] font-bold min-w-[16px] text-center',
+                        idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-slate-400' : idx === 2 ? 'text-orange-400' : 'text-slate-600'
+                      )}>
+                        #{idx + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className={cn('text-xs font-semibold truncate', theme === 'dark' ? 'text-slate-200' : 'text-slate-700')}>
+                            {u.UserName}
+                          </span>
+                          <span className="text-[10px] font-mono text-blue-400 ml-2">{u.ActionCount} lượt</span>
+                        </div>
+                        <div className={cn('h-1 rounded-full mt-0.5', theme === 'dark' ? 'bg-slate-700' : 'bg-slate-200')}>
+                          <div
+                            className="h-full rounded-full bg-blue-500 transition-all"
+                            style={{ width: `${(u.ActionCount / topUsers[0].ActionCount) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Action bars */}
             <div className="space-y-1.5">
-              {topActions.map((stat, idx) => {
+              {topActions.map((stat) => {
                 const color = getActionColor(stat.action);
                 const pct = (stat.count / maxCount) * 100;
                 return (
@@ -356,7 +543,7 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <span className={cn('text-[10px] font-mono text-slate-500 min-w-[32px] text-right')}>
+                    <span className="text-[10px] font-mono text-slate-500 min-w-[32px] text-right">
                       {stat.count}
                     </span>
                   </button>
@@ -382,16 +569,14 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
           <div className="relative">
             <div className={cn('absolute left-[15px] top-0 bottom-0 w-px', theme === 'dark' ? 'bg-slate-700' : 'bg-slate-200')} />
             <div className="space-y-3">
-              {recentLogs.map((log, idx) => {
-                const { bg, text, dot } = getActionColor(log.action);
+              {recentLogs.map((log) => {
+                const { bg, text, dot, border } = getActionColor(log.action);
                 const ts = formatTimestampRelativeAbsolute(log.timestamp);
                 return (
                   <button
                     key={log.id}
                     onClick={() => setSelectedLog(log)}
-                    className={cn(
-                      'w-full flex items-start gap-3 pl-0.5 pr-2 py-1.5 rounded-lg transition-all hover:opacity-80 text-left'
-                    )}
+                    className="w-full flex items-start gap-3 pl-0.5 pr-2 py-1.5 rounded-lg transition-all hover:opacity-80 text-left"
                   >
                     <div className={cn('w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10', bg, 'border', border)}>
                       <span className={text}>{getActionIcon(log.action)}</span>
@@ -559,7 +744,15 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
 
       {/* Error state */}
       {error && (
-        <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-rose-500 text-sm">
+        <div
+          className={cn(
+            'rounded-xl border px-4 py-3 text-sm flex items-center gap-2',
+            auditAccessDenied
+              ? 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+              : 'border-rose-500/20 bg-rose-500/10 text-rose-500',
+          )}
+        >
+          <AlertTriangle size={16} />
           {error}
         </div>
       )}
@@ -597,10 +790,12 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
                   <td colSpan={6} className="px-5 py-16 text-center">
                     <Terminal size={28} className="mx-auto mb-2 text-slate-600" />
                     <p className={cn('font-medium', theme === 'dark' ? 'text-slate-400' : 'text-slate-500')}>
-                      {searchQuery || selectedAction || selectedEntity ? 'Không có kết quả phù hợp' : 'Chưa có nhật ký hoạt động'}
+                      {searchQuery || selectedAction || selectedEntity || dateFrom || dateTo
+                        ? 'Không có kết quả phù hợp'
+                        : 'Chưa có nhật ký hoạt động'}
                     </p>
                     <p className="text-xs text-slate-600 mt-1">
-                      {searchQuery || selectedAction || selectedEntity
+                      {searchQuery || selectedAction || selectedEntity || dateFrom || dateTo
                         ? 'Thử thay đổi bộ lọc'
                         : 'Các hoạt động sẽ xuất hiện khi có thao tác trên hệ thống'}
                     </p>
@@ -621,7 +816,6 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
                           : 'hover:bg-slate-50',
                       )}
                     >
-                      {/* Action badge */}
                       <td className="px-5 py-3.5 align-top">
                         <div className="flex items-center gap-1.5">
                           <span className={cn(
@@ -633,8 +827,6 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
                         </div>
                         <p className="text-[10px] text-slate-600 mt-0.5">{getActionCategory(log.action)}</p>
                       </td>
-
-                      {/* Entity type */}
                       <td className="px-5 py-3.5 align-top">
                         {log.entityType ? (
                           <div className="flex items-center gap-1.5 text-xs">
@@ -657,8 +849,6 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
                           </p>
                         )}
                       </td>
-
-                      {/* Details */}
                       <td className="px-5 py-3.5 align-top hidden md:table-cell">
                         <p className={cn(
                           'text-xs leading-relaxed max-w-xs',
@@ -671,8 +861,6 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
                             : <span className="text-slate-600">—</span>}
                         </p>
                       </td>
-
-                      {/* User */}
                       <td className="px-5 py-3.5 align-top">
                         {log.userName ? (
                           <span className="text-xs font-semibold text-blue-400">{log.userName}</span>
@@ -680,8 +868,6 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
                           <span className="text-xs text-slate-600">Hệ thống</span>
                         )}
                       </td>
-
-                      {/* IP */}
                       <td className="px-5 py-3.5 align-top hidden lg:table-cell">
                         {log.ipAddress ? (
                           <span className="text-xs font-mono text-slate-400">{log.ipAddress}</span>
@@ -689,8 +875,6 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
                           <span className="text-xs text-slate-600">—</span>
                         )}
                       </td>
-
-                      {/* Time */}
                       <td className="px-5 py-3.5 align-top">
                         <div title={ts.absolute} className="text-xs text-slate-500 whitespace-nowrap">
                           {ts.relative}
@@ -778,7 +962,6 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
             'w-full max-w-lg rounded-2xl border shadow-2xl',
             theme === 'dark' ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'
           )}>
-            {/* Modal header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50">
               <div className="flex items-center gap-3">
                 <div className={cn(
@@ -805,9 +988,7 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
               </button>
             </div>
 
-            {/* Modal body */}
             <div className="p-5 space-y-4">
-              {/* Action badge */}
               <div className="flex items-center gap-3">
                 <span className={cn(
                   'text-sm font-bold px-3 py-1.5 rounded-lg border',
@@ -825,7 +1006,6 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
                 </span>
               </div>
 
-              {/* Detail fields */}
               <div className={cn(
                 'rounded-xl p-4 space-y-3',
                 theme === 'dark' ? 'bg-slate-800/50' : 'bg-slate-50'
@@ -855,7 +1035,6 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
               </div>
             </div>
 
-            {/* Modal footer */}
             <div className="flex justify-end px-5 py-4 border-t border-slate-700/50">
               <button
                 onClick={() => setSelectedLog(null)}
@@ -875,3 +1054,27 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
     </div>
   );
 };
+
+// Stat card sub-component
+function StatCard({ theme, label, value, color, icon }: {
+  theme: Theme;
+  label: string;
+  value: number;
+  color: 'blue' | 'emerald' | 'amber' | 'rose' | 'orange';
+  icon: React.ReactNode;
+}) {
+  const colors = {
+    blue: theme === 'dark' ? 'bg-blue-600/10 border-blue-500/20 text-blue-400' : 'bg-blue-50 border-blue-100 text-blue-600',
+    emerald: theme === 'dark' ? 'bg-emerald-600/10 border-emerald-500/20 text-emerald-400' : 'bg-emerald-50 border-emerald-100 text-emerald-600',
+    amber: theme === 'dark' ? 'bg-amber-600/10 border-amber-500/20 text-amber-400' : 'bg-amber-50 border-amber-100 text-amber-600',
+    rose: theme === 'dark' ? 'bg-rose-600/10 border-rose-500/20 text-rose-400' : 'bg-rose-50 border-rose-100 text-rose-600',
+    orange: theme === 'dark' ? 'bg-orange-600/10 border-orange-500/20 text-orange-400' : 'bg-orange-50 border-orange-100 text-orange-600',
+  };
+  return (
+    <div className={cn('rounded-xl p-3 text-center border', colors[color])}>
+      <div className="flex items-center justify-center gap-1 mb-1">{icon}</div>
+      <p className="text-2xl font-bold">{value.toLocaleString('vi-VN')}</p>
+      <p className="text-[10px] text-current opacity-60 uppercase tracking-wide">{label}</p>
+    </div>
+  );
+}

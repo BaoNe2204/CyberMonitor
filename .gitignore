@@ -25,3 +25,4 @@ test_attack_simulation.py
 build
 __pycache__/
 %TEMP%
+BUG_REPORT_AND_FIXES.md

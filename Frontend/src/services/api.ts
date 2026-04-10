@@ -461,6 +461,8 @@ export interface ApiResponse<T> {
   success: boolean;
   message: string;
   data: T | null;
+  /** HTTP status từ fetch (do client gắn vào, không phải từ body JSON) */
+  httpStatus?: number;
 }
 
 export interface PagedResult<T> {
@@ -577,6 +579,7 @@ async function request<T>(
         success: false,
         message: backendMessage ?? 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.',
         data: null,
+        httpStatus: 401,
       };
     }
 
@@ -586,15 +589,18 @@ async function request<T>(
         success: response.ok,
         message: response.ok ? 'OK' : `HTTP ${response.status}`,
         data: null,
+        httpStatus: response.status,
       };
     }
     try {
-      return JSON.parse(text) as ApiResponse<T>;
+      const parsed = JSON.parse(text) as ApiResponse<T>;
+      return { ...parsed, httpStatus: response.status };
     } catch {
       return {
         success: false,
         message: `Phản hồi không phải JSON (HTTP ${response.status}). Kiểm tra Backend có chạy tại ${API_BASE_URL} không.`,
         data: null,
+        httpStatus: response.status,
       };
     }
   } catch (error) {
@@ -1249,19 +1255,51 @@ export const AuditLogsApi = {
     userId?: string;
     fromDate?: string;
     toDate?: string;
-  }): Promise<AuditLogPage | null> => {
+  }): Promise<ApiResponse<AuditLogPage>> => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (filters?.action) params.append('action', filters.action);
     if (filters?.entityType) params.append('entityType', filters.entityType);
     if (filters?.userId) params.append('userId', filters.userId);
     if (filters?.fromDate) params.append('fromDate', filters.fromDate);
     if (filters?.toDate) params.append('toDate', filters.toDate);
-    const res = await request<AuditLogPage>(`/api/audit-logs?${params}`);
-    return res.success ? res.data : null;
+    return request<AuditLogPage>(`/api/audit-logs?${params}`);
   },
 
   getStats: async (days = 30) => {
     return request(`/api/audit-logs/stats?days=${days}`);
+  },
+
+  getTimeline: async (days = 30) => {
+    return request(`/api/audit-logs/timeline?days=${days}`);
+  },
+
+  getTopUsers: async (days = 30, top = 10) => {
+    return request(`/api/audit-logs/top-users?days=${days}&top=${top}`);
+  },
+
+  getCountSince: async (since: string, action?: string, entityType?: string) => {
+    const params = new URLSearchParams({ since });
+    if (action) params.append('action', action);
+    if (entityType) params.append('entityType', entityType);
+    return request(`/api/audit-logs/count-since?${params}`);
+  },
+
+  exportCsv: (filters?: {
+    action?: string;
+    entityType?: string;
+    userId?: string;
+    fromDate?: string;
+    toDate?: string;
+  }) => {
+    const token = getToken();
+    const params = new URLSearchParams();
+    if (filters?.action) params.append('action', filters.action);
+    if (filters?.entityType) params.append('entityType', filters.entityType);
+    if (filters?.userId) params.append('userId', filters.userId);
+    if (filters?.fromDate) params.append('fromDate', filters.fromDate);
+    if (filters?.toDate) params.append('toDate', filters.toDate);
+    const url = `${API_BASE_URL}/api/audit-logs/export?${params}`;
+    window.open(url, '_blank');
   },
 };
 
@@ -1279,6 +1317,7 @@ export type SignalRCallbacks = {
   onServerStatusChanged?: (serverId: string, status: string, cpu?: number, ram?: number, disk?: number) => void;
   onNotification?: (notification: Notification) => void;
   onBlockedIpChanged?: (blockedIp: BlockedIP) => void;
+  onAuditLogReceived?: (auditLog: AuditLogEntry) => void;
 };
 
 export function createSignalRConnection(callbacks: SignalRCallbacks): { connect: () => void; disconnect: () => void } {
@@ -1408,6 +1447,17 @@ export function createSignalRConnection(callbacks: SignalRCallbacks): { connect:
         };
         console.log('[SignalR] NotificationReceived:', notification.title);
         callbacks.onNotification?.(notification);
+      });
+
+      connection.on('AuditLogReceived', (auditDto: any) => {
+        const auditLog: AuditLogEntry = {
+          id: auditDto.id, tenantId: auditDto.tenantId, userId: auditDto.userId,
+          userName: auditDto.userName, action: auditDto.action, entityType: auditDto.entityType,
+          entityId: auditDto.entityId, ipAddress: auditDto.ipAddress,
+          timestamp: auditDto.timestamp, details: auditDto.details,
+        };
+        console.log('[SignalR] AuditLogReceived:', auditLog.action);
+        callbacks.onAuditLogReceived?.(auditLog);
       });
 
       // Store the start promise so disconnect() can await it

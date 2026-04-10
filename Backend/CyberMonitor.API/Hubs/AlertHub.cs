@@ -13,6 +13,8 @@ public interface IAlertHub
     /// <summary>Frontend nhận lệnh block IP (từ AI Engine hoặc SOC)</summary>
     Task ReceiveBlockCommand(BlockCommandDto command);
     Task ReceiveUnblockCommand(string ip);
+    /// <summary>Frontend nhận audit log mới (real-time update)</summary>
+    Task AuditLogReceived(AuditLogDto auditLog);
 }
 
 public class AlertHub : Microsoft.AspNetCore.SignalR.Hub<IAlertHub>
