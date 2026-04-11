@@ -24,7 +24,13 @@ public class AgentHealthBackgroundService : BackgroundService
     private readonly ILogger<AgentHealthBackgroundService> _logger;
     private readonly HttpClient _httpClient;
 
-    private const int StaleTimeoutSeconds = 60;
+    // Server offline nếu LastSeenAt cũ hơn 90s (3 chu kỳ heartbeat 30s)
+    // + debounce: không re-push SignalR nếu server đã Offline rồi
+    private const int StaleTimeoutSeconds = 90;
+
+    // Debounce: không flip online nếu vừa mới bị mark offline
+    private readonly Dictionary<Guid, DateTime> _lastOfflineTime = new();
+    private readonly object _debounceLock = new();
 
     public AgentHealthBackgroundService(
         IServiceScopeFactory scopeFactory,
@@ -138,6 +144,18 @@ public class AgentHealthBackgroundService : BackgroundService
         int retryCount = 3;
         int retryDelayMs = 1000;
 
+        // Debounce: nếu server vừa bị mark offline trong 60s gần đây → bỏ qua
+        lock (_debounceLock)
+        {
+            if (_lastOfflineTime.TryGetValue(server.Id, out var lastOffline) &&
+                DateTime.UtcNow - lastOffline < TimeSpan.FromSeconds(60))
+            {
+                _logger.LogDebug("[HEALTH] Debounce skip {ServerName} (vua bi offline {Seconds}s truoc)",
+                    server.Name, (int)(DateTime.UtcNow - lastOffline).TotalSeconds);
+                return;
+            }
+        }
+
         for (int attempt = 1; attempt <= retryCount; attempt++)
         {
             try
@@ -176,6 +194,15 @@ public class AgentHealthBackgroundService : BackgroundService
                 dbServer.Status = isHealthyNow ? "Online" : "Offline";
                 dbServer.LastHealthCheckAt = DateTime.UtcNow;
                 await db.SaveChangesAsync();
+
+                // Ghi nhận thời điểm offline để debounce
+                if (!isHealthyNow)
+                {
+                    lock (_debounceLock)
+                    {
+                        _lastOfflineTime[dbServer.Id] = DateTime.UtcNow;
+                    }
+                }
 
                 _logger.LogInformation(
                     "[HEALTH] Server {ServerName} ({HealthUrl}) → {Status} (retry:{Retries})",

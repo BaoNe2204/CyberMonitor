@@ -522,7 +522,7 @@ class IPBlocker:
 
         # 2. Kiểm tra whitelist
         if self._is_whitelisted(ip):
-            logger.info("[BLOCK] %s — nam trong Whitelist, BO QUA block", ip)
+            logger.info("[BLOCK-SKIP] %s — NAM TRONG WHITELIST (bo qua block)", ip)
             return False
 
         logger.info("[BLOCK] Dang chan %s — %s | %s | %s", ip, attack_type, severity, reason[:40])
@@ -612,15 +612,23 @@ class IPBlocker:
     # ── Backend reporting ─────────────────────────────────────────
     def _is_whitelisted(self, ip: str) -> bool:
         try:
+            logger.info("[WHITELIST-CHECK] Checking IP %s against backend whitelist...", ip)
             resp = self.session.get(
                 f"{self.backend_url}/api/whitelists/ai-check/{ip}",
                 timeout=5,
             )
             if resp.status_code == 200:
                 data = resp.json()
-                return data.get("data", {}).get("isWhitelisted", False)
+                is_listed = data.get("data", {}).get("isWhitelisted", False)
+                logger.info(
+                    "[WHITELIST-CHECK] IP %s is %s (whitelist)",
+                    ip, "WHITELISTED" if is_listed else "NOT in whitelist"
+                )
+                return is_listed
+            logger.warning("[WHITELIST-CHECK] HTTP %d when checking whitelist for %s", resp.status_code, ip)
             return False
-        except Exception:
+        except Exception as e:
+            logger.warning("[WHITELIST-CHECK] Loi khi check whitelist cho %s: %s", ip, e)
             return False
 
     def _report_block_to_backend(self, ip: str, attack_type: str, severity: str, reason: str) -> None:

@@ -125,6 +125,10 @@ public class WhitelistsController : ControllerBase
                 return Forbid();
         }
 
+        _logger.LogInformation(
+            "[WHITELIST] Dang them IP {Ip} vao whitelist (ServerId={ServerId}, TenantId={TenantId}) boi {Role}",
+            request.IpAddress, request.ServerId, tenantId, role);
+
         var whitelist = new Whitelist
         {
             TenantId = role == "SuperAdmin" ? null : tenantId,
@@ -257,8 +261,12 @@ public class WhitelistsController : ControllerBase
         if (whitelist == null)
             return NotFound(new ApiResponse<object>(false, "Không tìm thấy Whitelist.", null));
 
-        if (role == "Admin" && whitelist.TenantId != tenantId)
-            return Forbid();
+            if (role == "Admin" && whitelist.TenantId != tenantId)
+                return Forbid();
+
+        _logger.LogInformation(
+            "[WHITELIST] Dang xoa IP {Ip} (ServerId={ServerId}, TenantId={TenantId}) boi {Role}",
+            whitelist.IpAddress, whitelist.ServerId, whitelist.TenantId, role);
 
         var ipAddress = whitelist.IpAddress;
         var serverIdVal = whitelist.ServerId;
@@ -276,8 +284,7 @@ public class WhitelistsController : ControllerBase
         _db.Whitelists.Remove(whitelist);
         await _db.SaveChangesAsync();
 
-        _logger.LogInformation("[WHITELIST] Da xoa {Ip} (ServerId={ServerId}) khoi whitelist boi {Role}",
-            whitelist.IpAddress, whitelist.ServerId, role);
+        _logger.LogInformation("[WHITELIST] Da xoa {Ip} khoi whitelist boi {Role}", whitelist.IpAddress, role);
 
         return Ok(new ApiResponse<object>(true, $"IP {whitelist.IpAddress} đã xóa khỏi Whitelist.", null));
     }
@@ -317,7 +324,8 @@ public class WhitelistsController : ControllerBase
                 w.IsActive &&
                 (!serverId.HasValue || w.ServerId == null || w.ServerId == serverId.Value));
 
-        _logger.LogDebug("AI whitelist check: IP={IP}, ServerId={ServerId}, Result={Result}", 
+        _logger.LogInformation(
+            "[AI-WHITELIST] Check IP={IP}, ServerId={ServerId} → isWhitelisted={Result}",
             ip, serverId, exists);
 
         return Ok(new ApiResponse<object>(true, exists ? "Whitelisted" : "Not whitelisted", 

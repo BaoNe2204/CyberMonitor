@@ -313,6 +313,16 @@ public class UsersController : ControllerBase
         var digestQueue = await _db.AlertDigestQueue.Where(q => q.UserId == user.Id).ToListAsync();
         _db.AlertDigestQueue.RemoveRange(digestQueue);
 
+        // Null out ResolvedBy on alerts resolved by this user
+        var resolvedAlerts = await _db.Alerts.Where(a => a.ResolvedBy == user.Id).ToListAsync();
+        foreach (var alert in resolvedAlerts)
+            alert.ResolvedBy = null;
+
+        // Null out AcknowledgedBy on alerts acknowledged by this user
+        var acknowledgedAlerts = await _db.Alerts.Where(a => a.AcknowledgedBy == user.Id).ToListAsync();
+        foreach (var alert in acknowledgedAlerts)
+            alert.AcknowledgedBy = null;
+
         _db.Users.Remove(user);
         await _db.SaveChangesAsync();
 

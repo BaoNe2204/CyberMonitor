@@ -242,7 +242,7 @@ public class ServersController : ControllerBase
         _db.AuditLogs.Add(new AuditLog
         {
             TenantId = server.TenantId,
-            UserId = userId,
+            UserId = userId.HasValue && await _db.Users.AnyAsync(u => u.Id == userId.Value) ? userId : null,
             Action = "SERVER_UPDATED",
             EntityType = "Server",
             EntityId = server.Id.ToString(),
@@ -280,17 +280,19 @@ public class ServersController : ControllerBase
         var trafficLogs = await _db.TrafficLogs.Where(t => t.ServerId == id).ToListAsync();
         var blockedIPs = await _db.BlockedIPs.Where(b => b.ServerId == id).ToListAsync();
         var serverAlertEmails = await _db.ServerAlertEmails.Where(e => e.ServerId == id).ToListAsync();
+        var telegramRecipients = await _db.ServerTelegramRecipients.Where(r => r.ServerId == id).ToListAsync();
         _db.Tickets.RemoveRange(tickets);
         _db.Alerts.RemoveRange(alerts);
         _db.ApiKeys.RemoveRange(apiKeys);
         _db.TrafficLogs.RemoveRange(trafficLogs);
         _db.BlockedIPs.RemoveRange(blockedIPs);
         _db.ServerAlertEmails.RemoveRange(serverAlertEmails);
+        _db.ServerTelegramRecipients.RemoveRange(telegramRecipients);
 
         _db.AuditLogs.Add(new AuditLog
         {
             TenantId = server.TenantId,
-            UserId = userId,
+            UserId = userId.HasValue && await _db.Users.AnyAsync(u => u.Id == userId.Value) ? userId : null,
             Action = "SERVER_DELETED",
             EntityType = "Server",
             EntityId = server.Id.ToString(),
@@ -341,7 +343,7 @@ public class ServersController : ControllerBase
         _db.AuditLogs.Add(new AuditLog
         {
             TenantId = server.TenantId,
-            UserId = userId,
+            UserId = userId.HasValue && await _db.Users.AnyAsync(u => u.Id == userId.Value) ? userId : null,
             Action = "API_KEY_REGENERATED",
             EntityType = "Server",
             EntityId = server.Id.ToString(),
