@@ -2,6 +2,9 @@
 // CyberMonitor - Core Types
 // ============================================================
 
+// Import types from api.ts to avoid duplication
+import type { Alert } from './services/api';
+
 export type Theme = 'dark' | 'light';
 export type Language = 'vi' | 'en';
 export type AuthMode = 'login' | 'register';
@@ -30,7 +33,7 @@ export interface ApiKey {
   id: string;
   name: string;
   key: string;
-  plainApiKey?: string;
+  plainApiKey: string;  // Make required instead of optional
   created: string;
   expiresAt?: string;
   lastUsed?: string;

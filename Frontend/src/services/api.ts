@@ -9,7 +9,7 @@
  * - Automatic retry với exponential backoff
  */
 
-import type { DashboardSummary } from '../types';
+import type { DashboardSummary, Notification } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -447,16 +447,6 @@ export interface Subscription {
   daysRemaining: number;
 }
 
-export interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: string;
-  isRead: boolean;
-  link: string | null;
-  createdAt: string;
-}
-
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -621,7 +611,11 @@ export const AuthApi = {
   login: async (email: string, password: string, twoFactorCode?: string): Promise<ApiResponse<AuthResponse>> => {
     const body: Record<string, string> = { email, password };
     if (twoFactorCode) body.twoFactorCode = twoFactorCode;
+    
+    // Tạm thời disable auto-logout cho login request
+    _isClearingAuth = true;
     const res = await request<AuthResponse>('/api/auth/login', body, { method: 'POST' });
+    _isClearingAuth = false;
     
     // Chỉ lưu token khi đăng nhập thành công HOÀN TOÀN (không phải requiresTwoFactor)
     // Nếu requiresTwoFactor = true, res.data sẽ là { requiresTwoFactor, tempToken } chứ không phải AuthResponse
@@ -925,7 +919,7 @@ export const SubscriptionsApi = {
 
   createPayment: async (tenantId: string, planName: string, amount: number) => {
     return request<{ orderId: string; paymentUrl: string }>('/api/subscriptions/create-payment', {
-      tenantId,
+      tenantId: tenantId || '00000000-0000-0000-0000-000000000000', // Use Guid.Empty if not provided
       planName,
       amount,
     }, { method: 'POST' });
@@ -1442,8 +1436,15 @@ export function createSignalRConnection(callbacks: SignalRCallbacks): { connect:
 
       connection.on('NotificationReceived', (notifDto: any) => {
         const notification: Notification = {
-          id: notifDto.id, title: notifDto.title, message: notifDto.message,
-          type: notifDto.type, isRead: notifDto.isRead, link: notifDto.link, createdAt: notifDto.createdAt,
+          id: notifDto.id,
+          tenantId: notifDto.tenantId || '',
+          userId: notifDto.userId || '',
+          title: notifDto.title,
+          message: notifDto.message,
+          type: notifDto.type,
+          isRead: notifDto.isRead,
+          link: notifDto.link,
+          createdAt: notifDto.createdAt,
         };
         console.log('[SignalR] NotificationReceived:', notification.title);
         callbacks.onNotification?.(notification);

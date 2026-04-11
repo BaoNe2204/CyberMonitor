@@ -241,12 +241,6 @@ function CreateTicketModal({ theme, currentUser, tenantId, onClose, onSuccess }:
   const handleSubmit = async () => {
     if (!form.title.trim()) { alert('Vui lòng nhập tiêu đề'); return; }
     
-    // SuperAdmin phải chọn tenant
-    if (isSuperAdmin && !form.selectedTenantId.trim()) {
-      alert('SuperAdmin phải chỉ định Tenant ID');
-      return;
-    }
-    
     setSubmitting(true);
     try {
       const payload: any = { 
@@ -257,7 +251,7 @@ function CreateTicketModal({ theme, currentUser, tenantId, onClose, onSuccess }:
         createdBy: currentUser.id 
       };
       
-      // Thêm tenantId (Admin/User từ JWT, SuperAdmin từ form)
+      // Thêm tenantId nếu có (Admin/User từ JWT, SuperAdmin từ form - optional)
       if (form.selectedTenantId && form.selectedTenantId.trim()) {
         payload.tenantId = form.selectedTenantId;
       }
@@ -280,15 +274,15 @@ function CreateTicketModal({ theme, currentUser, tenantId, onClose, onSuccess }:
           {/* SuperAdmin: Nhập Tenant ID */}
           {isSuperAdmin && (
             <div>
-              <label className="text-[11px] font-bold text-slate-500 uppercase mb-1.5 block">Tenant ID * (SuperAdmin)</label>
+              <label className="text-[11px] font-bold text-slate-500 uppercase mb-1.5 block">Tenant ID (Optional)</label>
               <input 
                 value={form.selectedTenantId} 
                 onChange={e => setForm({ ...form, selectedTenantId: e.target.value })} 
-                placeholder="Nhập Tenant ID (GUID)"
+                placeholder="Nhập Tenant ID (GUID) hoặc để trống"
                 className={cn('w-full rounded-lg px-4 py-2.5 text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/50',
                   theme === 'dark' ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900')} 
               />
-              <p className="text-xs text-slate-500 mt-1">SuperAdmin phải chỉ định Tenant ID để tạo ticket</p>
+              <p className="text-xs text-slate-500 mt-1">Để trống để tạo ticket cho chính bạn</p>
             </div>
           )}
           

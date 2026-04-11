@@ -857,9 +857,25 @@ class AgentHubListener:
         ip = args[0] if args and isinstance(args[0], str) else (
             args[0].get("ip") if args and isinstance(args[0], dict) else None)
         if ip:
-            logger.info("[Hub] Unblock command tu backend: %s", ip)
+            logger.info("=" * 60)
+            logger.info("[UNLOCK] NHAN LENH MO CHAN IP TU BACKEND")
+            logger.info("[UNLOCK] IP: %s", ip)
+            logger.info("[UNLOCK] Thoi gian: %s", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            logger.info("[UNLOCK] Server ID: %s", self.server_id or "N/A")
+            logger.info("[UNLOCK] Dang thuc hien mo chan...")
+            
             ok = self.blocker.unblock(str(ip))
-            logger.info("[Hub] Ket qua unblock %s: %s", ip, "THANH CONG" if ok else "THAT BAI")
+            
+            if ok:
+                logger.info("[UNLOCK] ✓ MO CHAN THANH CONG - IP %s da duoc mo khoa", ip)
+                logger.info("[UNLOCK] - Firewall rule da duoc xoa")
+                logger.info("[UNLOCK] - IP da duoc loai khoi danh sach chan noi bo")
+            else:
+                logger.warning("[UNLOCK] ✗ MO CHAN THAT BAI - Khong the mo khoa IP %s", ip)
+                logger.warning("[UNLOCK] - Kiem tra quyen Administrator")
+                logger.warning("[UNLOCK] - Kiem tra firewall rule ton tai")
+            
+            logger.info("=" * 60)
 
 
 # ──────────────────────────────────────────────

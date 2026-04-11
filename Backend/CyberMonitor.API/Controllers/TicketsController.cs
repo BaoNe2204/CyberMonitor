@@ -120,13 +120,12 @@ public class TicketsController : ControllerBase
         var role = GetUserRole();
         
         // SuperAdmin có thể tạo ticket cho bất kỳ tenant nào (dùng request.TenantId)
+        // Nếu SuperAdmin không chỉ định TenantId, tạo ticket với Guid.Empty (cho chính SuperAdmin)
         // Admin/User phải có tenantId trong JWT
         Guid effectiveTenantId;
         if (role == "SuperAdmin")
         {
-            if (!request.TenantId.HasValue)
-                return BadRequest(new ApiResponse<TicketDto>(false, "SuperAdmin phải chỉ định TenantId.", null));
-            effectiveTenantId = request.TenantId.Value;
+            effectiveTenantId = request.TenantId ?? Guid.Empty; // Allow SuperAdmin to create tickets without specifying tenant
         }
         else
         {

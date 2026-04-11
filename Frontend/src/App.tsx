@@ -16,8 +16,8 @@ import { cn } from './lib/utils';
 import { useDataWorker, useFetchWorker } from './hooks/useDataWorker';
 
 // Types & Data
-import { Theme, Language, AuthMode, ApiKey, Agent, ServerKeyModalState } from './types';
-import type { User, Alert, Notification, Ticket } from './services/api';
+import { Theme, Language, AuthMode, ApiKey, Agent, ServerKeyModalState, Notification } from './types';
+import type { User, Alert, Ticket } from './services/api';
 import { translations } from './i18n/translations';
 
 // API Client
@@ -181,9 +181,11 @@ export default function App() {
         fetchDashboardStatsRef.current();
         setNotifications(prev => [{
           id: ticket.id,
+          tenantId: ticket.tenantId,
+          userId: user?.id || '',
           title: `Ticket: ${ticket.ticketNumber}`,
           message: ticket.title,
-          type: 'Info',
+          type: 'Ticket' as const,
           isRead: false,
           link: `/incidents?ticket=${ticket.id}`,
           createdAt: ticket.createdAt,
@@ -198,12 +200,13 @@ export default function App() {
         setUnreadCount(prev => prev + 1);
       },
       onServerStatusChanged: (serverId: string, status: string, cpu?: number, ram?: number, disk?: number) => {
-        console.log('[SignalR] ServerStatusChanged:', serverId, status, cpu, ram);
+        const normalizedStatus = (status || 'offline').toLowerCase() as 'online' | 'offline' | 'warning';
+        console.log('[SignalR] ServerStatusChanged:', serverId, status, '→', normalizedStatus, cpu, ram);
         setServers(prev => prev.map(s => {
           if (s.id !== serverId) return s;
           return {
             ...s,
-            status: status as Agent['status'],
+            status: normalizedStatus,
             cpu: cpu ?? s.cpu,
             ram: ram ?? s.ram,
             diskUsage: disk ?? s.diskUsage,
@@ -502,8 +505,8 @@ export default function App() {
               id: n.id,
               title: n.title,
               message: n.message,
-              time: n.createdAt,
-              read: n.isRead,
+              createdAt: n.createdAt,
+              isRead: n.isRead,
               type: n.type,
               link: n.link,
               tenantId: n.tenantId,

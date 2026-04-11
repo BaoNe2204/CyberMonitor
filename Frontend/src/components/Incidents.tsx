@@ -93,28 +93,28 @@ export const Incidents = ({ theme, t, recentAlerts, setSelectedDetail }: Inciden
       <div className={cn("border rounded-xl overflow-hidden transition-colors", theme === 'dark' ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200 shadow-sm")}>
         {filtered.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full text-left table-fixed">
               <thead>
                 <tr className={cn("text-[10px] uppercase tracking-wider text-slate-500", theme === 'dark' ? "bg-slate-950/50" : "bg-slate-50")}>
-                  <th className="px-6 py-4 font-medium">#</th>
-                  <th className="px-6 py-4 font-medium">{t.severity || 'Mức Độ'}</th>
-                  <th className="px-6 py-4 font-medium">Loại</th>
-                  <th className="px-6 py-4 font-medium">{t.message || 'Mô Tả'}</th>
-                  <th className="px-6 py-4 font-medium">IP Nguồn</th>
-                  <th className="px-6 py-4 font-medium">Server</th>
-                  <th className="px-6 py-4 font-medium">MITRE</th>
-                  <th className="px-6 py-4 font-medium">Trạng Thái</th>
-                  <th className="px-6 py-4 font-medium">{t.time || 'Thời Gian'}</th>
-                  <th className="px-6 py-4 font-medium">Action</th>
+                  <th className="px-4 py-4 font-medium w-12">#</th>
+                  <th className="px-4 py-4 font-medium w-20">{t.severity || 'Mức Độ'}</th>
+                  <th className="px-4 py-4 font-medium w-28">Loại</th>
+                  <th className="px-4 py-4 font-medium">{t.message || 'Mô Tả'}</th>
+                  <th className="px-4 py-4 font-medium w-32">IP Nguồn</th>
+                  <th className="px-4 py-4 font-medium w-32">Server</th>
+                  <th className="px-4 py-4 font-medium w-24">MITRE</th>
+                  <th className="px-4 py-4 font-medium w-28">Trạng Thái</th>
+                  <th className="px-4 py-4 font-medium w-24">{t.time || 'Thời Gian'}</th>
+                  <th className="px-4 py-4 font-medium w-20">Action</th>
                 </tr>
               </thead>
               <tbody className={cn("divide-y", theme === 'dark' ? "divide-slate-800" : "divide-slate-100")}>
                 {filtered.map((alert, i) => (
                   <tr key={alert.id} className={cn("transition-colors cursor-pointer", theme === 'dark' ? "hover:bg-slate-800/30" : "hover:bg-slate-50")}>
-                    <td className="px-6 py-4 text-xs text-slate-500">#{i + 1}</td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4 text-xs text-slate-500">#{i + 1}</td>
+                    <td className="px-4 py-4">
                       <span className={cn(
-                        "text-[10px] font-bold px-2 py-0.5 rounded",
+                        "text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap inline-block",
                         alert.severity === 'Critical' ? "bg-rose-500/10 text-rose-500 border border-rose-500/20" :
                         alert.severity === 'High' ? "bg-orange-500/10 text-orange-500 border border-orange-500/20" :
                         alert.severity === 'Medium' ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" :
@@ -123,20 +123,26 @@ export const Incidents = ({ theme, t, recentAlerts, setSelectedDetail }: Inciden
                         {alert.severity || '—'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-xs text-slate-400">{alert.alertType || '—'}</td>
-                    <td className={cn("px-6 py-4 text-sm max-w-[250px] truncate", theme === 'dark' ? "text-slate-200" : "text-slate-700")}>
-                      {alert.title || alert.message || '—'}
+                    <td className="px-4 py-4 text-xs text-slate-400 break-words">{alert.alertType || '—'}</td>
+                    <td className={cn("px-4 py-4 text-sm break-words", theme === 'dark' ? "text-slate-200" : "text-slate-700")}>
+                      <div className="line-clamp-2" title={alert.title || alert.message || '—'}>
+                        {alert.title || alert.message || '—'}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 text-xs font-mono text-slate-400">{alert.sourceIp || '—'}</td>
-                    <td className="px-6 py-4 text-xs text-slate-400">{alert.serverName || alert.targetAsset || '—'}</td>
-                    <td className="px-6 py-4">
-                      <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-mono", theme === 'dark' ? "bg-slate-800 text-slate-400" : "bg-slate-100 text-slate-500")}>
+                    <td className="px-4 py-4 text-xs font-mono text-slate-400 break-all">{alert.sourceIp || '—'}</td>
+                    <td className="px-4 py-4 text-xs text-slate-400 break-words">
+                      <div className="line-clamp-2" title={alert.serverName || alert.targetAsset || '—'}>
+                        {alert.serverName || alert.targetAsset || '—'}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-mono break-all inline-block", theme === 'dark' ? "bg-slate-800 text-slate-400" : "bg-slate-100 text-slate-500")}>
                         {alert.mitreTechnique || alert.mitreTactic || alert.mitre || '—'}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4">
                       <span className={cn(
-                        "text-[10px] font-bold px-2 py-0.5 rounded",
+                        "text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap inline-block",
                         alert.status === 'Resolved' || alert.status === 'Closed' || alert.status === 'resolved' || alert.status === 'closed' ? "bg-emerald-500/10 text-emerald-500" :
                         alert.status === 'Investigating' || alert.status === 'Acknowledged' || alert.status === 'acknowledged' ? "bg-blue-500/10 text-blue-500" :
                         "bg-slate-500/10 text-slate-400"
@@ -144,11 +150,11 @@ export const Incidents = ({ theme, t, recentAlerts, setSelectedDetail }: Inciden
                         {alert.status || 'Open'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-xs text-slate-500">{formatRelativeCompactTruoc(alert.createdAt)}</td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4 text-xs text-slate-500 whitespace-nowrap">{formatRelativeCompactTruoc(alert.createdAt)}</td>
+                    <td className="px-4 py-4">
                       <button 
                         onClick={() => setSelectedDetail({ type: 'incident', data: alert })}
-                        className="text-blue-400 hover:underline text-xs"
+                        className="text-blue-400 hover:underline text-xs whitespace-nowrap"
                       >
                         {t.details || 'Chi Tiết'}
                       </button>

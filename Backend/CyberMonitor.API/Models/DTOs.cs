@@ -279,7 +279,7 @@ public record AddTicketCommentRequest(
 
 // ============ PAYMENT DTOs ============
 public record CreatePaymentRequest(
-    [Required] Guid TenantId,
+    Guid TenantId, // Not required - SuperAdmin can use Guid.Empty
     [Required] string PlanName,
     [Required] decimal Amount
 );

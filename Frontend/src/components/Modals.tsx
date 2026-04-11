@@ -16,7 +16,7 @@ interface ModalsProps {
   showAPIKeyModal: boolean;
   setShowAPIKeyModal: (show: boolean) => void;
   apiKeys: Array<{ id: string; name: string; key: string; created: string; plainApiKey: string }>;
-  generateApiKey: () => Promise<string | null>;
+  generateApiKey: (serverId: string) => Promise<string | null>;
   deleteApiKey: (id: string) => void;
   is2FAEnabled: boolean;
   setIs2FAEnabled: (enabled: boolean) => void;
@@ -187,14 +187,8 @@ export const Modals = ({
 
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <p className="text-sm text-slate-500">Use these keys to authenticate your agents and API requests.</p>
-                <button 
-                  onClick={generateApiKey}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-500 transition-colors"
-                >
-                  <Plus size={16} />
-                  {t.generateNewKey}
-                </button>
+                <p className="text-sm text-slate-500">API keys are automatically generated when you add a new server.</p>
+                {/* Removed manual API key generation - keys are now created per-server */}
               </div>
 
               <div className={cn("rounded-xl border overflow-hidden", theme === 'dark' ? "border-slate-800" : "border-slate-200")}>
@@ -238,27 +232,49 @@ export const Modals = ({
       )}
 
       {selectedDetail && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className={cn("w-full max-w-2xl p-6 rounded-2xl border shadow-2xl transition-colors", theme === 'dark' ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200")}
+            className={cn("w-full max-w-3xl my-8 p-6 rounded-2xl border shadow-2xl transition-colors", theme === 'dark' ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200")}
           >
-            <div className="flex justify-between items-center mb-6">
-              <h3 className={cn("text-xl font-bold", theme === 'dark' ? "text-white" : "text-slate-900")}>{t.details} - {selectedDetail.data.name || selectedDetail.data.message}</h3>
-              <button onClick={() => setSelectedDetail(null)} className="text-slate-500 hover:text-rose-500 transition-colors"><XCircle size={24} /></button>
+            <div className="flex justify-between items-start gap-4 mb-6">
+              <h3 className={cn("text-xl font-bold flex-1", theme === 'dark' ? "text-white" : "text-slate-900")}>
+                {t.details} - {selectedDetail.data.title || selectedDetail.data.name || selectedDetail.data.message || 'Chi tiết'}
+              </h3>
+              <button onClick={() => setSelectedDetail(null)} className="text-slate-500 hover:text-rose-500 transition-colors shrink-0">
+                <XCircle size={24} />
+              </button>
             </div>
-            <div className="grid grid-cols-2 gap-6">
-              {Object.entries(selectedDetail.data).map(([key, value]) => (
-                <div key={key} className="space-y-1">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase">{key}</p>
-                  <p className={cn("text-sm font-mono p-2 rounded transition-colors", theme === 'dark' ? "bg-slate-950 text-slate-200" : "bg-slate-50 text-slate-700")}>{String(value)}</p>
-                </div>
-              ))}
+            
+            {/* Scrollable content area with max height */}
+            <div className="max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(selectedDetail.data).map(([key, value]) => (
+                  <div key={key} className={cn(
+                    "space-y-1 p-3 rounded-lg transition-colors",
+                    theme === 'dark' ? "bg-slate-950/50" : "bg-slate-50"
+                  )}>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{key}</p>
+                    <p className={cn(
+                      "text-sm font-mono break-words whitespace-pre-wrap",
+                      theme === 'dark' ? "text-slate-200" : "text-slate-700"
+                    )}>
+                      {value === null || value === undefined ? '—' : String(value)}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className={cn("mt-8 pt-6 border-t flex justify-end transition-colors", theme === 'dark' ? "border-slate-800" : "border-slate-100")}>
-              <button onClick={() => setSelectedDetail(null)} className={cn("px-6 py-2 rounded-lg font-bold transition-colors", theme === 'dark' ? "bg-slate-800 text-white hover:bg-slate-700" : "bg-slate-100 text-slate-900 hover:bg-slate-200")}>{t.cancel}</button>
+            
+            <div className={cn("mt-6 pt-4 border-t flex justify-end transition-colors", theme === 'dark' ? "border-slate-800" : "border-slate-100")}>
+              <button 
+                onClick={() => setSelectedDetail(null)} 
+                className={cn("px-6 py-2 rounded-lg font-bold transition-colors", theme === 'dark' ? "bg-slate-800 text-white hover:bg-slate-700" : "bg-slate-100 text-slate-900 hover:bg-slate-200")}
+              >
+                {t.close || t.cancel || 'Đóng'}
+              </button>
             </div>
           </motion.div>
         </div>

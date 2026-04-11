@@ -185,7 +185,7 @@ public class SubscriptionsController : ControllerBase
 
         Guid effectiveTenantId;
         if (role == "SuperAdmin")
-            effectiveTenantId = request.TenantId;
+            effectiveTenantId = request.TenantId != Guid.Empty ? request.TenantId : Guid.Empty; // Allow SuperAdmin to buy for themselves
         else
         {
             if (!tenantId.HasValue) return Forbid();
