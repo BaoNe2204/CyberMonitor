@@ -5,6 +5,7 @@ using CyberMonitor.API.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ClosedXML.Excel;
 
 namespace CyberMonitor.API.Controllers;
 
@@ -27,7 +28,8 @@ public class ReportsController : ControllerBase
     public async Task<IActionResult> ExportExcel(
         [FromQuery] DateTime? startDate,
         [FromQuery] DateTime? endDate,
-        [FromQuery] Guid? tenantId)
+        [FromQuery] Guid? tenantId,
+        [FromQuery] bool includeActivityLogs = true)
     {
         var now = DateTime.UtcNow;
         var start = startDate ?? now.AddDays(-30);
@@ -49,12 +51,17 @@ public class ReportsController : ControllerBase
                 .ThenInclude(c => c.User)
             .AsQueryable();
 
+        IQueryable<AuditLog> auditQuery = _db.AuditLogs
+            .Include(a => a.User)
+            .AsQueryable();
+
         if (role == "SuperAdmin")
         {
             if (tenantId.HasValue)
             {
                 alertQuery = alertQuery.Where(a => a.TenantId == tenantId);
                 ticketQuery = ticketQuery.Where(t => t.TenantId == tenantId);
+                auditQuery = auditQuery.Where(a => a.TenantId == tenantId);
             }
         }
         else if (role == "Admin")
@@ -63,6 +70,7 @@ public class ReportsController : ControllerBase
             {
                 alertQuery = alertQuery.Where(a => a.TenantId == currentTenantId);
                 ticketQuery = ticketQuery.Where(t => t.TenantId == currentTenantId);
+                auditQuery = auditQuery.Where(a => a.TenantId == currentTenantId);
             }
         }
         else
@@ -72,9 +80,11 @@ public class ReportsController : ControllerBase
 
         alertQuery = alertQuery.Where(a => a.CreatedAt >= start && a.CreatedAt <= end);
         ticketQuery = ticketQuery.Where(t => t.CreatedAt >= start && t.CreatedAt <= end);
+        auditQuery = auditQuery.Where(a => a.Timestamp >= start && a.Timestamp <= end);
 
         var alerts = await alertQuery.OrderByDescending(a => a.CreatedAt).ToListAsync();
         var tickets = await ticketQuery.OrderByDescending(t => t.CreatedAt).ToListAsync();
+        var auditLogs = await auditQuery.OrderByDescending(a => a.Timestamp).Take(5000).ToListAsync();
 
         var topAttackers = alerts
             .Where(a => !string.IsNullOrEmpty(a.SourceIp) && a.Status == "Resolved")
@@ -362,6 +372,56 @@ public class ReportsController : ControllerBase
             }
 
             wsAttack.Columns().AdjustToContents();
+        }
+
+        if (includeActivityLogs && auditLogs.Count > 0)
+        {
+            var wsAudit = workbook.Worksheets.Add("Nhật Ký Hoạt Động");
+            wsAudit.Cell("A1").Value = "NHẬT KÝ HOẠT ĐỘNG HỆ THỐNG";
+            wsAudit.Cell("A1").Style.Font.FontSize = 14;
+            wsAudit.Cell("A1").Style.Font.Bold = true;
+            wsAudit.Range("A1:H1").Merge();
+
+            wsAudit.Cell("A2").Value = $"Tổng bản ghi: {auditLogs.Count}";
+            wsAudit.Cell("A2").Style.Font.FontSize = 10;
+            wsAudit.Cell("A2").Style.Font.FontColor = ClosedXML.Excel.XLColor.FromHtml("#718096");
+
+            var auditHeaders = new[] { "ID", "Thời gian", "Hành động", "Đối tượng", "ID Đối tượng", "Người dùng", "Địa chỉ IP", "Chi tiết" };
+            for (int i = 0; i < auditHeaders.Length; i++)
+            {
+                wsAudit.Cell(4, i + 1).Value = auditHeaders[i];
+                wsAudit.Cell(4, i + 1).Style.Font.Bold = true;
+                wsAudit.Cell(4, i + 1).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromHtml("#2D3748");
+                wsAudit.Cell(4, i + 1).Style.Font.FontColor = ClosedXML.Excel.XLColor.FromHtml("#FFFFFF");
+            }
+
+            int auditRow = 5;
+            foreach (var log in auditLogs)
+            {
+                wsAudit.Cell(auditRow, 1).Value = log.Id;
+                wsAudit.Cell(auditRow, 2).Value = log.Timestamp.ToString("dd/MM/yyyy HH:mm:ss");
+                wsAudit.Cell(auditRow, 3).Value = log.Action;
+
+                var actionColor = log.Action switch
+                {
+                    string a when a.Contains("Create") || a.Contains("Login") => ClosedXML.Excel.XLColor.FromHtml("#C6F6D5"),
+                    string a when a.Contains("Delete") || a.Contains("Remove") => ClosedXML.Excel.XLColor.FromHtml("#FED7D7"),
+                    string a when a.Contains("Update") || a.Contains("Edit") => ClosedXML.Excel.XLColor.FromHtml("#FAF089"),
+                    string a when a.Contains("Alert") => ClosedXML.Excel.XLColor.FromHtml("#FEEBC8"),
+                    _ => ClosedXML.Excel.XLColor.FromHtml("#E2E8F0")
+                };
+                wsAudit.Cell(auditRow, 3).Style.Fill.BackgroundColor = actionColor;
+
+                wsAudit.Cell(auditRow, 4).Value = log.EntityType ?? "";
+                wsAudit.Cell(auditRow, 5).Value = log.EntityId ?? "";
+                wsAudit.Cell(auditRow, 6).Value = log.User?.FullName ?? "System";
+                wsAudit.Cell(auditRow, 7).Value = log.IpAddress ?? "";
+                wsAudit.Cell(auditRow, 8).Value = log.Details ?? "";
+                auditRow++;
+            }
+
+            wsAudit.Columns().AdjustToContents();
+            wsAudit.Column(8).Width = 50;
         }
 
         var fileName = $"CyberMonitor_Report_{tenantName.Replace(" ", "_")}_{DateTime.UtcNow:yyyyMMddHHmmss}.xlsx";

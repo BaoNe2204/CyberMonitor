@@ -1,13 +1,3 @@
-/**
- * CyberMonitor SOC Platform - Main Application
- * Kết nối với ASP.NET Backend + SignalR Real-time
- * 
- * Performance improvements:
- * - Parallel data fetching on login (not sequential)
- * - Web Worker for data processing (non-blocking)
- * - Smart caching with automatic invalidation
- * - Loading skeletons for better UX
- */
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -76,7 +66,6 @@ import { NotificationCenter } from './components/NotificationCenter';
 import { ServerSettings } from './components/ServerSettings';
 
 export default function App() {
-  // --- Web Worker for heavy data processing ---
   const { processDashboardData } = useDataWorker();
   const { fetchDashboard, fetchMultiple, isReady: workerReady } = useFetchWorker();
 
@@ -490,7 +479,6 @@ export default function App() {
           updateProgress(20);
         }
 
-        // 2. Fetch tickets (background, non-blocking)
         TicketsApi.getAll(1, 30).then(ticketRes => {
           if (ticketRes.success && ticketRes.data) {
             setTickets(ticketRes.data.items);
@@ -498,7 +486,6 @@ export default function App() {
         });
         updateProgress(10);
 
-        // 3. Fetch notifications (background, non-blocking)
         NotificationsApi.getNotifications(1, 20).then(notifRes => {
           if (notifRes) {
             setNotifications(notifRes.items.map((n: any) => ({
@@ -527,7 +514,6 @@ export default function App() {
 
     fetchInitialData();
 
-    // Refresh dashboard stats every 30 seconds
     const interval = setInterval(fetchDashboardStats, 30000);
     return () => clearInterval(interval);
   }, [isLoggedIn, fetchDashboardStats, fetchDashboard, processDashboardData, workerReady]);
@@ -585,7 +571,6 @@ export default function App() {
     return { success: false, message: res.message || 'Đăng ký thất bại' };
   }, []);
 
-  /** Sau khi bật/tắt 2FA trong modal — đồng bộ user + localStorage để toggle Settings/Account đúng. */
   const syncUserProfileFromServer = useCallback(async () => {
     const res = await AuthApi.getMe();
     if (res.success && res.data) {
@@ -607,7 +592,6 @@ export default function App() {
     setPricingPlans([]);
   }, []);
 
-  // --- Auto-logout when 401 detected anywhere in the app ---
   const logoutOnExpireRef = useRef<() => void>(() => {});
   useEffect(() => {
     logoutOnExpireRef.current = handleLogout;
@@ -872,7 +856,6 @@ export default function App() {
 
   // --- Rendering ---
 
-  // Payment result page — demo mode (demoResult set) hoặc VNPay redirect thật
   if (demoResult !== null || window.location.pathname === '/payment-result') {
     return (
       <PaymentResultPage

@@ -102,6 +102,10 @@ export function invalidateCaches(tags?: string[]): void {
 // REQUEST DEDUPLICATION
 // ============================================================================
 
+// ============================================================================
+// REQUEST DEDUPLICATION
+// ============================================================================
+
 const inFlightRequests = new Map<string, Promise<any>>();
 
 function dedupeRequest<T>(key: string, factory: () => Promise<T>): Promise<T> {
@@ -119,9 +123,6 @@ function dedupeRequest<T>(key: string, factory: () => Promise<T>): Promise<T> {
   return promise as Promise<T>;
 }
 
-// ============================================================================
-// ADVANCED FETCH - Retry + Backoff + Concurrency
-// ============================================================================
 
 async function fetchWithRetry<T>(
   url: string,
@@ -194,6 +195,10 @@ async function parallelFetch(
 
   return results;
 }
+
+// ============================================================================
+// CACHED REQUEST HELPERS
+// ============================================================================
 
 // ============================================================================
 // CACHED REQUEST HELPERS
@@ -499,7 +504,12 @@ export function isAuthenticated(): boolean {
 }
 
 // Singleton flag để ngăn nhiều request cùng lúc 401 gọi clearAuth() nhiều lần (race condition)
+// Singleton flag để ngăn nhiều request cùng lúc 401 gọi clearAuth() nhiều lần (race condition)
 let _isClearingAuth = false;
+
+// ============================================================================
+// HTTP CLIENT - Enhanced v2
+// ============================================================================
 
 // ============================================================================
 // HTTP CLIENT - Enhanced v2
@@ -758,6 +768,10 @@ export const ServersApi = {
     return request<ServerKeyLookup>(`/api/servers/${serverId}/key`);
   },
 
+  revealKey: async (serverId: string) => {
+    return request<ServerKeyLookup>(`/api/servers/${serverId}/reveal-key`);
+  },
+
   // Alert Email Management
   getAlertEmails: async (serverId: string) => {
     return request<ServerAlertEmail[]>(`/api/servers/${serverId}/alert-emails`);
@@ -775,6 +789,7 @@ export const ServersApi = {
     return request<ServerAlertEmail>(`/api/servers/${serverId}/alert-emails/${emailId}/toggle`, undefined, { method: 'PUT' });
   },
 
+  // Telegram recipient management
   // Telegram recipient management
   getTelegramRecipients: async (serverId: string) => {
     return request<ServerTelegramRecipient[]>(`/api/servers/${serverId}/telegram-recipients`);
@@ -1278,7 +1293,7 @@ export const AuditLogsApi = {
     return request(`/api/audit-logs/count-since?${params}`);
   },
 
-  exportCsv: (filters?: {
+  exportCsv: async (filters?: {
     action?: string;
     entityType?: string;
     userId?: string;
@@ -1292,8 +1307,28 @@ export const AuditLogsApi = {
     if (filters?.userId) params.append('userId', filters.userId);
     if (filters?.fromDate) params.append('fromDate', filters.fromDate);
     if (filters?.toDate) params.append('toDate', filters.toDate);
-    const url = `${API_BASE_URL}/api/audit-logs/export?${params}`;
-    window.open(url, '_blank');
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/audit-logs/export?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `audit_logs_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[API] exportCsv error:', err);
+      throw err;
+    }
   },
 };
 
@@ -1321,6 +1356,7 @@ export function createSignalRConnection(callbacks: SignalRCallbacks): { connect:
   let isConnecting = false;
   let isActive = false;
 
+  // Helper: safely check if connection is in a state where stop() is safe
   // Helper: safely check if connection is in a state where stop() is safe
   const isConnectedOrConnecting = () =>
     connection !== null &&
@@ -1368,6 +1404,7 @@ export function createSignalRConnection(callbacks: SignalRCallbacks): { connect:
         }
       };
 
+      // Register all event handlers BEFORE starting
       // Register all event handlers BEFORE starting
       connection.on('ReceiveAlert', (alertDto: any) => {
         const alert: Alert = {
@@ -1462,6 +1499,7 @@ export function createSignalRConnection(callbacks: SignalRCallbacks): { connect:
       });
 
       // Store the start promise so disconnect() can await it
+      // Store the start promise so disconnect() can await it
       startPromise = connection.start()
         .then(() => {
           isConnecting = false;
@@ -1477,6 +1515,7 @@ export function createSignalRConnection(callbacks: SignalRCallbacks): { connect:
         })
         .catch((err) => {
           isConnecting = false;
+          // Ignore "connection stopped" errors when intentionally disconnected
           // Ignore "connection stopped" errors when intentionally disconnected
           if (!isActive) return;
           const msg = err?.message || String(err);
@@ -1558,6 +1597,7 @@ export const DefenseApi = {
   },
 
   // POST /api/defense/block-ip
+  // POST /api/defense/block-ip
   blockIP: async (data: {
     ip: string;
     attackType?: string;
@@ -1571,10 +1611,12 @@ export const DefenseApi = {
   },
 
   // POST /api/defense/unblock-ip
+  // POST /api/defense/unblock-ip
   unblockIP: async (ip: string, unblockedBy?: string) => {
     return request('/api/defense/unblock-ip', { ip, unblockedBy }, { method: 'POST' });
   },
 
+  // POST /api/defense/manual-block
   // POST /api/defense/manual-block
   manualBlock: async (data: {
     ip: string;
@@ -1587,12 +1629,14 @@ export const DefenseApi = {
   },
 
   // GET /api/defense/check/{ip}
+  // GET /api/defense/check/{ip}
   checkIP: async (ip: string) => {
     return request<{ ipAddress: string; isBlocked: boolean; blockedAt: string | null; expiresAt: string | null; reason: string | null; attackType: string | null }>(
       `/api/defense/check/${encodeURIComponent(ip)}`
     );
   },
 
+  // GET /api/defense/rate-limit-status
   // GET /api/defense/rate-limit-status
   getRateLimitStatus: async () => {
     return request<{
@@ -1640,7 +1684,6 @@ export interface NotificationPage {
 }
 
 export const NotificationsApi = {
-  // GET /api/notifications
   getNotifications: async (page = 1, pageSize = 20, isRead?: boolean, type?: string) => {
     const params = new URLSearchParams({
       page: String(page),
@@ -1653,28 +1696,23 @@ export const NotificationsApi = {
     return res.success ? res.data : null;
   },
 
-  // GET /api/notifications/unread-count
   getUnreadCount: async (): Promise<number> => {
     const res = await request<{ count: number }>('/api/notifications/unread-count');
     return res.success ? (res.data?.count ?? 0) : 0;
   },
 
-  // PUT /api/notifications/{id}/read
   markAsRead: async (id: string): Promise<void> => {
     await request(`/api/notifications/${id}/read`, undefined, { method: 'PUT' });
   },
 
-  // PUT /api/notifications/read-all
   markAllAsRead: async (): Promise<void> => {
     await request('/api/notifications/read-all', undefined, { method: 'PUT' });
   },
 
-  // DELETE /api/notifications/{id}
   deleteNotification: async (id: string): Promise<void> => {
     await request(`/api/notifications/${id}`, undefined, { method: 'DELETE' });
   },
 
-  // DELETE /api/notifications/clear-read
   clearRead: async (): Promise<void> => {
     await request('/api/notifications/clear-read', undefined, { method: 'DELETE' });
   },
@@ -1703,7 +1741,6 @@ export interface WhitelistPage {
 }
 
 export const WhitelistApi = {
-  // GET /api/whitelists
   getWhitelists: async (
     page = 1,
     pageSize = 50,
@@ -1718,15 +1755,18 @@ export const WhitelistApi = {
   },
 
   // POST /api/whitelists
+  // POST /api/whitelists
   addWhitelist: async (ipAddress: string, description?: string, serverId?: string | null) => {
     return request<WhitelistEntry>('/api/whitelists', { ipAddress, description, serverId }, { method: 'POST' });
   },
 
   // DELETE /api/whitelists/{id}
+  // DELETE /api/whitelists/{id}
   removeWhitelist: async (id: string) => {
     return request(`/api/whitelists/${id}`, undefined, { method: 'DELETE' });
   },
 
+  // GET /api/whitelists/check/{ip}
   // GET /api/whitelists/check/{ip}
   checkWhitelist: async (ip: string, serverId?: string | null) => {
     const params = serverId ? `?serverId=${serverId}` : '';

@@ -23,7 +23,7 @@ ProjectAssetsFile=<PATH>obj/project.assets.json
 RootNamespace=CyberMonitor.API
 RunAnalyzers=
 RunAnalyzersDuringLiveAnalysis=
-SolutionPath=*Undefined*
+SolutionPath=<PATH>../../CyberMonitor.sln
 TargetFrameworkIdentifier=.NETCoreApp
 TargetPath=<PATH>bin/Debug/net8.0/CyberMonitor.API.dll
 TargetRefPath=<PATH>obj/Debug/net8.0/ref/CyberMonitor.API.dll
@@ -93,6 +93,8 @@ Migrations/
  20260408140809_AddAvatarUrlToUsers.Designer.cs
  20260408201807_AddIsActiveToWhitelist.cs
  20260408201807_AddIsActiveToWhitelist.Designer.cs
+ 20260413083153_AddEncryptedKeyToApiKeys.cs
+ 20260413083153_AddEncryptedKeyToApiKeys.Designer.cs
  CyberMonitorDbContextModelSnapshot.cs
 Models/
  DTOs.cs

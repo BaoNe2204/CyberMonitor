@@ -122,6 +122,7 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [newLogsCount, setNewLogsCount] = useState(0);
   const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
+  const [exporting, setExporting] = useState(false);
   const autoRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastLoadTime = useRef<string>(new Date().toISOString());
 
@@ -260,14 +261,21 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
       )
     : logs;
 
-  const handleExport = () => {
-    const filters = {
-      action: selectedAction || undefined,
-      entityType: selectedEntity || undefined,
-      fromDate: dateFrom || undefined,
-      toDate: dateTo || undefined,
-    };
-    AuditLogsApi.exportCsv(filters);
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const filters = {
+        action: selectedAction || undefined,
+        entityType: selectedEntity || undefined,
+        fromDate: dateFrom || undefined,
+        toDate: dateTo || undefined,
+      };
+      await AuditLogsApi.exportCsv(filters);
+    } catch (err) {
+      console.error('[SystemLogs] Export error:', err);
+    } finally {
+      setExporting(false);
+    }
   };
 
   // Stats
@@ -355,11 +363,11 @@ export const SystemLogs = ({ theme, t }: SystemLogsProps) => {
           {/* Export */}
           <button
             onClick={handleExport}
-            disabled={displayLogs.length === 0}
+            disabled={displayLogs.length === 0 || exporting}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm font-bold transition-all shadow"
           >
-            <Download size={15} />
-            Xuất CSV
+            {exporting ? <RefreshCw size={15} className="animate-spin" /> : <Download size={15} />}
+            {exporting ? 'Đang xuất…' : 'Xuất CSV'}
           </button>
         </div>
       </div>

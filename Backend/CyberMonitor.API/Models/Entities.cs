@@ -222,6 +222,9 @@ public class ApiKey
     [Required, MaxLength(500)]
     public string KeyHash { get; set; } = string.Empty;
 
+    /// <summary>Encrypted full API key (DPAPI encrypted, reversible by server admin)</summary>
+    public string? EncryptedKey { get; set; }
+
     [Required, MaxLength(20)]
     public string KeyPrefix { get; set; } = string.Empty;
 

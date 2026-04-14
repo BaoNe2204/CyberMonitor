@@ -17,6 +17,7 @@ export const ApiManagement = ({ theme, t, guide, setGuide }: ApiManagementProps)
   const [servers, setServers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
+  const [revealedKeys, setRevealedKeys] = useState<Record<string, string>>({});
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
@@ -56,8 +57,31 @@ export const ApiManagement = ({ theme, t, guide, setGuide }: ApiManagementProps)
     const res = await ServersApi.regenerateKey(serverId);
     if (res.success) {
       await fetchServers();
+      setRevealedKeys(prev => ({ ...prev, [serverId]: res.data?.plainApiKey || '' }));
     }
     setRefreshingId(null);
+  };
+
+  const handleRevealKey = async (serverId: string) => {
+    if (revealedKeys[serverId]) {
+      setRevealedKeys(prev => {
+        const newKeys = { ...prev };
+        delete newKeys[serverId];
+        return newKeys;
+      });
+      return;
+    }
+    const res = await ServersApi.revealKey(serverId);
+    if (res.success) {
+      // KEY_CHUA_MA_HOA = key cũ chưa mã hóa, không thể khôi phục
+      if (res.message === 'KEY_CHUA_MA_HOA') {
+        alert('API Key này chưa được mã hóa. Vui lòng nhấn nút Regenerate (mũi tên xoay) để tạo key mới.');
+        return;
+      }
+      if (res.data?.plainApiKey) {
+        setRevealedKeys(prev => ({ ...prev, [serverId]: res.data!.plainApiKey }));
+      }
+    }
   };
 
   const handleSaveGuide = async () => {
@@ -118,12 +142,14 @@ export const ApiManagement = ({ theme, t, guide, setGuide }: ApiManagementProps)
           servers={servers}
           loading={loading}
           visibleKeys={visibleKeys}
+          revealedKeys={revealedKeys}
           copiedKey={copiedKey}
           refreshingId={refreshingId}
           onRefresh={fetchServers}
           onToggleVisibility={toggleKeyVisibility}
           onCopy={copyToClipboard}
           onRegenerate={handleRegenerateKey}
+          onReveal={handleRevealKey}
         />
       )}
 
@@ -275,23 +301,27 @@ const ServersApiKeysSection = ({
   servers,
   loading,
   visibleKeys,
+  revealedKeys,
   copiedKey,
   refreshingId,
   onRefresh,
   onToggleVisibility,
   onCopy,
   onRegenerate,
+  onReveal,
 }: {
   theme: Theme;
   servers: any[];
   loading: boolean;
   visibleKeys: Set<string>;
+  revealedKeys: Record<string, string>;
   copiedKey: string | null;
   refreshingId: string | null;
   onRefresh: () => void;
   onToggleVisibility: (id: string) => void;
   onCopy: (text: string, id: string) => void;
   onRegenerate: (id: string) => void;
+  onReveal: (id: string) => void;
 }) => (
   <div className={cn(
     "rounded-2xl border overflow-hidden",
@@ -382,27 +412,30 @@ const ServersApiKeysSection = ({
                     <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">API Key</span>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => onToggleVisibility(serverKeyId)}
+                        onClick={() => onReveal(server.id)}
                         className={cn(
-                          "p-1.5 rounded-lg transition-colors",
-                          theme === 'dark' ? "hover:bg-slate-800" : "hover:bg-slate-200"
+                          "px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1",
+                          revealedKeys[server.id]
+                            ? "bg-blue-600/20 text-blue-400 hover:bg-blue-600/30"
+                            : theme === 'dark'
+                              ? "bg-slate-800 hover:bg-slate-700 text-slate-300"
+                              : "bg-slate-100 hover:bg-slate-200 text-slate-700"
                         )}
                       >
-                        {visibleKeys.has(serverKeyId) ? (
-                          <EyeOff size={14} className="text-slate-400" />
-                        ) : (
-                          <Eye size={14} className="text-slate-400" />
-                        )}
+                        <Key size={12} />
+                        {revealedKeys[server.id] ? "Ẩn Key" : "Hiện Key"}
                       </button>
-                      <button
-                        onClick={() => onCopy(apiKey.keyPrefix || '', `prefix-${serverKeyId}`)}
-                        className={cn(
-                          "p-1.5 rounded-lg transition-colors",
-                          theme === 'dark' ? "hover:bg-slate-800" : "hover:bg-slate-200"
-                        )}
-                      >
-                        <Copy size={14} className={copiedKey === `prefix-${serverKeyId}` ? "text-green-400" : "text-slate-400"} />
-                      </button>
+                      {revealedKeys[server.id] && (
+                        <button
+                          onClick={() => onCopy(revealedKeys[server.id], `full-${server.id}`)}
+                          className={cn(
+                            "p-1.5 rounded-lg transition-colors",
+                            theme === 'dark' ? "hover:bg-slate-800" : "hover:bg-slate-200"
+                          )}
+                        >
+                          <Copy size={14} className={copiedKey === `full-${server.id}` ? "text-green-400" : "text-slate-400"} />
+                        </button>
+                      )}
                       <button
                         onClick={() => onRegenerate(server.id)}
                         disabled={refreshingId === server.id}
@@ -422,10 +455,10 @@ const ServersApiKeysSection = ({
                     "block text-sm font-mono break-all",
                     theme === 'dark' ? "text-slate-300" : "text-slate-700"
                   )}>
-                    {visibleKeys.has(serverKeyId) ? (
-                      <span className="text-blue-400">{'sk_live_*******************************'}</span>
+                    {revealedKeys[server.id] ? (
+                      <span className="text-blue-400">{revealedKeys[server.id]}</span>
                     ) : (
-                      <span className="text-slate-500 italic">Nhấn mắt để hiện key</span>
+                      <span className="text-slate-500 italic">Nhấn "Hiện Key" để xem API Key đầy đủ</span>
                     )}
                   </code>
                   <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">

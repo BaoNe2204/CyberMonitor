@@ -155,6 +155,7 @@ public class ServersController : ControllerBase
             TenantId = targetTenantId,
             ServerId = server.Id,
             KeyHash = ComputeSha256(plainApiKey),
+            EncryptedKey = EncryptString(plainApiKey),
             KeyPrefix = $"sk_live_{plainApiKey[8..12]}",
             Name = $"Agent Key - {server.Name}",
             Permissions = "{\"ingest\":true,\"read\":true,\"write\":false}",
@@ -333,6 +334,7 @@ public class ServersController : ControllerBase
             TenantId = server.TenantId,
             ServerId = server.Id,
             KeyHash = ComputeSha256(newPlainKey),
+            EncryptedKey = EncryptString(newPlainKey),
             KeyPrefix = $"sk_live_{newPlainKey[8..12]}",
             Name = $"Agent Key - {server.Name} (Regenerated {DateTime.UtcNow:yyyyMMdd})",
             Permissions = "{\"ingest\":true,\"read\":true,\"write\":false}",
@@ -395,6 +397,74 @@ public class ServersController : ControllerBase
         }));
     }
 
+    /// <summary>Reveal full API Key (chỉ SuperAdmin/Admin) - key được mã hóa bằng DPAPI</summary>
+    [HttpGet("{id:guid}/reveal-key")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<object>>> RevealServerApiKey(Guid id)
+    {
+        var tenantId = GetTenantId();
+        var role = GetUserRole();
+
+        if (role == "User")
+            return Forbid();
+
+        var server = await _db.Servers.FindAsync(id);
+        if (server == null)
+            return NotFound(new ApiResponse<object>(false, "Server không tìm thấy.", null));
+
+        if (role != "SuperAdmin" && server.TenantId != tenantId)
+            return Forbid();
+
+        var activeKey = await _db.ApiKeys
+            .Where(k => k.ServerId == id && k.IsActive)
+            .OrderByDescending(k => k.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        if (activeKey == null)
+            return NotFound(new ApiResponse<object>(false, "Không có API Key active.", null));
+
+        // Nếu chưa có EncryptedKey, không thể khôi phục key gốc (SHA256 là hash một chiều)
+        // User phải nhấn Regenerate để tạo key mới
+        if (string.IsNullOrEmpty(activeKey.EncryptedKey))
+        {
+            return Ok(new ApiResponse<object>(true, "KEY_CHUA_MA_HOA", new
+            {
+                plainApiKey = (string?)null,
+                keyPrefix = activeKey.KeyPrefix,
+                serverId = server.Id,
+                serverName = server.Name,
+                activeKey.Name,
+                activeKey.CreatedAt,
+                message = "API Key này chưa được mã hóa. Vui lòng nhấn nút Regenerate (mũi tên xoay) để tạo key mới có thể xem."
+            }));
+        }
+
+        var plainKey = DecryptString(activeKey.EncryptedKey);
+
+        // Ghi log khi reveal
+        _db.AuditLogs.Add(new AuditLog
+        {
+            TenantId = server.TenantId,
+            UserId = GetUserId(),
+            Action = "API_KEY_REVEALED",
+            EntityType = "Server",
+            EntityId = server.Id.ToString(),
+            Details = $"API key revealed for server '{server.Name}'"
+        });
+        await _db.SaveChangesAsync();
+
+        return Ok(new ApiResponse<object>(true, "OK", new
+        {
+            plainApiKey = plainKey,
+            keyPrefix = activeKey.KeyPrefix,
+            serverId = server.Id,
+            serverName = server.Name,
+            activeKey.Name,
+            activeKey.CreatedAt,
+            activeKey.LastUsedAt
+        }));
+    }
+
     private Guid? GetTenantId()
     {
         if (HttpContext.Items.TryGetValue("TenantId", out var tenantObj) && tenantObj is Guid tenantFromKey)
@@ -421,6 +491,22 @@ public class ServersController : ControllerBase
     {
         var bytes = System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(input));
         return Convert.ToHexString(bytes).ToLower();
+    }
+
+    private static string EncryptString(string plainText)
+    {
+        var plainBytes = Encoding.UTF8.GetBytes(plainText);
+        var encryptedBytes = System.Security.Cryptography.ProtectedData.Protect(
+            plainBytes, null, System.Security.Cryptography.DataProtectionScope.CurrentUser);
+        return Convert.ToBase64String(encryptedBytes);
+    }
+
+    private static string DecryptString(string encryptedText)
+    {
+        var encryptedBytes = Convert.FromBase64String(encryptedText);
+        var plainBytes = System.Security.Cryptography.ProtectedData.Unprotect(
+            encryptedBytes, null, System.Security.Cryptography.DataProtectionScope.CurrentUser);
+        return Encoding.UTF8.GetString(plainBytes);
     }
 
     // ============================================================================

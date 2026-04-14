@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using ClosedXML.Excel;
 
 namespace CyberMonitor.API.Controllers;
 
@@ -182,6 +183,109 @@ public class AuditLogsController : ControllerBase
 
         var bytes = Encoding.UTF8.GetBytes(sb.ToString());
         return File(bytes, "text/csv", $"audit_logs_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+    }
+
+    /// <summary>Xuất audit logs ra Excel</summary>
+    [HttpGet("export-excel")]
+    public async Task<IActionResult> ExportExcel(
+        [FromQuery] string? action = null,
+        [FromQuery] string? entityType = null,
+        [FromQuery] Guid? userId = null,
+        [FromQuery] DateTime? fromDate = null,
+        [FromQuery] DateTime? toDate = null)
+    {
+        var tenantId = GetTenantId();
+        var role = GetUserRole();
+
+        if (role == "User")
+            return Forbid();
+
+        IQueryable<AuditLog> query = _db.AuditLogs.Include(a => a.User).AsQueryable();
+
+        if (role == "Admin")
+        {
+            if (!tenantId.HasValue) return Forbid();
+            query = query.Where(a => a.TenantId == tenantId);
+        }
+
+        if (!string.IsNullOrEmpty(action))
+            query = query.Where(a => a.Action.Contains(action));
+        if (!string.IsNullOrEmpty(entityType))
+            query = query.Where(a => a.EntityType == entityType);
+        if (userId.HasValue)
+            query = query.Where(a => a.UserId == userId.Value);
+        if (fromDate.HasValue)
+            query = query.Where(a => a.Timestamp >= fromDate.Value);
+        if (toDate.HasValue)
+            query = query.Where(a => a.Timestamp <= toDate.Value);
+
+        var logs = await query
+            .OrderByDescending(a => a.Timestamp)
+            .Take(10000)
+            .ToListAsync();
+
+        var workbook = new XLWorkbook();
+        var ws = workbook.Worksheets.Add("Nhật Ký Hoạt Động");
+
+        ws.Cell("A1").Value = "NHẬT KÝ HOẠT ĐỘNG HỆ THỐNG";
+        ws.Cell("A1").Style.Font.FontSize = 16;
+        ws.Cell("A1").Style.Font.Bold = true;
+        ws.Range("A1:H1").Merge();
+
+        ws.Cell("A2").Value = $"Xuất lúc: {DateTime.Now:dd/MM/yyyy HH:mm:ss}";
+        ws.Cell("A2").Style.Font.FontSize = 10;
+        ws.Cell("A2").Style.Font.FontColor = XLColor.FromHtml("#718096");
+        ws.Cell("A3").Value = $"Tổng bản ghi: {logs.Count}";
+        ws.Cell("A3").Style.Font.FontSize = 10;
+        ws.Cell("A3").Style.Font.FontColor = XLColor.FromHtml("#718096");
+
+        var headers = new[] { "ID", "Thời gian", "Hành động", "Đối tượng", "ID Đối tượng", "Người dùng", "Địa chỉ IP", "Chi tiết" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            ws.Cell(5, i + 1).Value = headers[i];
+            ws.Cell(5, i + 1).Style.Font.Bold = true;
+            ws.Cell(5, i + 1).Style.Fill.BackgroundColor = XLColor.FromHtml("#2D3748");
+            ws.Cell(5, i + 1).Style.Font.FontColor = XLColor.FromHtml("#FFFFFF");
+        }
+
+        int row = 6;
+        foreach (var log in logs)
+        {
+            ws.Cell(row, 1).Value = log.Id;
+            ws.Cell(row, 2).Value = log.Timestamp.ToString("dd/MM/yyyy HH:mm:ss");
+            ws.Cell(row, 3).Value = log.Action;
+
+            var actionColor = log.Action switch
+            {
+                string a when a.Contains("Create") => XLColor.FromHtml("#C6F6D5"),
+                string a when a.Contains("Delete") || a.Contains("Remove") => XLColor.FromHtml("#FED7D7"),
+                string a when a.Contains("Update") || a.Contains("Edit") => XLColor.FromHtml("#FAF089"),
+                string a when a.Contains("Login") || a.Contains("Logout") => XLColor.FromHtml("#BEE3F8"),
+                _ => XLColor.FromHtml("#E2E8F0")
+            };
+            ws.Cell(row, 3).Style.Fill.BackgroundColor = actionColor;
+
+            ws.Cell(row, 4).Value = log.EntityType ?? "";
+            ws.Cell(row, 5).Value = log.EntityId ?? "";
+            ws.Cell(row, 6).Value = log.User?.FullName ?? "System";
+            ws.Cell(row, 7).Value = log.IpAddress ?? "";
+            ws.Cell(row, 8).Value = log.Details ?? "";
+            row++;
+        }
+
+        ws.Columns().AdjustToContents();
+        ws.Column(8).Width = 50;
+
+        var fileName = $"ActivityLogs_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+        using var ms = new MemoryStream();
+        workbook.SaveAs(ms);
+        ms.Position = 0;
+
+        _logger.LogInformation("Activity logs exported to Excel: {Count} records", logs.Count);
+
+        return File(ms.ToArray(),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            fileName);
     }
 
     /// <summary>Thống kê theo ngày (cho biểu đồ timeline)</summary>

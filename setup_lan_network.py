@@ -94,7 +94,6 @@ VITE_API_URL=http://{ip}:5000
 VITE_WS_URL=ws://{ip}:5000
 
 # Gemini API Key (optional - for AI features)
-# GEMINI_API_KEY=your-gemini-api-key-here
 """
     
     try:

@@ -70,6 +70,13 @@ export const Modals = ({
   const [isAdding, setIsAdding] = React.useState(false);
   const [addError, setAddError] = React.useState('');
   const [regeneratingKey, setRegeneratingKey] = React.useState(false);
+  const [copiedKey, setCopiedKey] = React.useState('');
+
+  const copyText = (text: string, key: string) => {
+    navigator.clipboard.writeText(text).catch(() => {});
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(''), 2000);
+  };
 
   return (
     <AnimatePresence>
@@ -344,13 +351,16 @@ export const Modals = ({
                     </code>
                     <button
                       type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(serverKeyToView.plainApiKey!).catch(() => {});
-                      }}
-                      className="shrink-0 p-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+                      onClick={() => copyText(serverKeyToView.plainApiKey!, 'apiKey')}
+                      className={cn(
+                        'shrink-0 p-2 rounded-lg transition-colors',
+                        copiedKey === 'apiKey'
+                          ? 'bg-green-600 text-white'
+                          : 'bg-blue-600 hover:bg-blue-500 text-white'
+                      )}
                       title="Sao chép"
                     >
-                      <Copy size={16} />
+                      {copiedKey === 'apiKey' ? <CheckCircle2 size={16} /> : <Copy size={16} />}
                     </button>
                   </div>
                 </div>
@@ -368,13 +378,16 @@ export const Modals = ({
                     </p>
                     <button
                       type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(agentInstallCommand).catch(() => {});
-                      }}
-                      className="shrink-0 p-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+                      onClick={() => copyText(agentInstallCommand, 'agentCommand')}
+                      className={cn(
+                        'shrink-0 p-2 rounded-lg transition-colors',
+                        copiedKey === 'agentCommand'
+                          ? 'bg-green-600 text-white'
+                          : 'bg-blue-600 hover:bg-blue-500 text-white'
+                      )}
                       title="Sao chép lệnh"
                     >
-                      <Copy size={16} />
+                      {copiedKey === 'agentCommand' ? <CheckCircle2 size={16} /> : <Copy size={16} />}
                     </button>
                   </div>
                   <code

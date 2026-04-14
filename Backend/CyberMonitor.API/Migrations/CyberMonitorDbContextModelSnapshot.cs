@@ -189,6 +189,9 @@ namespace CyberMonitor.API.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
+                    b.Property<string>("EncryptedKey")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime?>("ExpiresAt")
                         .HasColumnType("datetime2");
 
@@ -694,10 +697,20 @@ namespace CyberMonitor.API.Migrations
                     b.Property<decimal>("DiskUsage")
                         .HasColumnType("decimal(5,2)");
 
+                    b.Property<string>("HealthUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("IpAddress")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsHealthy")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastHealthCheckAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("LastSeenAt")
                         .HasColumnType("datetime2");
