@@ -19,7 +19,6 @@ build-verify
 # Local docs not for GitHub
 CYBERMONITOR_TECHNICAL_DOC.md
 HƯỚNG_DẪN_CÀI_ĐẶT.md
-README.md
 test_fake_traffic.py
 test_attack_simulation.py
 build
