@@ -166,10 +166,23 @@ public class WhitelistsController : ControllerBase
         // === Trigger notifications asynchronously (after DB committed) ===
         var effectiveTenantId = whitelist.TenantId ?? tenantId ?? Guid.Empty;
         var addedByRole = role;
+        
+        // Lấy UserName từ HttpContext TRƯỚC khi chạy background task (vì HttpContext sẽ bị dispose)
+        string? capturedUserName = null;
+        if (HttpContext?.User?.Identity?.Name != null)
+            capturedUserName = HttpContext.User.Identity.Name;
+        if (string.IsNullOrEmpty(capturedUserName))
+        {
+            var claim = HttpContext?.User?.FindFirst(ClaimTypes.Name)
+                        ?? HttpContext?.User?.FindFirst("name");
+            capturedUserName = claim?.Value;
+        }
+        
         _ = Task.Run(async () =>
         {
             using var scope = _scopeFactory.CreateScope();
             var dbBg = scope.ServiceProvider.GetRequiredService<CyberMonitorDbContext>();
+            var telegramServiceBg = scope.ServiceProvider.GetRequiredService<ITelegramService>();
             try
             {
                 var notifTenantId = effectiveTenantId;
@@ -179,16 +192,8 @@ public class WhitelistsController : ControllerBase
                     .Where(u => u.TenantId == notifTenantId && u.IsActive)
                     .ToListAsync();
 
-                // Lấy UserName từ HttpContext identity (nếu có), fallback sang DB
-                string? userName = null;
-                if (HttpContext?.User?.Identity?.Name != null)
-                    userName = HttpContext.User.Identity.Name;
-                if (string.IsNullOrEmpty(userName))
-                {
-                    var claim = HttpContext?.User?.FindFirst(ClaimTypes.Name)
-                                ?? HttpContext?.User?.FindFirst("name");
-                    userName = claim?.Value;
-                }
+                // Dùng userName đã capture, fallback sang DB nếu cần
+                string? userName = capturedUserName;
                 if (string.IsNullOrEmpty(userName))
                 {
                     var userRec = await dbBg.Users
@@ -232,8 +237,8 @@ public class WhitelistsController : ControllerBase
                     }
                 }
 
-                // Gửi Telegram
-                await _telegramService.SendWhitelistNotificationAsync(notifTenantId, request.IpAddress, userName ?? addedByRole, scopeLabel);
+                // Gửi Telegram với service từ scope mới
+                await telegramServiceBg.SendWhitelistNotificationAsync(notifTenantId, request.IpAddress, userName ?? addedByRole, scopeLabel);
             }
             catch (Exception ex)
             {

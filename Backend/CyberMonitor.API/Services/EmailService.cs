@@ -37,6 +37,22 @@ public class EmailService : IEmailService
         _logger = logger;
     }
 
+    private bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        try
+        {
+            var addr = new MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private static string AlertRateKey(Guid tenantId, string alertType, string? sourceIp) =>
         $"{tenantId}|{alertType}|{sourceIp ?? "none"}";
 
@@ -97,6 +113,13 @@ public class EmailService : IEmailService
 
     public async Task SendAlertEmailAsync(Guid tenantId, string toEmail, Alert alert, Server? server)
     {
+        // Validate email format
+        if (!IsValidEmail(toEmail))
+        {
+            _logger.LogWarning("Invalid email format: {Email}. Skipping alert email.", toEmail);
+            return;
+        }
+
         // Rate limit: max 1 email per 5 minutes per (tenant + alertType + sourceIp)
         if (IsAlertRateLimited(tenantId, alert.AlertType ?? "Unknown", alert.SourceIp))
         {
@@ -192,6 +215,13 @@ public class EmailService : IEmailService
 
     public async Task SendTicketNotificationAsync(Guid tenantId, string toEmail, Ticket ticket, string action)
     {
+        // Validate email format
+        if (!IsValidEmail(toEmail))
+        {
+            _logger.LogWarning("Invalid email format: {Email}. Skipping ticket notification.", toEmail);
+            return;
+        }
+
         // Rate limit: 1 email per (tenant + recipient) every 5 minutes
         if (TrySetNotifRateLimited(tenantId, toEmail))
         {
@@ -268,6 +298,13 @@ public class EmailService : IEmailService
     {
         try
         {
+            // Validate email format
+            if (!IsValidEmail(toEmail))
+            {
+                _logger.LogWarning("Invalid email format: {Email}. Skipping welcome email.", toEmail);
+                return;
+            }
+
             var body = $@"
 <!DOCTYPE html>
 <html>
@@ -310,6 +347,13 @@ public class EmailService : IEmailService
     {
         try
         {
+            // Validate email format
+            if (!IsValidEmail(toEmail))
+            {
+                _logger.LogWarning("Invalid email format: {Email}. Skipping payment confirmation.", toEmail);
+                return;
+            }
+
             var body = $@"
 <!DOCTYPE html>
 <html>
@@ -347,6 +391,13 @@ public class EmailService : IEmailService
     {
         try
         {
+            // Validate email format
+            if (!IsValidEmail(toEmail))
+            {
+                _logger.LogWarning("Invalid email format: {Email}. Skipping email send.", toEmail);
+                return;
+            }
+
             var body = $@"
 <!DOCTYPE html>
 <html>
@@ -424,6 +475,13 @@ public class EmailService : IEmailService
     {
         try
         {
+            // Validate email format
+            if (!IsValidEmail(toEmail))
+            {
+                _logger.LogWarning("Invalid email format: {Email}. Skipping password changed email.", toEmail);
+                return;
+            }
+
             var body = $@"
 <!DOCTYPE html>
 <html>
@@ -479,6 +537,13 @@ public class EmailService : IEmailService
 
     public async Task SendTicketCommentEmailAsync(Guid tenantId, string toEmail, Ticket ticket, string commenterName, string commentContent)
     {
+        // Validate email format
+        if (!IsValidEmail(toEmail))
+        {
+            _logger.LogWarning("Invalid email format: {Email}. Skipping ticket comment email.", toEmail);
+            return;
+        }
+
         // Rate limit: 1 email per (tenant + recipient) every 5 minutes
         if (TrySetNotifRateLimited(tenantId, toEmail))
         {

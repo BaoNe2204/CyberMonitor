@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Runtime.Versioning;
 namespace CyberMonitor.API.Controllers;
 
 [ApiController]
@@ -83,6 +84,7 @@ public class ServersController : ControllerBase
     /// <summary>Thêm server mới + sinh API Key</summary>
     [HttpPost("add")]
     [Authorize]
+    [SupportedOSPlatform("windows")]
     public async Task<ActionResult<ApiResponse<ApiKeyGeneratedResponse>>> AddServer([FromBody] CreateServerRequest request)
     {
         var tenantId = GetTenantId();
@@ -277,16 +279,23 @@ public class ServersController : ControllerBase
         var alerts = await _db.Alerts.Where(a => a.ServerId == id).ToListAsync();
         var alertIds = alerts.Select(a => a.Id).ToList();
         var tickets = await _db.Tickets.Where(t => t.AlertId.HasValue && alertIds.Contains(t.AlertId.Value)).ToListAsync();
+        var ticketIds = tickets.Select(t => t.Id).ToList();
+        var ticketComments = await _db.TicketComments.Where(c => ticketIds.Contains(c.TicketId)).ToListAsync();
         var apiKeys = await _db.ApiKeys.Where(k => k.ServerId == id).ToListAsync();
         var trafficLogs = await _db.TrafficLogs.Where(t => t.ServerId == id).ToListAsync();
         var blockedIPs = await _db.BlockedIPs.Where(b => b.ServerId == id).ToListAsync();
+        var whitelists = await _db.Whitelists.Where(w => w.ServerId == id).ToListAsync();
         var serverAlertEmails = await _db.ServerAlertEmails.Where(e => e.ServerId == id).ToListAsync();
         var telegramRecipients = await _db.ServerTelegramRecipients.Where(r => r.ServerId == id).ToListAsync();
+        
+        // Xóa theo thứ tự: child records trước, parent sau
+        _db.TrafficLogs.RemoveRange(trafficLogs);
+        _db.TicketComments.RemoveRange(ticketComments);
         _db.Tickets.RemoveRange(tickets);
         _db.Alerts.RemoveRange(alerts);
         _db.ApiKeys.RemoveRange(apiKeys);
-        _db.TrafficLogs.RemoveRange(trafficLogs);
         _db.BlockedIPs.RemoveRange(blockedIPs);
+        _db.Whitelists.RemoveRange(whitelists);
         _db.ServerAlertEmails.RemoveRange(serverAlertEmails);
         _db.ServerTelegramRecipients.RemoveRange(telegramRecipients);
 
@@ -297,7 +306,7 @@ public class ServersController : ControllerBase
             Action = "SERVER_DELETED",
             EntityType = "Server",
             EntityId = server.Id.ToString(),
-            Details = $"Server '{server.Name}' ({server.IpAddress}) deleted with {alerts.Count} alerts, {tickets.Count} tickets"
+            Details = $"Server '{server.Name}' ({server.IpAddress}) deleted with {alerts.Count} alerts, {tickets.Count} tickets, {trafficLogs.Count} traffic logs, {whitelists.Count} whitelists"
         });
 
         _db.Servers.Remove(server);
@@ -309,6 +318,7 @@ public class ServersController : ControllerBase
     /// <summary>Tái tạo API Key mới cho server</summary>
     [HttpPost("{id:guid}/regenerate-key")]
     [Authorize]
+    [SupportedOSPlatform("windows")]
     public async Task<ActionResult<ApiResponse<ApiKeyGeneratedResponse>>> RegenerateKey(Guid id)
     {
         var tenantId = GetTenantId();
@@ -400,6 +410,7 @@ public class ServersController : ControllerBase
     /// <summary>Reveal full API Key (chỉ SuperAdmin/Admin) - key được mã hóa bằng DPAPI</summary>
     [HttpGet("{id:guid}/reveal-key")]
     [Authorize]
+    [SupportedOSPlatform("windows")]
     public async Task<ActionResult<ApiResponse<object>>> RevealServerApiKey(Guid id)
     {
         var tenantId = GetTenantId();
@@ -493,6 +504,7 @@ public class ServersController : ControllerBase
         return Convert.ToHexString(bytes).ToLower();
     }
 
+    [SupportedOSPlatform("windows")]
     private static string EncryptString(string plainText)
     {
         var plainBytes = Encoding.UTF8.GetBytes(plainText);
@@ -501,6 +513,7 @@ public class ServersController : ControllerBase
         return Convert.ToBase64String(encryptedBytes);
     }
 
+    [SupportedOSPlatform("windows")]
     private static string DecryptString(string encryptedText)
     {
         var encryptedBytes = Convert.FromBase64String(encryptedText);

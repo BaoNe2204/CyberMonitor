@@ -603,6 +603,10 @@ public class TicketsController : ControllerBase
         if (role != "SuperAdmin" && ticket.TenantId != tenantId)
             return Forbid();
 
+        // Delete related comments first
+        var comments = await _db.TicketComments.Where(c => c.TicketId == id).ToListAsync();
+        _db.TicketComments.RemoveRange(comments);
+
         _db.Tickets.Remove(ticket);
         await _db.SaveChangesAsync();
 
